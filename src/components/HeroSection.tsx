@@ -10,7 +10,7 @@ const HeroSection: React.FC = () => {
   });
 
 
-  const nameLetters = "YOUSSEF".split('');
+  const nameLetters = "JOE".split('');
 
   return (
     <section 
@@ -62,7 +62,7 @@ const HeroSection: React.FC = () => {
               <span className="text-sm text-foreground font-medium">{'{ Building Digital Solutions }'}</span>
             </motion.div>
 
-            {/* Animated Youssef text */}
+            {/* Animated Joe text with typewriter effect */}
             <div className="flex justify-center items-center flex-wrap gap-1 sm:gap-2">
               {nameLetters.map((letter, index) => (
                 <motion.h1
@@ -101,7 +101,7 @@ const HeroSection: React.FC = () => {
                 <span className="text-chart-2">const</span>
                 <span className="text-foreground">expertise</span>
                 <span className="text-chart-2">=</span>
-                <span className="text-green-500">["React", "Node.js", "PHP", "NestJS"]</span>
+                <span className="text-green-500">["React", "Next.js", "Node.js", "PHP", "NestJS"]</span>
               </div>
             </div>
           </div>

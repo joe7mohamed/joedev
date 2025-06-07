@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { ExternalLink, Sparkles, Code2, ChevronRight, Building2, ShoppingBag, Home } from 'lucide-react';
+import { ExternalLink, Github, Sparkles, Code2, ChevronRight, Building2, ShoppingBag, Home } from 'lucide-react';
 import { portfolioData } from '../data/portfolio';
 
 interface Project {
@@ -16,6 +16,8 @@ interface Project {
   features: string[];
   businessImpact: string[];
   futureEnhancements: string[];
+  image?: string;
+  github?: string;
 }
 
 const PortfolioSection: React.FC = () => {
@@ -135,9 +137,17 @@ const PortfolioSection: React.FC = () => {
                   
                   {/* Project Image/Placeholder */}
                   <div className="relative h-48 bg-gradient-to-br from-chart-1/10 to-chart-2/10 overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <CategoryIcon className="w-16 h-16 text-chart-1/30" />
-                    </div>
+                    {project.image ? (
+                      <img 
+                        src={project.image} 
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <CategoryIcon className="w-16 h-16 text-chart-1/30" />
+                      </div>
+                    )}
                     
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -180,8 +190,8 @@ const PortfolioSection: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Live Site Link */}
-                    <div className="pt-2">
+                    {/* Live Site Link and GitHub */}
+                    <div className="pt-2 flex flex-wrap items-center gap-4">
                       <a
                         href={project.url}
                         target="_blank"
@@ -191,6 +201,17 @@ const PortfolioSection: React.FC = () => {
                         <ExternalLink className="w-4 h-4" />
                         {project.url.replace('https://', '').replace('http://', '')}
                       </a>
+                      {project.github && (
+                        <a
+                          href={project.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-chart-1 hover:text-chart-2 transition-colors text-sm font-medium"
+                        >
+                          <Github className="w-4 h-4" />
+                          GitHub
+                        </a>
+                      )}
                     </div>
 
                     {/* Key Features */}

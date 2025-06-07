@@ -16,7 +16,11 @@ import {
   SiCss3,
   SiJavascript,
   SiPython,
-  SiOracle
+  SiOracle,
+  SiNextdotjs,
+  SiTypescript,
+  SiMongodb,
+  SiMysql
 } from 'react-icons/si';
 import { Cloud, Users, Brain, Clock, Target } from 'lucide-react';
 import { portfolioData } from '../data/portfolio';
@@ -37,6 +41,7 @@ const SkillsSection: React.FC = () => {
     'Python': SiPython,
     'Dart': SiFlutter,
     'React.js': SiReact,
+    'Next.js': SiNextdotjs,
     'Flutter': SiFlutter,
     'Express.js': SiExpress,
     'Git': SiGit,
@@ -44,6 +49,9 @@ const SkillsSection: React.FC = () => {
     'ShadCN': SiReact,
     'Redux': SiReact,
     'Framer Motion': SiReact,
+    'TypeScript': SiTypescript,
+    'MongoDB': SiMongodb,
+    'MySQL': SiMysql,
     'AWS': SiAmazon,
     'Node.js': SiNodedotjs,
     'NestJS': SiNestjs,
@@ -59,6 +67,7 @@ const SkillsSection: React.FC = () => {
     'Python': '#3776AB',
     'Dart': '#0175C2',
     'React.js': '#61DAFB',
+    'Next.js': '#000000',
     'Flutter': '#02569B',
     'Express.js': '#000000',
     'Git': '#F05032',
@@ -66,6 +75,9 @@ const SkillsSection: React.FC = () => {
     'ShadCN': '#000000',
     'Redux': '#764ABC',
     'Framer Motion': '#FF0055',
+    'TypeScript': '#3178C6',
+    'MongoDB': '#47A248',
+    'MySQL': '#4479A1',
     'AWS': '#FF9900',
     'Node.js': '#339933',
     'NestJS': '#E0234E',

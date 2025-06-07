@@ -52,6 +52,7 @@ export const portfolioData = {
     ],
     technologies: [
       { name: "React.js", level: 92, category: "Framework" },
+      { name: "Next.js", level: 90, category: "Framework" },
       { name: "Flutter", level: 85, category: "Framework" },
       { name: "Express.js", level: 88, category: "Framework" },
       { name: "Git", level: 90, category: "Version Control" },
@@ -59,6 +60,9 @@ export const portfolioData = {
       { name: "ShadCN", level: 85, category: "UI Library" },
       { name: "Redux", level: 82, category: "State Management" },
       { name: "Framer Motion", level: 80, category: "Animation" },
+      { name: "TypeScript", level: 88, category: "Language" },
+      { name: "MongoDB", level: 85, category: "Database" },
+      { name: "MySQL", level: 87, category: "Database" },
     ],
     cloud: [
       { name: "PHP", level: 85, category: "Language" },
@@ -189,6 +193,7 @@ export const portfolioData = {
       status: "Live Production",
       url: "http://albarakahospital.bh/",
       demoUrl: "http://albarakahospital.bh/",
+      image: "/projects/hospital-placeholder.svg",
       features: [
         "Hospital Profile & Services catalog",
         "Modern web design with medical industry standards",
@@ -217,6 +222,7 @@ export const portfolioData = {
       status: "In Development",
       url: "https://nuammer.joedev.net",
       demoUrl: "https://nuammer.joedev.net",
+      image: "/projects/nuammer-placeholder.svg",
       features: [
         "Multi-role authentication (Guests, Clients, Designers, Suppliers)",
         "Comprehensive material catalog with advanced search",
@@ -247,6 +253,7 @@ export const portfolioData = {
       status: "In Development",
       url: "https://ppms.joedev.net",
       demoUrl: "https://ppms.joedev.net",
+      image: "/projects/ppms-placeholder.svg",
       features: [
         "Property & unit-wise income/expense monitoring",
         "Occupancy management and reservation tracking",
@@ -278,6 +285,8 @@ export const portfolioData = {
       status: "Live Production",
       url: "https://joedev.net",
       demoUrl: "https://joedev.net",
+      github: "https://github.com/joe7mohamed/joedev",
+      image: "/projects/joedev-placeholder.svg",
       features: [
         "Modern responsive design with dark/light theme support",
         "Interactive project showcases with live demos",

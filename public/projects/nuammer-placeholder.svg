@@ -1,0 +1,37 @@
+<svg width="800" height="400" viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="400" fill="#0f172a"/>
+  
+  <!-- Grid background -->
+  <defs>
+    <pattern id="grid-nuammer" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="luxury-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#grid-nuammer)" opacity="0.3"/>
+  
+  <!-- Diamond/Luxury Icon -->
+  <g transform="translate(400, 180)">
+    <path d="M0 -60 L40 -20 L20 40 L0 50 L-20 40 L-40 -20 Z" 
+          fill="url(#luxury-gradient)" opacity="0.3"/>
+    <path d="M0 -60 L40 -20 L20 40 L0 50 L-20 40 L-40 -20 Z" 
+          fill="none" stroke="url(#luxury-gradient)" stroke-width="2"/>
+    <path d="M-40 -20 L40 -20 M-20 40 L20 40 M0 -60 L0 50" 
+          stroke="url(#luxury-gradient)" stroke-width="1" opacity="0.5"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="400" y="300" text-anchor="middle" fill="#e2e8f0" font-family="system-ui" font-size="24" font-weight="600">
+    Nuammer - Luxury Materials Library
+  </text>
+  <text x="400" y="330" text-anchor="middle" fill="#94a3b8" font-family="system-ui" font-size="16">
+    B2B Marketplace Platform
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="150" cy="150" r="50" fill="#fbbf24" opacity="0.1"/>
+  <circle cx="650" cy="250" r="70" fill="#f59e0b" opacity="0.1"/>
+</svg>
