@@ -1,0 +1,147 @@
+<!-- EmailJS Template for JoeDev.net Portfolio Contact Form -->
+<!-- Subject: New {{project_type}} Project Inquiry from {{from_name}} - JoeDev.net -->
+
+<div style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; background: #0f172a; color: #e2e8f0; padding: 0; margin: 0;">
+  <div style="max-width: 600px; margin: 0 auto; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+    <!-- Header with gradient -->
+    <div style="background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%); padding: 32px 24px; text-align: center;">
+      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;">
+        JoeDev.net
+      </h1>
+      <p style="margin: 8px 0 0 0; color: #e0f2fe; font-size: 14px;">
+        Professional Full-Stack Development
+      </p>
+    </div>
+    
+    <!-- Content -->
+    <div style="padding: 32px 24px;">
+      <!-- Alert Badge -->
+      <div style="display: inline-block; background: #22c55e; color: #ffffff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 24px;">
+        🎯 NEW PROJECT INQUIRY
+      </div>
+      
+      <h2 style="margin: 0 0 8px 0; color: #f1f5f9; font-weight: 600; font-size: 24px;">
+        {{from_name}} wants to discuss a project
+      </h2>
+      
+      <p style="margin: 0 0 24px 0; color: #94a3b8; font-size: 16px;">
+        You received a new {{project_type}} project inquiry from your portfolio contact form.
+      </p>
+      
+      <!-- Contact Details Card -->
+      <div style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <h3 style="margin: 0 0 16px 0; color: #38bdf8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">
+          Contact Information
+        </h3>
+        
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0;">
+              <span style="color: #64748b; font-size: 14px;">👤 Name:</span>
+            </td>
+            <td style="padding: 8px 0;">
+              <strong style="color: #e2e8f0; font-size: 14px;">{{from_name}}</strong>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0;">
+              <span style="color: #64748b; font-size: 14px;">📧 Email:</span>
+            </td>
+            <td style="padding: 8px 0;">
+              <a href="mailto:{{from_email}}" style="color: #38bdf8; text-decoration: none; font-size: 14px;">{{from_email}}</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0;">
+              <span style="color: #64748b; font-size: 14px;">🏢 Company:</span>
+            </td>
+            <td style="padding: 8px 0;">
+              <span style="color: #e2e8f0; font-size: 14px;">{{company}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0;">
+              <span style="color: #64748b; font-size: 14px;">📋 Project Type:</span>
+            </td>
+            <td style="padding: 8px 0;">
+              <span style="display: inline-block; background: #6366f1; color: #ffffff; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                {{project_type}}
+              </span>
+            </td>
+          </tr>
+        </table>
+      </div>
+      
+      <!-- Free Consultation Alert (if applicable) -->
+      {{#if wants_consultation}}
+      <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #451a03; padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: center;">
+        <strong style="font-size: 16px;">🎁 FREE CONSULTATION REQUESTED!</strong>
+        <p style="margin: 4px 0 0 0; font-size: 14px;">
+          This client is interested in your 40-minute free consultation offer.
+        </p>
+      </div>
+      {{/if}}
+      
+      <!-- Message Content -->
+      <div style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <h3 style="margin: 0 0 16px 0; color: #38bdf8; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">
+          Project Details
+        </h3>
+        <p style="margin: 0; color: #e2e8f0; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">{{message}}</p>
+      </div>
+      
+      <!-- Quick Actions -->
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="mailto:{{reply_to}}" style="display: inline-block; background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%); color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin: 0 8px;">
+          ✉️ Reply to {{from_name}}
+        </a>
+      </div>
+      
+      <!-- Footer Info -->
+      <div style="border-top: 1px solid #334155; padding-top: 24px; margin-top: 32px;">
+        <p style="margin: 0 0 8px 0; color: #64748b; font-size: 12px;">
+          This inquiry was submitted on {{timestamp}} via your portfolio contact form.
+        </p>
+        <p style="margin: 0; color: #64748b; font-size: 12px;">
+          Free Consultation Requested: <strong style="color: {{wants_consultation}}">{{wants_consultation}}</strong>
+        </p>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div style="background: #0f172a; padding: 24px; text-align: center; border-top: 1px solid #334155;">
+      <p style="margin: 0 0 8px 0; color: #475569; font-size: 12px;">
+        © 2024 JoeDev.net - Full-Stack Development Solutions
+      </p>
+      <p style="margin: 0;">
+        <a href="https://joedev.net" style="color: #38bdf8; text-decoration: none; font-size: 12px;">Visit Portfolio</a>
+        <span style="color: #334155; margin: 0 8px;">|</span>
+        <a href="https://linkedin.com/in/youssef7mohamed" style="color: #38bdf8; text-decoration: none; font-size: 12px;">LinkedIn</a>
+        <span style="color: #334155; margin: 0 8px;">|</span>
+        <a href="https://github.com/youssef7mohamed" style="color: #38bdf8; text-decoration: none; font-size: 12px;">GitHub</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- 
+EMAILJS TEMPLATE VARIABLES REFERENCE:
+===================================
+{{from_name}} - Contact's full name
+{{from_email}} - Contact's email address
+{{company}} - Company name (or "Not specified")
+{{project_type}} - Type of project selected
+{{message}} - Main message content
+{{wants_consultation}} - "Yes" or "No" for free consultation
+{{timestamp}} - When the form was submitted
+{{to_name}} - Your name (Youssef)
+{{reply_to}} - Same as from_email for easy replies
+
+SUBJECT LINE SUGGESTION:
+========================
+New {{project_type}} Project Inquiry from {{from_name}} - JoeDev.net
+
+REPLY-TO SETTING:
+=================
+Set Reply-To field to: {{reply_to}}
+-->

@@ -1,0 +1,57 @@
+[
+  {
+    "_id": "676a3f1b8c9d2e4f5a6b7c8d",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "company": "Tech Corp",
+    "projectType": "webapp",
+    "message": "I need a modern web application for my business. We're looking for a responsive solution that can handle high traffic and provide excellent user experience.",
+    "wantsFreeConsultation": true,
+    "submittedAt": "2025-01-15T10:30:00Z",
+    "read": false
+  },
+  {
+    "_id": "676a3f1b8c9d2e4f5a6b7c8e",
+    "name": "Jane Smith",
+    "email": "jane.smith@startup.com",
+    "company": "StartupXYZ",
+    "projectType": "mobile",
+    "message": "Looking for a mobile app solution that works on both iOS and Android. Need modern UI/UX design and backend integration.",
+    "wantsFreeConsultation": false,
+    "submittedAt": "2025-01-14T14:20:00Z",
+    "read": false
+  },
+  {
+    "_id": "676a3f1b8c9d2e4f5a6b7c8f",
+    "name": "Bob Wilson",
+    "email": "bob@enterprise.com",
+    "company": "Enterprise Solutions",
+    "projectType": "system",
+    "message": "Need to modernize our legacy systems. Current infrastructure is outdated and we need a migration strategy.",
+    "wantsFreeConsultation": true,
+    "submittedAt": "2025-01-13T09:15:00Z",
+    "read": true
+  },
+  {
+    "_id": "676a3f1b8c9d2e4f5a6b7c90",
+    "name": "Sarah Johnson",
+    "email": "sarah.j@consulting.com",
+    "company": "Johnson Consulting",
+    "projectType": "consulting",
+    "message": "We need technical consulting for our upcoming project. Looking for expertise in cloud architecture and scalability.",
+    "wantsFreeConsultation": true,
+    "submittedAt": "2025-01-12T16:45:00Z",
+    "read": false
+  },
+  {
+    "_id": "676a3f1b8c9d2e4f5a6b7c91",
+    "name": "Mike Chen",
+    "email": "mike.chen@datatech.com",
+    "company": "DataTech Solutions",
+    "projectType": "database",
+    "message": "Database architecture consultation needed. We're dealing with performance issues and need optimization strategies.",
+    "wantsFreeConsultation": false,
+    "submittedAt": "2025-01-11T11:30:00Z",
+    "read": true
+  }
+]
