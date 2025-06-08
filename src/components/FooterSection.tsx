@@ -128,14 +128,12 @@ const FooterSection: React.FC = () => {
                 animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ delay: 0.6 + index * 0.1, duration: 0.4 }}
                 whileHover={{ scale: 1.1, y: -2 }}
-                className={`relative p-3 bg-card rounded-full border border-border text-muted-foreground ${link.color} transition-all duration-300 hover:border-current hover:bg-muted ${link.name === 'Email' ? 'hover:shadow-lg hover:shadow-red-400/20' : ''}`}
+                className={`relative p-3 bg-card rounded-full border border-border text-muted-foreground ${link.color} transition-all duration-300 hover:border-current hover:bg-muted hover:shadow-lg ${link.name === 'Email' ? 'hover:shadow-red-400/20' : link.name === 'LinkedIn' ? 'hover:shadow-blue-400/20' : 'hover:shadow-purple-400/20'}`}
                 aria-label={link.name}
                 title={link.name === 'Email' ? 'Click to send me an email' : link.name}
               >
                 <link.icon className="w-5 h-5" />
-                {link.name === 'Email' && (
-                  <span className="absolute -inset-1 rounded-full border-2 border-red-400 opacity-0 hover:opacity-100 animate-pulse transition-opacity duration-300"></span>
-                )}
+                <span className={`absolute -inset-1 rounded-full border-2 ${link.name === 'Email' ? 'border-red-400' : link.name === 'LinkedIn' ? 'border-blue-400' : 'border-purple-400'} opacity-0 hover:opacity-100 animate-pulse transition-opacity duration-300`}></span>
               </motion.a>
             ))}
             </div>

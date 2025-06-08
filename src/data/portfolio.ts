@@ -89,12 +89,9 @@ export const portfolioData = {
       location: "Adliya, Bahrain",
       period: "08/2024 – Present",
       responsibilities: [
-        "Maintained and enhanced the hospital's legacy PHP-based information system across all departments (Reception, Medical, Billing, Quality)",
-        "Led the initiative to modernize internal platforms using React.js, Node.js (NestJS), and MySQL for better scalability and staff experience",
-        "Implemented secure data protection measures including daily encrypted backups and access-controlled environments",
-        "Managed internal corporate email systems via GoDaddy, ensuring secure setup (SPF, DKIM) and seamless communication",
-        "Provided technical support for network infrastructure, desktop systems, and medical device integrations",
-        "Utilized modern frontend tools such as TailwindCSS, ShadCN, Redux, Framer Motion alongside backend and legacy tech (Bootstrap, jQuery, AJAX)",
+        "Modernizing hospital systems using React.js, Node.js, and MySQL",
+        "Implementing secure data protection and backup solutions",
+        "Managing network infrastructure and medical device integrations",
       ],
     },
     previous: [
@@ -103,7 +100,7 @@ export const portfolioData = {
         company: "CrediMax B.S.C",
         location: "Seef District, Bahrain",
         period: "03/2023 – 05/2023",
-        description: "Supported smooth teamwork and efficient communication for better project coordination. Solved issues in applications and systems with analytical skills. Developed user-friendly mobile apps, tested for optimal performance with POS devices. Ensured attention to detail and quality standards throughout software development. Implemented security measures to protect data and ensure compliance.",
+        description: "Developed mobile apps for POS devices. Implemented security measures and ensured data compliance.",
       },
     ],
   },
@@ -115,7 +112,7 @@ export const portfolioData = {
     period: "2018 – 2023",
     gpa: null,
     achievements: [],
-    description: "Comprehensive software engineering program covering computer science fundamentals, software development methodologies, and practical application development."
+    description: "Focused on software development methodologies and practical application development."
   },
 
   volunteer: [
@@ -124,12 +121,10 @@ export const portfolioData = {
       organization: "Bahrain International Circuit",
       location: "Zalaq, Bahrain", 
       period: "2019 – Present",
-      description: "Volunteering to organize the motorsport races that are hosted at the Bahrain International Circuit every season (F1, Porsche, WEC, etc.)",
+      description: "Organizing international motorsport events including F1, Porsche, and WEC races.",
       responsibilities: [
         "Ensuring safety protocols during international racing events",
-        "Coordinating with international teams and officials",
         "Managing track safety and emergency response procedures",
-        "Contributing to successful execution of Formula 1, Porsche Carrera Cup, and WEC races"
       ]
     }
   ],

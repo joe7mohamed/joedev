@@ -27,7 +27,7 @@ const ExperienceTimeline: React.FC = () => {
               Professional Journey
             </h2>
             <p className="text-muted-foreground text-base sm:text-lg max-w-3xl mx-auto">
-              From software engineering education to professional development and community service
+              Building impactful software solutions
             </p>
           </div>
 

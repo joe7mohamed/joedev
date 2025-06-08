@@ -75,7 +75,7 @@ const ServicesSection: React.FC = () => {
           className="space-y-16"
         >
           {/* Header */}
-          <div className="text-center md:text-center text-left space-y-4">
+          <div className="text-center space-y-4">
             <motion.div variants={fadeInUp}>
               <Badge variant="secondary" className="px-4 py-2">
                 Process

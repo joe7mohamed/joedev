@@ -97,11 +97,17 @@ const HeroSection: React.FC = () => {
               <p className="text-xl md:text-2xl text-chart-1 font-medium">
                 Software Engineer
               </p>
-              <div className="flex justify-center items-center gap-2 text-sm text-muted-foreground font-mono">
-                <span className="text-chart-2">const</span>
-                <span className="text-foreground">expertise</span>
-                <span className="text-chart-2">=</span>
-                <span className="text-green-500">["React", "Next.js", "Node.js", "PHP", "NestJS"]</span>
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-2 text-sm text-muted-foreground font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="text-chart-2">const</span>
+                  <span className="text-foreground">expertise</span>
+                  <span className="text-chart-2">=</span>
+                </div>
+                <div className="text-green-500 text-center">
+                  <span className="sm:hidden">["React", "Next.js", "Node.js",</span>
+                  <span className="sm:hidden">"Express.js", "PHP", "NestJS"]</span>
+                  <span className="hidden sm:inline">["React", "Next.js", "Node.js", "Express.js", "PHP", "NestJS"]</span>
+                </div>
               </div>
             </div>
           </div>
