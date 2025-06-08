@@ -116,8 +116,10 @@ const FooterSection: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 1 } : { opacity: 0 }}
             transition={{ delay: 0.6, duration: 0.6 }}
-            className="flex justify-center gap-6"
+            className="space-y-4"
           >
+            <p className="text-sm text-muted-foreground">Connect with me</p>
+            <div className="flex justify-center gap-6">
             {socialLinks.map((link, index) => (
               <motion.a
                 key={link.name}
@@ -126,12 +128,17 @@ const FooterSection: React.FC = () => {
                 animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ delay: 0.6 + index * 0.1, duration: 0.4 }}
                 whileHover={{ scale: 1.1, y: -2 }}
-                className={`p-3 bg-card rounded-full border border-border text-muted-foreground ${link.color} transition-all duration-300 hover:border-current hover:bg-muted`}
+                className={`relative p-3 bg-card rounded-full border border-border text-muted-foreground ${link.color} transition-all duration-300 hover:border-current hover:bg-muted ${link.name === 'Email' ? 'hover:shadow-lg hover:shadow-red-400/20' : ''}`}
                 aria-label={link.name}
+                title={link.name === 'Email' ? 'Click to send me an email' : link.name}
               >
                 <link.icon className="w-5 h-5" />
+                {link.name === 'Email' && (
+                  <span className="absolute -inset-1 rounded-full border-2 border-red-400 opacity-0 hover:opacity-100 animate-pulse transition-opacity duration-300"></span>
+                )}
               </motion.a>
             ))}
+            </div>
           </motion.div>
           
           {/* Bottom Section */}

@@ -211,7 +211,7 @@ const ContactSection: React.FC = () => {
                     <Mail className="w-5 h-5 text-chart-1" />
                     <a 
                       href="mailto:youssef.m.ibrahim.zaky@gmail.com" 
-                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-chart-1 transition-all duration-300 hover:underline decoration-chart-1 decoration-2 underline-offset-4 font-medium"
                     >
                       youssef.m.ibrahim.zaky@gmail.com
                     </a>

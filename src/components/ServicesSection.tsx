@@ -75,7 +75,7 @@ const ServicesSection: React.FC = () => {
           className="space-y-16"
         >
           {/* Header */}
-          <div className="text-center space-y-4">
+          <div className="text-center md:text-center text-left space-y-4">
             <motion.div variants={fadeInUp}>
               <Badge variant="secondary" className="px-4 py-2">
                 Process
@@ -89,7 +89,7 @@ const ServicesSection: React.FC = () => {
             </motion.h2>
             <motion.p 
               variants={fadeInUp}
-              className="text-lg text-muted-foreground max-w-2xl mx-auto"
+              className="text-lg text-muted-foreground max-w-2xl md:mx-auto"
             >
               Simple, streamlined process from idea to launch
             </motion.p>
@@ -111,7 +111,7 @@ const ServicesSection: React.FC = () => {
                   }`}
                 >
                   {/* Step Content */}
-                  <div className="flex-1 text-center md:text-left order-2 md:order-none">
+                  <div className="flex-1 text-left order-2 md:order-none">
                     <Card className="border-border/50 hover:border-primary/30 transition-all duration-300">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">

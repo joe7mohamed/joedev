@@ -74,7 +74,7 @@ const ExperienceTimeline: React.FC = () => {
                         </span>
                       </div>
                       
-                      <div className="space-y-3">
+                      <div className="space-y-3 max-w-3xl">
                         {experience.current.responsibilities.map((responsibility, index) => (
                           <div key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
                             <div className="w-1.5 h-1.5 bg-chart-1 rounded-full mt-2 flex-shrink-0"></div>
@@ -116,7 +116,7 @@ const ExperienceTimeline: React.FC = () => {
                           </span>
                         </div>
                         
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
                           {exp.description}
                         </p>
                       </div>
@@ -164,7 +164,7 @@ const ExperienceTimeline: React.FC = () => {
                     </span>
                   </div>
                   
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
                     {education.description}
                   </p>
                 </div>
@@ -211,11 +211,11 @@ const ExperienceTimeline: React.FC = () => {
                       </span>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
                       {vol.description}
                     </p>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-w-3xl">
                       {vol.responsibilities.map((responsibility, respIndex) => (
                         <div key={respIndex} className="flex items-start gap-2 text-sm text-muted-foreground">
                           <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
