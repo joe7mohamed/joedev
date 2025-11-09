@@ -53,6 +53,8 @@ export const portfolioData = {
     technologies: [
       { name: "React.js", level: 92, category: "Framework" },
       { name: "Next.js", level: 90, category: "Framework" },
+      { name: "Node.js", level: 88, category: "Runtime" },
+      { name: "NestJS", level: 85, category: "Framework" },
       { name: "Flutter", level: 85, category: "Framework" },
       { name: "Express.js", level: 88, category: "Framework" },
       { name: "Git", level: 90, category: "Version Control" },
@@ -65,10 +67,11 @@ export const portfolioData = {
       { name: "MySQL", level: 87, category: "Database" },
     ],
     cloud: [
-      { name: "PHP", level: 85, category: "Language" },
       { name: "AWS", level: 85, category: "Platform" },
-      { name: "Node.js", level: 88, category: "Runtime" },
-      { name: "NestJS", level: 85, category: "Framework" },
+      { name: "Azure", level: 80, category: "Platform" },
+      { name: "Vercel", level: 90, category: "Platform" },
+      { name: "MongoDB Atlas", level: 85, category: "Cloud Database" },
+      { name: "Docker", level: 75, category: "Containerization" },
     ],
     personal: [
       { name: "Communication", level: 95, category: "Soft Skill" },

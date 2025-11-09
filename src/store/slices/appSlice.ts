@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { emailService, type ContactFormData } from '../../services/emailService';
+import { contactService, type ContactFormData } from '../../services/emailService';
 
 interface AppState {
   isLoading: boolean;
@@ -22,11 +22,11 @@ const initialState: AppState = {
   contactSubmissionMessage: '',
 };
 
-// Async thunk for email submission
+// Async thunk for contact submission
 export const submitContactForm = createAsyncThunk(
   'app/submitContactForm',
   async (contactData: ContactFormData) => {
-    const response = await emailService.sendContactEmail(contactData);
+    const response = await contactService.submitContact(contactData);
     return response;
   }
 );

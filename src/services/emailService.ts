@@ -1,4 +1,4 @@
-import emailjs from '@emailjs/browser';
+import axios from 'axios';
 
 export interface ContactFormData {
   name: string;
@@ -14,77 +14,70 @@ export interface EmailServiceResponse {
   message: string;
 }
 
-class EmailService {
-  private serviceId: string;
-  private templateId: string;
-  private publicKey: string;
+class ContactService {
+  private apiUrl: string;
 
   constructor() {
-    // These will be set via environment variables
-    this.serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
-    this.templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
-    this.publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
-    
-    // Initialize EmailJS
-    if (this.publicKey) {
-      emailjs.init(this.publicKey);
-    }
+    // Use the current domain for API calls
+    this.apiUrl = import.meta.env.PROD 
+      ? 'https://joedev.net/api' 
+      : 'http://localhost:3000/api';
   }
 
-  async sendContactEmail(data: ContactFormData): Promise<EmailServiceResponse> {
+  async submitContact(data: ContactFormData): Promise<EmailServiceResponse> {
     try {
-      // Check if EmailJS is configured
-      if (!this.serviceId || !this.templateId || !this.publicKey) {
-        console.log('📧 EmailJS not configured, simulating email send...');
-        console.log('📋 Contact data:', {
-          name: data.name,
-          email: data.email,
-          company: data.company,
-          projectType: data.projectType,
-          message: data.message,
-          wantsFreeConsultation: data.wantsFreeConsultation
-        });
-        
-        // Simulate delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
+      console.log('📧 Submitting contact form to MongoDB...');
+      console.log('📋 Contact data:', {
+        name: data.name,
+        email: data.email,
+        company: data.company,
+        projectType: data.projectType,
+        message: data.message,
+        wantsFreeConsultation: data.wantsFreeConsultation
+      });
+      
+      const response = await axios.post(`${this.apiUrl}/contacts`, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000, // 10 second timeout
+      });
+
+      if (response.data.success) {
+        console.log('✅ Contact form submitted successfully');
         return {
           success: true,
-          message: 'Your message has been received! I\'ll respond within 24 hours. (Demo Mode)'
+          message: 'Your message has been received! I\'ll respond within 24 hours.'
         };
+      } else {
+        throw new Error(response.data.message || 'Failed to submit contact form');
       }
 
-      // Real EmailJS implementation
-      const templateParams = {
-        from_name: data.name,
-        from_email: data.email,
-        company: data.company || 'Not specified',
-        project_type: data.projectType,
-        message: data.message,
-        wants_consultation: data.wantsFreeConsultation ? 'Yes' : 'No',
-        timestamp: new Date().toLocaleString(),
-        to_name: 'Youssef',
-        reply_to: data.email
-      };
-
-      console.log('📧 Sending email via EmailJS...');
-      console.log('🔧 Template params:', templateParams);
-      
-      await emailjs.send(
-        this.serviceId,
-        this.templateId,
-        templateParams
-      );
-
-      console.log('✅ Email sent successfully via EmailJS');
-      
-      return {
-        success: true,
-        message: 'Your message has been sent successfully! I\'ll respond within 24 hours.'
-      };
-
     } catch (error) {
-      console.error('❌ Failed to send email:', error);
+      console.error('❌ Failed to submit contact form:', error);
+      
+      // Provide user-friendly error messages
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          return {
+            success: false,
+            message: 'Request timeout. Please check your connection and try again.'
+          };
+        }
+        if (error.response?.status === 429) {
+          return {
+            success: false,
+            message: 'Too many requests. Please wait a moment and try again.'
+          };
+        }
+        if (error.response && error.response.status >= 500) {
+          return {
+            success: false,
+            message: 'Server error. Please try again later or email me directly at youssef.m.ibrahim.zaky@gmail.com'
+          };
+        }
+      }
+      
       return {
         success: false,
         message: 'Failed to send your message. Please try again or email me directly at youssef.m.ibrahim.zaky@gmail.com'
@@ -93,4 +86,4 @@ class EmailService {
   }
 }
 
-export const emailService = new EmailService();
+export const contactService = new ContactService();

@@ -16,6 +16,7 @@ import ExperienceTimeline from './components/ExperienceTimeline';
 import PortfolioSection from './components/PortfolioSection';
 import ContactSection from './components/ContactSection';
 import FooterSection from './components/FooterSection';
+import AdminApp from './components/admin/AdminApp';
 
 function MainContent() {
   const dispatch = useAppDispatch();
@@ -66,6 +67,7 @@ function App() {
     <Provider store={store}>
       <BrowserRouter>
         <Routes>
+          <Route path="/admin/*" element={<AdminApp />} />
           <Route path="*" element={<MainContent />} />
         </Routes>
         <Toaster 

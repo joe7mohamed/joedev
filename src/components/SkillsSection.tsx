@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { 
-  SiReact, 
-  SiNodedotjs, 
+import {
+  SiReact,
+  SiNodedotjs,
   SiTailwindcss,
   SiExpress,
   SiNestjs,
@@ -20,7 +20,9 @@ import {
   SiNextdotjs,
   SiTypescript,
   SiMongodb,
-  SiMysql
+  SiMysql,
+  SiVercel,
+  SiDocker
 } from 'react-icons/si';
 import { Cloud, Users, Brain, Clock, Target } from 'lucide-react';
 import { portfolioData } from '../data/portfolio';
@@ -42,6 +44,8 @@ const SkillsSection: React.FC = () => {
     'Dart': SiFlutter,
     'React.js': SiReact,
     'Next.js': SiNextdotjs,
+    'Node.js': SiNodedotjs,
+    'NestJS': SiNestjs,
     'Flutter': SiFlutter,
     'Express.js': SiExpress,
     'Git': SiGit,
@@ -53,8 +57,10 @@ const SkillsSection: React.FC = () => {
     'MongoDB': SiMongodb,
     'MySQL': SiMysql,
     'AWS': SiAmazon,
-    'Node.js': SiNodedotjs,
-    'NestJS': SiNestjs,
+    'Azure': Cloud,
+    'Vercel': SiVercel,
+    'MongoDB Atlas': SiMongodb,
+    'Docker': SiDocker,
   };
 
   const colorMap: Record<string, string> = {
@@ -68,6 +74,8 @@ const SkillsSection: React.FC = () => {
     'Dart': '#0175C2',
     'React.js': '#61DAFB',
     'Next.js': '#000000',
+    'Node.js': '#339933',
+    'NestJS': '#E0234E',
     'Flutter': '#02569B',
     'Express.js': '#000000',
     'Git': '#F05032',
@@ -79,8 +87,10 @@ const SkillsSection: React.FC = () => {
     'MongoDB': '#47A248',
     'MySQL': '#4479A1',
     'AWS': '#FF9900',
-    'Node.js': '#339933',
-    'NestJS': '#E0234E',
+    'Azure': '#0078D4',
+    'Vercel': '#000000',
+    'MongoDB Atlas': '#47A248',
+    'Docker': '#2496ED',
   };
 
   const skillCategories = [
