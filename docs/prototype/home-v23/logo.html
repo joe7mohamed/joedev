@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ZakyDev mark</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F0E0C;--ink:#F3EFE6;--muted:#A8A192;--hair:rgba(243,239,230,.14);--gold:#D4AF37}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Geist",system-ui,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:clamp(20px,5vw,56px);display:grid;gap:clamp(28px,5vw,56px)}
+h1{text-wrap:balance;font:600 clamp(30px,4.2vw,50px)/1.08 "Fraunces",Georgia,serif;letter-spacing:-.02em;margin:0}
+h2{font:500 12px "Geist Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 14px}
+p{margin:0;color:var(--muted);max-width:60ch}
+.ms{fill:none;stroke:var(--ink);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.mg{fill:none;stroke:var(--gold);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:center}
+.stage{aspect-ratio:1;max-width:420px;width:100%;border:1px solid var(--hair);border-radius:28px;display:grid;place-items:center;cursor:pointer;background:radial-gradient(circle at 60% 40%,rgba(212,175,55,.12),transparent 60%)}
+.stage svg{width:56%;overflow:visible}
+button{font:500 14px "Geist",sans-serif;color:var(--ink);background:none;border:1px solid var(--ink);border-radius:99px;min-height:44px;padding:0 20px;cursor:pointer;margin-top:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.card{border:1px solid var(--hair);border-radius:20px;padding:22px;display:grid;gap:14px;justify-items:center;text-align:center;font:400 12px "Geist Mono",monospace;color:var(--muted)}
+.card.l{background:#FAF9F6;--ink:#1A1814;--gold:#8A6D1F;color:#6A6457}.card.g{background:#D4AF37;--ink:#14120E;--gold:#FAF9F6;color:#14120E}
+.lock{display:flex;align-items:center;gap:12px;font:500 30px "Geist",sans-serif;color:var(--ink);letter-spacing:-.01em}.lock svg{width:44px}
+.stack{display:grid;justify-items:center;gap:8px;font:500 22px "Geist",sans-serif;color:var(--ink)}.stack svg{width:72px}
+.sizes{display:flex;gap:28px;align-items:end;flex-wrap:wrap}.sz{display:grid;gap:10px;justify-items:center;font:400 11px "Geist Mono",monospace;color:var(--muted)}
+.icons{display:flex;gap:18px;flex-wrap:wrap}.icons img{width:96px;height:96px;border-radius:23px;outline:1px solid var(--hair)}
+.cons{position:relative;width:min(100%,300px)}.cons svg{width:100%;display:block}.cons .g{stroke:var(--hair);stroke-width:.5}.cons .c{fill:none;stroke:var(--gold);stroke-width:.6;stroke-dasharray:1.5 1.5}
+
+.tg-a,.tg-b{transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.tg-s{fill:#D4AF37;opacity:0;transform-box:fill-box;transform-origin:center}
+.play .tg-a{animation:tgA .85s cubic-bezier(.16,1,.3,1) both}
+.play .tg-b{animation:tgB .85s cubic-bezier(.16,1,.3,1) both}
+.play .tg-a path,.play .tg-b path{stroke-dasharray:1;animation:tgD .7s cubic-bezier(.4,0,.2,1) both}
+.play .tg-s{animation:tgS .6s .6s ease-out both}
+@keyframes tgA{0%{transform:translate(24px,-7px);opacity:0}70%{transform:translate(-1.2px,.4px);opacity:1}100%{transform:none}}
+@keyframes tgB{0%{transform:translate(-24px,7px);opacity:0}70%{transform:translate(1.2px,-.4px);opacity:1}100%{transform:none}}
+@keyframes tgD{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes tgS{0%{transform:scale(.2);opacity:.95}100%{transform:scale(4.2);opacity:0}}
+.hov:hover .tg-a{transform:translate(3px,-1px)}.hov:hover .tg-b{transform:translate(-3px,1px)}
+@media (prefers-reduced-motion: reduce){.play .tg-a,.play .tg-b,.play .tg-a path,.play .tg-b path,.play .tg-s{animation:none}}
+
+@media (max-width:760px){.hero{grid-template-columns:1fr}}
+.zspin{display:inline-block;width:1.4em;height:1.4em;animation:zspin 1.2s cubic-bezier(.7,0,.3,1) infinite}.zspin path{fill:none;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.zspin .a{stroke:currentColor}.zspin .b{stroke:#D4AF37}@keyframes zspin{0%,20%{transform:rotate(0)}70%,100%{transform:rotate(180deg)}}</style>
+<main>
+<section class="hero"><div><h2>ZakyDev · the mark</h2><h1>A Z made of &gt; and &lt;.</h1><p style="margin-top:14px">Two code brackets slide in from either side and lock into the letter. The ink half is the opening bracket, the gold half closes it.</p><button id="again">Replay animation</button></div>
+<div class="stage hov" id="stage" title="Replay"><svg viewBox="0 0 64 64" id="big"><g class="tg-a"><path pathLength="1" class="ms" d="M12 15H50L36.2 28"/></g><g class="tg-b"><path pathLength="1" class="mg" d="M27.8 36L14 49H52"/></g><circle class="tg-s" cx="32" cy="32" r="3"/></svg></div></section>
+<section><h2>Lockups</h2><div class="grid"><div class="card"><div class="lock hov"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:7" d="M12 15H50L36.2 28"/><path class="mg" style="stroke-width:7" d="M27.8 36L14 49H52"/></svg><span>zakydev</span></div>horizontal · dark</div><div class="card l"><div class="lock"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:7" d="M12 15H50L36.2 28"/><path class="mg" style="stroke-width:7" d="M27.8 36L14 49H52"/></svg><span>zakydev</span></div>horizontal · light</div><div class="card"><div class="stack"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:7" d="M12 15H50L36.2 28"/><path class="mg" style="stroke-width:7" d="M27.8 36L14 49H52"/></svg><span>zakydev</span></div>stacked</div><div class="card g"><div class="lock"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:7" d="M12 15H50L36.2 28"/><path class="mg" style="stroke-width:7" d="M27.8 36L14 49H52"/></svg><span>zakydev</span></div>on gold</div></div></section>
+<section><h2>Spinner</h2><div style="display:flex;gap:28px;align-items:center;font-size:34px"><svg class="zspin" viewBox="0 0 64 64"><path class="a" d="M12 15H50L36.2 28"/><path class="b" d="M27.8 36L14 49H52"/></svg><svg class="zspin" style="font-size:20px" viewBox="0 0 64 64"><path class="a" d="M12 15H50L36.2 28"/><path class="b" d="M27.8 36L14 49H52"/></svg><button style="margin:0;display:inline-flex;align-items:center;gap:10px"><svg class="zspin" style="font-size:13px" viewBox="0 0 64 64"><path class="a" d="M12 15H50L36.2 28"/><path class="b" d="M27.8 36L14 49H52"/></svg>Sending</button></div><p style="margin-top:14px">For buttons and short waits: the mark turns half a turn, rests, and turns again. Because the two halves mirror each other, it always lands as a Z.</p></section>
+<section><h2>Sizes</h2><div class="sizes"><div class="sz"><div style="width:96px;height:96px"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:7" d="M12 15H50L36.2 28"/><path class="mg" style="stroke-width:7" d="M27.8 36L14 49H52"/></svg></div><span>96px</span></div><div class="sz"><div style="width:48px;height:48px"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:7" d="M12 15H50L36.2 28"/><path class="mg" style="stroke-width:7" d="M27.8 36L14 49H52"/></svg></div><span>48px</span></div><div class="sz"><div style="width:32px;height:32px"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:7" d="M12 15H50L36.2 28"/><path class="mg" style="stroke-width:7" d="M27.8 36L14 49H52"/></svg></div><span>32px</span></div><div class="sz"><div style="width:20px;height:20px"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:9" d="M12 15H50L38 26.5"/><path class="mg" style="stroke-width:9" d="M26 37.5L14 49H52"/></svg></div><span>20px · small cut</span></div><div class="sz"><div style="width:16px;height:16px"><svg viewBox="0 0 64 64" class=""><path class="ms" style="stroke-width:9" d="M12 15H50L38 26.5"/><path class="mg" style="stroke-width:9" d="M26 37.5L14 49H52"/></svg></div><span>16px · small cut</span></div></div><p style="margin-top:14px">Below 32px a second cut takes over: heavier strokes and a wider gap, so the two halves never merge.</p></section>
+<section><h2>App icon and favicon</h2><div class="icons"><img src="brand/zakydev-icon-dark.svg" alt="Dark app icon"><img src="brand/zakydev-icon-gold.svg" alt="Gold app icon"><img src="brand/favicon.svg" alt="Favicon" style="width:48px;height:48px;align-self:end;background:#FAF9F6;border-radius:10px;padding:8px"></div></section>
+<section><h2>Construction</h2><div class="cons"><svg viewBox="0 0 64 64"><path class="g" d="M0 0V64M0 0H64"/><path class="g" d="M8 0V64M0 8H64"/><path class="g" d="M16 0V64M0 16H64"/><path class="g" d="M24 0V64M0 24H64"/><path class="g" d="M32 0V64M0 32H64"/><path class="g" d="M40 0V64M0 40H64"/><path class="g" d="M48 0V64M0 48H64"/><path class="g" d="M56 0V64M0 56H64"/><path class="g" d="M64 0V64M0 64H64"/><path class="ms" d="M12 15H50L36.2 28"/><path class="mg" d="M27.8 36L14 49H52"/><circle class="c" cx="32" cy="32" r="5.8"/></svg></div><p style="margin-top:14px">64-unit grid. Both strokes are 7 units with round ends. The halves are point-symmetric around the centre, with a 4.5-unit gap on the diagonal. Keep clear space of one stroke width on every side.</p></section>
+</main>
+<script>const big=document.getElementById('big');function play(){big.classList.remove('play');void big.getBoundingClientRect();big.classList.add('play');}document.getElementById('again').onclick=play;document.getElementById('stage').onclick=play;play();</script></html>

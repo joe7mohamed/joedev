@@ -45,3 +45,6 @@ desktop.ini
 # Misc
 *.local
 *.map
+
+# brainstorming visual companion
+.superpowers/
