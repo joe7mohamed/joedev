@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
+  reporter: process.env.CI ? [['dot'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: 'http://localhost:3000', trace: 'on-first-retry' },
   // In CI, Turborepo has already built the app (`e2e` depends on `build`); locally, build first.
   webServer: {
