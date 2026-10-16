@@ -5,6 +5,8 @@
     "includes": [
       "**",
       "!docs/prototype",
+      "!apps/web/public",
+      "!.claude",
       "!**/dist",
       "!**/.next",
       "!**/test-results",
