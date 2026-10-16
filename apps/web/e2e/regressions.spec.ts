@@ -31,6 +31,19 @@ test('gold element stays on its slot when the page is shifted sideways (start-si
   expect(d.dx).toBeLessThanOrEqual(1);
 });
 
+test('gold element follows its own layer when a scrollbar shifts the fixed containing block', async ({
+  page,
+}) => {
+  await page.goto('/ar');
+  await page.addStyleTag({ content: 'html.enhanced [data-gold-layer]{left:16px} main{margin-left:16px}' });
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+  await gotoScene(page, 'work', 0.5);
+  const d = await gap(page, '#work [data-slot]');
+  expect(d.dx).toBeLessThanOrEqual(1);
+  expect(d.dy).toBeLessThanOrEqual(1);
+  expect(d.dw).toBeLessThanOrEqual(2);
+});
+
 test('gold element re-aligns after a viewport resize', async ({ page }) => {
   await page.goto('/en');
   await gotoScene(page, 'work', 0.5);

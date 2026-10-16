@@ -47,10 +47,12 @@ export const resolveGold = (
   const currentFrame = frames.get(currentId) as SceneFrame;
   const current = read(currentId, currentFrame);
   const nextId = present[at + 1];
-  const next = nextId ? read(nextId, frames.get(nextId) as SceneFrame) : null;
-  if (!current) return next;
+  const readNext = () => (nextId ? read(nextId, frames.get(nextId) as SceneFrame) : null);
+  if (!current) return readNext();
   const t = smooth(currentFrame.out);
-  if (!next || t <= 0) return current;
+  if (!nextId || t <= 0) return current;
+  const next = readNext();
+  if (!next) return current;
   if (t >= 1) return next;
   return {
     ...lerpRect(current, next, t),
