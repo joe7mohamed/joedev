@@ -51,3 +51,10 @@ No dependency reported an unreviewed install script.
 | Package | Installed | Where |
 | --- | --- | --- |
 | @types/node | 24.19.2 | devDependency of `apps/web` and `packages/shared`, replacing 26.6.5 to match the Node 24 runtime (npm resolved 24.19.2 under min-release-age) |
+
+## Phase 1 Task 1: motion math
+
+| Package | Installed | Where |
+| --- | --- | --- |
+| vitest | 5.0.4 | devDependency of `apps/web` (same version as `packages/shared`) |
+| vite | 8.3.4 | devDependency of `apps/web`, peer of vitest (same version as `packages/shared`) |
