@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg: #0f0e0c;
+  --panel: #181613;
+  --ink: #f3efe6;
+  --muted: #a8a192;
+  --hair: rgb(243 239 230 / 0.14);
+  --gold: #d4af37;
+  --accent: #d4af37;
+  --on-gold: #14120e;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --quick: 180ms;
+  --std: 450ms;
+  --slow: 900ms;
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #faf9f6;
+  --panel: #f1eee6;
+  --ink: #1a1814;
+  --muted: #6a6457;
+  --hair: rgb(26 24 20 / 0.14);
+  --accent: #8a6d1f;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-hair: var(--hair);
+  --color-gold: var(--gold);
+  --color-accent: var(--accent);
+  --color-on-gold: var(--on-gold);
+  --font-display: var(--stack-display);
+  --font-sans: var(--stack-body);
+  --font-mono: var(--face-mono), ui-monospace, Menlo, monospace;
+}
+
+/* Complete stacks per language. The Arabic faces are only loaded on /ar, so they are only named there. */
+html {
+  --stack-display: var(--face-display), Georgia, serif;
+  --stack-body: var(--face-body), system-ui, sans-serif;
+  --lh-display: 1.02;
+  --lh-body: 1.55;
+  background: var(--bg);
+  color: var(--ink);
+}
+html[lang="ar"] {
+  --stack-display: var(--face-display-ar), var(--face-display), serif;
+  --stack-body: var(--face-body-ar), var(--face-body), system-ui, sans-serif;
+  --lh-display: 1.3;
+  --lh-body: 1.7;
+}
+html[lang="ar"] * {
+  /* biome-ignore lint/complexity/noImportantStyles: spec 3.3 — Arabic is never letter-spaced; must beat utility classes */
+  letter-spacing: 0 !important;
+}
+body {
+  margin: 0;
+  font-family: var(--stack-body);
+  line-height: var(--lh-body);
+  overflow-x: clip;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--stack-display);
+  line-height: var(--lh-display);
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
