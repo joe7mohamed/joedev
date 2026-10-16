@@ -1,10 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-
-const OUT = 180;
-const IN = 500;
-const EASE = 'cubic-bezier(.2,.8,.2,1)';
+import { runSwap } from './swapSequence';
 
 /** Text that flips to a new value. Its resting style is always fully visible. */
 export function Swap({
@@ -26,32 +23,7 @@ export function Swap({
       setShown(value);
       return;
     }
-    for (const running of el.getAnimations()) running.cancel();
-    const out = el.animate(
-      [
-        { transform: 'none', opacity: 1 },
-        { transform: 'rotateX(-80deg) translateY(-35%)', opacity: 0 },
-      ],
-      { duration: OUT, easing: 'ease-in', fill: 'none' },
-    );
-    let cancelled = false;
-    out.finished
-      .then(() => {
-        if (cancelled) return;
-        setShown(value);
-        el.animate(
-          [
-            { transform: 'rotateX(80deg) translateY(35%)', opacity: 0 },
-            { transform: 'none', opacity: 1 },
-          ],
-          { duration: IN, easing: EASE, fill: 'none' },
-        );
-      })
-      .catch(() => setShown(value));
-    return () => {
-      cancelled = true;
-      out.cancel();
-    };
+    return runSwap(el, value, setShown);
   }, [value, shown]);
   const Tag = as;
   return (

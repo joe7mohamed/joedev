@@ -19,6 +19,12 @@ const SLUG: Record<string, string> = {
   'Supabase Realtime': 'supabase',
   Vitest: 'vitest',
   Playwright: 'playwright',
+  'Docker build checks': 'docker',
+  Jest: 'jest',
+  Zod: 'zod',
+  OpenAPI: 'openapiinitiative',
+  Linux: 'linux',
+  'JWT + RBAC': 'jsonwebtokens',
 };
 
 export function ToolChip({ name }: { name: string }) {

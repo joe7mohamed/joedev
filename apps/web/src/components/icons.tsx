@@ -112,7 +112,7 @@ export const icons = {
   // prototype app.js none: not in prototype app.js (arrow up-right, authored for the visit/CTA links)
   Arrow: make(
     <>
-      <path d="M5.5 14.5l9-9M7 5.5h7.500V13" />
+      <path d="M6 14L14 6M7.5 6H14v6.5" />
     </>,
   ),
 };
