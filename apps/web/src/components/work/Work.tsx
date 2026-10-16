@@ -1,7 +1,7 @@
 'use client';
 
 import type { HomeContent } from '@zakydev/shared';
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { pinnedRect, registerSlot } from '@/motion/gold';
 import { stepAt } from '@/motion/math';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
@@ -13,6 +13,15 @@ import './work.css';
 
 type WorkProps = { work: HomeContent['work']; projects: Project[] };
 type Step = { current: number; previous: number; flowing: boolean };
+
+const noop = (): (() => void) => () => undefined;
+/** False on the server and while hydrating, true after: client-only markup cannot cause a hydration mismatch. */
+const useHydrated = (): boolean =>
+  useSyncExternalStore(
+    noop,
+    () => true,
+    () => false,
+  );
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
@@ -75,6 +84,7 @@ export function Work({ work, projects }: WorkProps) {
   const root = useRef<HTMLDivElement>(null);
   const slot = useRef<HTMLDivElement>(null);
   const enhanced = useMedia(MOTION_OK);
+  const hydrated = useHydrated();
   const count = projects.length;
   const step = useWorkStep(count, root);
   useWorkSlot(slot);
@@ -102,6 +112,7 @@ export function Work({ work, projects }: WorkProps) {
                 current={i === at}
                 hidden={live && i !== at}
                 preload={i === 0}
+                stacked={hydrated && !live}
               />
             );
           })}

@@ -90,7 +90,7 @@ html[lang="ar"] [data-visit-text] small {
 /* On phones: a centred row under a hairline, the address underlined in gold, and a gold arrow circle. */
 @media (max-width: 860px) {
   [data-visit] {
-    justify-content: center;
+    justify-content: flex-start;
     gap: 14px;
     width: 100%;
     margin-top: 6px;
@@ -105,10 +105,6 @@ html[lang="ar"] [data-visit-text] small {
   }
   [data-visit]::before {
     display: none;
-  }
-  [data-visit-text] {
-    justify-items: center;
-    text-align: center;
   }
   [data-visit-text] small {
     color: var(--muted);

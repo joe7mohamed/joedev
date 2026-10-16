@@ -19,7 +19,9 @@ export function VisitLink({ href, label, style }: VisitLinkProps) {
     <a data-visit data-settle href={href} target="_blank" rel="noopener" style={style}>
       <span data-visit-text>
         <small>{label}</small>
-        <b dir="ltr">{addressOf(href)}</b>
+        <b dir="ltr" lang="en">
+          {addressOf(href)}
+        </b>
       </span>
       <span data-visit-arrow aria-hidden="true">
         <icons.Arrow />

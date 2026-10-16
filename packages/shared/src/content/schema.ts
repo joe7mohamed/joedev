@@ -9,7 +9,26 @@ export const u = (value: string): Text => ({ text: value, unconfirmed: true });
 export const plain = (value: Text): string => (typeof value === 'string' ? value : value.text);
 
 const word = z.object({ t: z.string().min(1), key: z.boolean().optional(), gold: z.boolean().optional() });
-const diagram = z.enum(['request-path', 'provider-fallback', 'server-sync']);
+const label = z.string().min(1);
+/** Each "how it works" drawing with exactly the words it places (prototype app.js SIGS), in drawing order. */
+const diagrams = {
+  'request-path': z.tuple([label, label, label]),
+  'provider-fallback': z.tuple([label, label, label]),
+  'server-sync': z.tuple([label]),
+} as const;
+
+const projectFields = {
+  id: z.enum(['nuammer', 'wazifi', 'talmeeha']),
+  name: z.string().min(1),
+  url: z.url(),
+  image: z.string().min(1),
+  imageAlt: z.string().min(1),
+  category: z.string().min(1),
+  description: z.string().min(1),
+  meta: z.tuple([z.string().min(1), text, z.string().min(1)]),
+  caption: z.string().min(1),
+  tools: z.array(z.string().min(1)).min(1),
+};
 
 export const homeContentSchema = z.object({
   nav: z.object({
@@ -37,21 +56,23 @@ export const homeContentSchema = z.object({
   work: z.object({ label: z.string().min(1), visit: z.string().min(1) }),
   projects: z
     .array(
-      z.object({
-        id: z.enum(['nuammer', 'wazifi', 'talmeeha']),
-        name: z.string().min(1),
-        url: z.url(),
-        image: z.string().min(1),
-        imageAlt: z.string().min(1),
-        category: z.string().min(1),
-        description: z.string().min(1),
-        meta: z.tuple([z.string().min(1), text, z.string().min(1)]),
-        diagram,
-        /** The words drawn inside the diagram (prototype app.js SIGS), in the order the drawing places them. */
-        diagramLabels: z.array(z.string().min(1)).min(1),
-        caption: z.string().min(1),
-        tools: z.array(z.string().min(1)).min(1),
-      }),
+      z.discriminatedUnion('diagram', [
+        z.object({
+          ...projectFields,
+          diagram: z.literal('request-path'),
+          diagramLabels: diagrams['request-path'],
+        }),
+        z.object({
+          ...projectFields,
+          diagram: z.literal('provider-fallback'),
+          diagramLabels: diagrams['provider-fallback'],
+        }),
+        z.object({
+          ...projectFields,
+          diagram: z.literal('server-sync'),
+          diagramLabels: diagrams['server-sync'],
+        }),
+      ]),
     )
     .length(3),
   process: z.object({

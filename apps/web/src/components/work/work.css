@@ -1,6 +1,7 @@
 /* Work (spec 5.4). Stacked by default: without script, with reduced motion, or when the scene is too tall to pin,
    every project is a complete article, one after another. The scene layout below applies only while the scene is
-   pinned in enhanced mode. The diagrams and the visit control are in work-parts.css. */
+   pinned in enhanced mode. The diagrams are in diagrams.css, the visit control in visit.css, and the contents of
+   the gold frame in frame.css. */
 
 [data-work] {
   --work-shadow: 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
@@ -122,6 +123,11 @@ html[lang="ar"] [data-category] {
 [data-tools] li {
   background: color-mix(in srgb, var(--bg) 70%, transparent);
 }
+/* tool names read left to right, but on the stacked Arabic page the row still starts on the page's start edge */
+html[dir="rtl"]:not(.enhanced) [data-tools],
+html[dir="rtl"] #work[data-unpinned] [data-tools] {
+  justify-content: flex-end;
+}
 [data-shot] img {
   display: block;
   width: 100%;
@@ -129,42 +135,6 @@ html[lang="ar"] [data-category] {
   height: auto;
   border: 1px solid var(--hair);
   border-radius: 14px;
-}
-
-/* The story-style bars: a 4 px track inside a 44 px target that takes only 22 px of the layout. */
-[data-bars] {
-  gap: 6px;
-  width: 100%;
-}
-[data-bars] button {
-  position: relative;
-  flex: 1;
-  height: 44px;
-  margin-block: -11px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
-  background: none;
-  cursor: pointer;
-}
-[data-bars] button::before,
-[data-bars] i {
-  content: "";
-  position: absolute;
-  inset: 20px 0 auto;
-  height: 4px;
-  border-radius: 4px;
-  background: var(--hair);
-}
-[data-bars] i {
-  background: var(--gold);
-  transform: scaleX(var(--f, 0));
-  transform-origin: 0 50%;
-}
-@media (hover: hover) {
-  [data-bars] button:hover::before {
-    background: var(--muted);
-  }
 }
 
 /* The pinned scene: only the current project shows; the frame is the gold element's slot. */
@@ -176,7 +146,14 @@ html.enhanced #work:not([data-unpinned]) [data-frame] {
   width: 100%;
   aspect-ratio: 16 / 10;
 }
-html.enhanced #work:not([data-unpinned]) [data-project-text]:not([data-current]),
+/* All projects share one grid cell, so the column always has the height of the tallest one and the engine's fit
+   check (pin or flow) sees it, whichever project is in view. The others are invisible, inert and aria-hidden. */
+html.enhanced #work:not([data-unpinned]) [data-project-text] {
+  grid-area: 1 / 1;
+}
+html.enhanced #work:not([data-unpinned]) [data-project-text]:not([data-current]) {
+  visibility: hidden;
+}
 html.enhanced #work:not([data-unpinned]) [data-shot] {
   display: none;
 }
@@ -213,6 +190,9 @@ html.enhanced #work:not([data-unpinned]) [data-shot] {
   html.enhanced #work:not([data-unpinned]) [data-count] {
     display: block;
   }
+  html.enhanced #work:not([data-unpinned]) [data-diagram] {
+    max-width: none;
+  }
   html.enhanced #work:not([data-unpinned]) [data-bars] {
     margin-bottom: 6px;
   }
@@ -225,13 +205,24 @@ html.enhanced #work:not([data-unpinned]) [data-shot] {
     font-size: clamp(44px, 13vw, 70px);
   }
   [data-summary] {
-    margin-inline: auto;
     font-size: 15px;
   }
   [data-meta] {
-    justify-content: center;
     gap: 6px 14px;
     font-size: 13px;
+  }
+  /* the pinned phone scene is one centred column; the stacked page keeps every line on the start edge */
+  html.enhanced #work:not([data-unpinned]) [data-summary],
+  html.enhanced #work:not([data-unpinned]) [data-diagram] {
+    margin-inline: auto;
+  }
+  html.enhanced #work:not([data-unpinned]) [data-meta],
+  html.enhanced #work:not([data-unpinned]) [data-visit] {
+    justify-content: center;
+  }
+  html.enhanced #work:not([data-unpinned]) [data-visit-text] {
+    justify-items: center;
+    text-align: center;
   }
   /* phone order: frame, bars, label, name, description, metadata, diagram panel, visit row */
   html.enhanced #work:not([data-unpinned]) [data-work] {

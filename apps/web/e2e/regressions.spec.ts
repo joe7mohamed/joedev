@@ -72,3 +72,44 @@ test('project text is fully opaque after rapid scrolling between projects', asyn
     .evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)));
   expect(Math.min(...opacities)).toBe(1);
 });
+
+// Spec 6.4: a pinned work scene must fit its tallest project, not only the one in view when the fit was measured.
+const workFits = async (page: Page, label: string): Promise<void> => {
+  for (let i = 0; i < 3; i++) {
+    await gotoScene(page, 'work', (i + 0.5) / 3);
+    const fit = await page.evaluate(() => {
+      const section = document.getElementById('work') as HTMLElement;
+      if (section.hasAttribute('data-unpinned')) return { unpinned: true, inside: true };
+      const sticky = section.querySelector('[data-sticky]') as HTMLElement;
+      const style = getComputedStyle(sticky);
+      const box = sticky.getBoundingClientRect();
+      const link = (
+        section.querySelector('[data-current] [data-visit]') as HTMLElement
+      ).getBoundingClientRect();
+      const top = box.top + Number.parseFloat(style.paddingTop);
+      const bottom = box.bottom - Number.parseFloat(style.paddingBottom);
+      return { unpinned: false, inside: link.top >= top - 1 && link.bottom <= bottom + 1 };
+    });
+    expect(fit.inside, `${label}, project ${i + 1}`).toBe(true);
+  }
+};
+
+test('the work scene is pinned only if every project fits, else it flows', async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 360 });
+  await page.goto('/ar');
+  await expect(page.locator('html')).toHaveClass(/enhanced/);
+  await page.addStyleTag({ content: 'html{font-size:200%}' });
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+  await page.waitForTimeout(400);
+  await workFits(page, 'large text');
+  for (const [path, width, height] of [
+    ['/en', 900, 500],
+    ['/ar', 1440, 740],
+    // the first project fits a phone this tall, the second (two-line Arabic description) does not
+    ['/ar', 412, 800],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto(path);
+    await workFits(page, `${path} ${width}x${height}`);
+  }
+});

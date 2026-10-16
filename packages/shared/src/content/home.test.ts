@@ -44,6 +44,11 @@ describe('home content', () => {
     }
     expect(home.en.projects[0]?.diagramLabels).toEqual(['NEXT.JS', 'NESTJS', 'MYSQL']);
   });
+  it('rejects diagram labels that do not fit their drawing', () => {
+    const broken = structuredClone(home.en) as unknown as { projects: { diagramLabels: string[] }[] };
+    (broken.projects[2] as { diagramLabels: string[] }).diagramLabels = ['SERVER', 'EXTRA'];
+    expect(() => homeContentSchema.parse(broken)).toThrow();
+  });
   it('rejects an empty string', () => {
     const broken = structuredClone(home.ar) as Record<string, unknown>;
     (broken.nav as Record<string, unknown>).work = '';

@@ -23,19 +23,34 @@ export const shotOpacity = (hero: SceneFrame | undefined, work: SceneFrame, scro
   return 1 - smooth(work.out / 0.5);
 };
 
-/** Writes `--shot` on the gold content and drifts the current screenshot from its top to its bottom. */
-function usePaint(target: HTMLElement | null, shots: RefObject<HTMLDivElement | null>): void {
+/** Work is near once the hero's handoff has begun: from then on the frame needs every screenshot. */
+const workIsNear = (hero: SceneFrame | undefined, work: SceneFrame, scrollY: number): boolean =>
+  (hero?.out ?? 1) > 0 || scrollY + 1 >= work.top;
+
+/**
+ * Writes `--shot` on the gold content and drifts the current screenshot from its top to its bottom. Returns whether
+ * work is near; it stays true once reached, so the later screenshots load once and never while the hero plays.
+ */
+function usePaint(
+  target: HTMLElement | null,
+  shots: RefObject<HTMLDivElement | null>,
+  count: number,
+): boolean {
+  const [near, setNear] = useState(false);
   useEffect(() => {
     if (!target) return;
     return engine.subscribe((frames, scroll) => {
       const work = frames.get('work');
       if (!work) return;
-      target.style.setProperty('--shot', shotOpacity(frames.get('hero'), work, scroll.y).toFixed(3));
-      const { index, local } = stepAt(work.body, shots.current?.children.length || 1);
-      const image = shots.current?.children[index] as HTMLElement | undefined;
+      const hero = frames.get('hero');
+      if (workIsNear(hero, work, scroll.y)) setNear(true);
+      target.style.setProperty('--shot', shotOpacity(hero, work, scroll.y).toFixed(3));
+      const { index, local } = stepAt(work.body, count);
+      const image = shots.current?.querySelector<HTMLElement>(`[data-index="${index}"]`);
       if (image) image.style.objectPosition = `50% ${(local * 100).toFixed(1)}%`;
     });
-  }, [target, shots]);
+  }, [target, shots, count]);
+  return near;
 }
 
 /** Desktop with a mouse: the frame tilts toward the pointer (home.css reads --px and --py on the gold layer). */
@@ -62,14 +77,15 @@ function usePointerTilt(target: HTMLElement | null): void {
 /**
  * The project frame inside the gold element (spec 5.4): a browser bar with the address, and the three screenshots
  * stacked. The current one is uncovered, the previous one stays beneath it, and a new one wipes in from the bottom
- * (work.css). It renders into `#gold-content`, which is aria-hidden and never takes pointer events, so the frame
+ * (frame.css). The first screenshot is the one the hero zoom already loaded; the others are added only once work
+ * is near, so they never compete with the hero. It renders into `#gold-content`, which is aria-hidden and never takes pointer events, so the frame
  * holds nothing interactive and its images need no alt text; the articles carry the described screenshots.
  */
 export function ProjectFrame({ projects, current, previous }: FrameProps) {
   const [target, setTarget] = useState<HTMLElement | null>(null);
   const shots = useRef<HTMLDivElement>(null);
   useEffect(() => setTarget(document.getElementById('gold-content')), []);
-  usePaint(target, shots);
+  const near = usePaint(target, shots, projects.length);
   usePointerTilt(target);
   const shown = projects[current];
   if (!target || !shown) return null;
@@ -79,20 +95,25 @@ export function ProjectFrame({ projects, current, previous }: FrameProps) {
         <i />
         <i />
         <i />
-        <span dir="ltr">{addressOf(shown.url)}</span>
+        <span dir="ltr" lang="en">
+          {addressOf(shown.url)}
+        </span>
       </div>
       <div ref={shots} data-shots>
-        {projects.map((p, i) => (
-          <Image
-            key={p.id}
-            src={p.image}
-            alt=""
-            {...SHOT}
-            loading={i === 0 ? 'eager' : 'lazy'}
-            data-on={i === current || undefined}
-            data-was={(i === previous && i !== current) || undefined}
-          />
-        ))}
+        {projects.map((p, i) =>
+          i === 0 || near ? (
+            <Image
+              key={p.id}
+              src={p.image}
+              alt=""
+              {...SHOT}
+              loading="eager"
+              data-index={i}
+              data-on={i === current || undefined}
+              data-was={(i === previous && i !== current) || undefined}
+            />
+          ) : null,
+        )}
       </div>
     </>,
     target,

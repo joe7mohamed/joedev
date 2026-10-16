@@ -19,6 +19,8 @@ type ProjectTextProps = {
   hidden: boolean;
   /** The first screenshot is preloaded: the hero zoom reveals it (spec 6.2). */
   preload: boolean;
+  /** Hydrated and the page is stacked (reduced motion, or a scene too tall to pin): the screenshot shows here. */
+  stacked: boolean;
 };
 
 const META_ICONS = [icons.Calendar, icons.Tag, icons.Box];
@@ -27,12 +29,38 @@ const META_ICONS = [icons.Calendar, icons.Tag, icons.Box];
 const step = (i: number): CSSProperties => ({ '--i': i }) as CSSProperties;
 
 /**
+ * The article's own screenshot, for the stacked page; the pinned scene shows it in the gold frame instead. The first
+ * one is always rendered (it is preloaded for the hero zoom anyway). The others would otherwise load with the page,
+ * because the stacked layout before hydration puts them within the browser's lazy-load distance: they render inside
+ * `<noscript>` for the page without script, and on the client only once the page is known to be stacked.
+ */
+function StackedShot({
+  project,
+  preload,
+  stacked,
+}: Pick<ProjectTextProps, 'project' | 'preload' | 'stacked'>) {
+  const image = <Image src={project.image} alt={project.imageAlt} {...SHOT} preload={preload} />;
+  return (
+    <figure data-shot>
+      {preload ? (
+        image
+      ) : (
+        <>
+          <noscript>{image}</noscript>
+          {stacked ? image : null}
+        </>
+      )}
+    </figure>
+  );
+}
+
+/**
  * One project as a complete article. In the stacked layout every project shows this in full. In enhanced mode only
  * the current one shows: its name flips through `Swap`, and everything else is keyed by the project, so a new
  * project remounts it and replays the settle-in animation, which only ever fills backwards and so always ends on
  * the visible resting style.
  */
-export function ProjectText({ project, visit, current, hidden, preload }: ProjectTextProps) {
+export function ProjectText({ project, visit, current, hidden, preload, stacked }: ProjectTextProps) {
   return (
     <article
       data-project-text
@@ -40,7 +68,7 @@ export function ProjectText({ project, visit, current, hidden, preload }: Projec
       inert={hidden || undefined}
       aria-hidden={hidden || undefined}
     >
-      <h3 data-name>
+      <h3 data-name lang="en">
         <Swap value={project.name} />
       </h3>
       <Fragment key={project.id}>
@@ -62,7 +90,7 @@ export function ProjectText({ project, visit, current, hidden, preload }: Projec
           })}
         </ul>
         <figure data-diagram data-settle style={step(5)}>
-          <Diagram kind={project.diagram} labels={project.diagramLabels} />
+          <Diagram project={project} />
           <figcaption>{project.caption}</figcaption>
         </figure>
         <ul data-tools data-settle dir="ltr" style={step(6)}>
@@ -71,9 +99,7 @@ export function ProjectText({ project, visit, current, hidden, preload }: Projec
           ))}
         </ul>
         <VisitLink href={project.url} label={visit} style={step(7)} />
-        <figure data-shot>
-          <Image src={project.image} alt={project.imageAlt} {...SHOT} preload={preload} />
-        </figure>
+        <StackedShot project={project} preload={preload} stacked={stacked} />
       </Fragment>
     </article>
   );

@@ -2,8 +2,9 @@ import type { HomeContent } from '@zakydev/shared';
 import type { CSSProperties, ReactNode } from 'react';
 import './diagrams.css';
 
-type Kind = HomeContent['projects'][number]['diagram'];
-type Labels = readonly string[];
+type Project = HomeContent['projects'][number];
+/** The labels each drawing takes, typed per diagram by the content schema. */
+type LabelsOf<K extends Project['diagram']> = Extract<Project, { diagram: K }>['diagramLabels'];
 
 /** Drawings are never mirrored, also on the Arabic page (spec 6.2). */
 const LTR: CSSProperties = { direction: 'ltr' };
@@ -11,14 +12,14 @@ const LTR: CSSProperties = { direction: 'ltr' };
 /** One looping "how it works" drawing (prototype app.js SIGS). The loops run only under html.enhanced (diagrams.css). */
 function Frame({ children }: { children: ReactNode }) {
   return (
-    <svg viewBox="0 0 260 64" style={LTR} aria-hidden="true" focusable="false" data-sig>
+    <svg viewBox="0 0 260 64" style={LTR} lang="en" aria-hidden="true" focusable="false" data-sig>
       {children}
     </svg>
   );
 }
 
 /** Nuammer: a request travels Next.js → NestJS → MySQL and back. */
-function RequestPath({ labels }: { labels: Labels }) {
+function RequestPath({ labels }: { labels: LabelsOf<'request-path'> }) {
   const x = [32, 130, 228];
   return (
     <Frame>
@@ -37,7 +38,7 @@ function RequestPath({ labels }: { labels: Labels }) {
 }
 
 /** Wazifi: the request tries provider A, which fails, and provider B answers. */
-function ProviderFallback({ labels }: { labels: Labels }) {
+function ProviderFallback({ labels }: { labels: LabelsOf<'provider-fallback'> }) {
   return (
     <Frame>
       <path data-sg="line" d="M32 32C80 32 90 14 152 14M32 32C80 32 90 50 152 50" />
@@ -60,7 +61,7 @@ function ProviderFallback({ labels }: { labels: Labels }) {
 }
 
 /** Talmeeha: the server pulses and the four players light up together. */
-function ServerSync({ labels }: { labels: Labels }) {
+function ServerSync({ labels }: { labels: LabelsOf<'server-sync'> }) {
   const players = [
     [40, 12],
     [40, 52],
@@ -82,13 +83,14 @@ function ServerSync({ labels }: { labels: Labels }) {
   );
 }
 
-const DRAWINGS: Record<Kind, (props: { labels: Labels }) => ReactNode> = {
-  'request-path': RequestPath,
-  'provider-fallback': ProviderFallback,
-  'server-sync': ServerSync,
-};
-
-export function Diagram({ kind, labels }: { kind: Kind; labels: Labels }) {
-  const Drawing = DRAWINGS[kind];
-  return <Drawing labels={labels} />;
+/** The project's "how it works" drawing, with exactly the labels its diagram places. */
+export function Diagram({ project }: { project: Project }) {
+  switch (project.diagram) {
+    case 'request-path':
+      return <RequestPath labels={project.diagramLabels} />;
+    case 'provider-fallback':
+      return <ProviderFallback labels={project.diagramLabels} />;
+    case 'server-sync':
+      return <ServerSync labels={project.diagramLabels} />;
+  }
 }

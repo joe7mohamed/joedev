@@ -129,17 +129,24 @@ html.enhanced [data-gold][data-thin="true"] > [data-gold-face] {
     --turn-x: 0deg;
   }
 }
+/* animated on the face itself and read there with var(), so they need not inherit */
 @property --bob {
   syntax: "<number>";
-  inherits: true;
+  inherits: false;
   initial-value: 0;
 }
 @property --sway {
   syntax: "<number>";
-  inherits: true;
+  inherits: false;
   initial-value: 0;
 }
 @media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-gold][data-tilt] > [data-gold-face] {
+    animation: gold-bob 3.5s ease-in-out infinite alternate;
+  }
+}
+/* only phones sway; desktop follows the pointer */
+@media (prefers-reduced-motion: no-preference) and (max-width: 860px) {
   html.enhanced [data-gold][data-tilt] > [data-gold-face] {
     animation:
       gold-bob 3.5s ease-in-out infinite alternate,

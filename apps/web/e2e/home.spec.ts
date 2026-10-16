@@ -734,6 +734,36 @@ test('the first screenshot is downloaded once for the hero zoom and the work fra
       shot.evaluate((img) => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth),
     )
     .toBeGreaterThan(0);
-  await page.waitForTimeout(500);
+  await page.waitForLoadState('networkidle');
   expect(requests, requests.join('\n')).toHaveLength(1);
+});
+
+test('the other screenshots wait until the hero hands over to work', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (/wazifi|talmeeha/.test(request.url())) requests.push(request.url());
+  });
+  await page.goto('/en');
+  await gotoScene(page, 'hero', 0.2);
+  await page.waitForLoadState('networkidle');
+  expect(requests, requests.join('\n')).toHaveLength(0);
+  await gotoScene(page, 'work', 0.5);
+  await expect.poll(() => requests.length).toBeGreaterThan(0);
+});
+
+// Spec 3.3: Arabic is never letter-spaced, while Latin runs on the Arabic page (lang="en") keep their tracking.
+test('Latin project names keep their tracking on the Arabic page, Arabic text has none', async ({ page }) => {
+  const spacing = async (path: string) => {
+    await page.goto(path);
+    await gotoScene(page, 'work', 0.17);
+    return page.evaluate(() => ({
+      name: getComputedStyle(document.querySelector('#work [data-current] h3') as HTMLElement).letterSpacing,
+      headline: getComputedStyle(document.querySelector('#hero h1') as HTMLElement).letterSpacing,
+    }));
+  };
+  const en = await spacing('/en');
+  const ar = await spacing('/ar');
+  expect(en.name).not.toBe('normal');
+  expect(ar.name).toBe(en.name);
+  expect(['normal', '0px']).toContain(ar.headline);
 });

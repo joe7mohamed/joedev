@@ -54,7 +54,9 @@ html[lang="ar"] {
   --lh-display: 1.3;
   --lh-body: 1.7;
 }
-html[lang="ar"] * {
+/* Latin runs inside the Arabic page (project names, addresses, tool names, drawing labels) carry lang="en" and keep
+   their designed tracking. */
+html[lang="ar"] :not(:lang(en)) {
   /* biome-ignore lint/complexity/noImportantStyles: spec 3.3 — Arabic is never letter-spaced; must beat utility classes */
   letter-spacing: 0 !important;
 }

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { engine } from '@/motion/engine';
+import './bars.css';
 
 type ProjectBarsProps = { names: string[]; current: number };
 
