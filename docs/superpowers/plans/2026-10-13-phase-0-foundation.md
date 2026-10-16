@@ -868,7 +868,7 @@ const security = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
   // no `preload`: joining the browser preload list is the owner's later, deliberate choice
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000' },
 ];
 
 const config: NextConfig = {
@@ -1253,6 +1253,8 @@ Sources: Cloudways support articles "How to launch an application on Cloudways V
 - [ ] **Step 1: Prepare.**
   - Confirm CI is green on `rebuild/zakydev`.
   - In Cloudflare DNS, take a screenshot or export of the current records, so nothing about email can be lost.
+  - Before connecting the domain, check every existing subdomain in the DNS export (for example a Workspace custom mail URL) for valid HTTPS, and record the result in `docs/DEPLOY.md`. HSTS ships without `includeSubDomains` until that audit passes and the owner agrees.
+  - Check the Next.js and React release notes for any security fix newer than the installed versions (see `docs/VERSIONS.md`). Bump if one exists and has cleared `min-release-age`.
   - Start `docs/DEPLOY.md` with what follows: the app settings, the DNS records added, and the records that must never be touched.
 
 - [ ] **Step 2: Create the app.**
@@ -1273,8 +1275,9 @@ Sources: Cloudways support articles "How to launch an application on Cloudways V
   - `NEXT_PUBLIC_*` values are baked in at build time, so set them before the first deploy and redeploy after any change.
 
 - [ ] **Step 4: First deploy on the temporary `*.cloudwaysnodeapps.com` address.**
-  - Read the build log.
-  - **If the build fails because TypeScript or Tailwind is missing**, Velocity installed without devDependencies. Change the build command to `npm ci --include=dev && npm run build` and record that.
+  - Before anything else, read the Node and npm versions printed in the Velocity build log, or run `node -v && npm -v` as a temporary build-command prefix. If npm is older than 11.19.0, root `devEngines` makes npm refuse to run. Then either set `"onFail": "warn"` in `devEngines.packageManager` and record it, or prefix the build command with `npm install -g npm@11`. Ask the owner which.
+  - Read the rest of the build log.
+  - **If Velocity installs without devDependencies**, the first failure is `turbo: not found` (or `next: not found`), not missing TypeScript or Tailwind. Change the build command to `npm ci --include=dev && npm run build` and record that.
   - Watch memory in the Monitoring tab during the build. Starter has 2 GB shared by the build and the running app; record the peak.
   - Check `/en`, `/ar`, `/`, and `/fr` (must be 404) on the temporary address.
 
@@ -1300,9 +1303,14 @@ curl -s  https://zakydev.com/ar | grep -o '<html[^>]*>'                         
 curl -sI -H 'Accept-Language: ar-BH' https://zakydev.com/ | grep -i '^location'     # /ar
 curl -sI https://zakydev.com/fr | head -n 1                                         # 404
 curl -sI https://www.zakydev.com/en | grep -i '^location'                           # https://zakydev.com/en
-curl -sI https://zakydev.com/en | grep -i 'strict-transport-security'               # no "preload"
+curl -sI https://zakydev.com/en | grep -i 'strict-transport-security'               # max-age=31536000, no includeSubDomains, no preload
+curl -sI -H 'Accept-Language: ar-BH' https://zakydev.com/ | grep -i '^location'     # /ar
+curl -sI -H 'Accept-Language: en-US' https://zakydev.com/ | grep -i '^location'     # /en (each request gets its own location)
+curl -sI https://zakydev.com/en | grep -i 'cf-cache-status'                         # run twice: must not be HIT for the HTML
 dig +short MX zakydev.com                                                           # still the Google Workspace hosts
 ```
+
+Request `/en` twice and confirm `cf-cache-status` is not `HIT` for the HTML. If it is, record it and purge.
 
 Then ask the owner to send a test email to `youssef@zakydev.com` from another account and confirm that it arrives.
 
