@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { body, bodyAr, display, displayAr, mono } from '@/lib/fonts';
 import { themeScript } from '@/lib/theme-script';
 import '../globals.css';
+import './home.css';
 
 export const dynamicParams = false;
 export const generateStaticParams = () => LOCALES.map((locale) => ({ locale }));
