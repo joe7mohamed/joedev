@@ -26,6 +26,8 @@ test('root redirects by preferred language', async ({ browser }) => {
   const frPage = await fr.newPage();
   await frPage.goto('/');
   await expect(frPage).toHaveURL(/\/en$/);
+  await ar.close();
+  await fr.close();
 });
 
 test('unknown locale is a 404 with our own page, not the built-in one', async ({ page }) => {
@@ -44,6 +46,45 @@ test('theme follows the system on first paint and the toggle after', async ({ br
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await light.close();
+});
+
+test('a light-system visitor whose storage throws still gets the light theme', async ({ browser }) => {
+  const light = await browser.newContext({ colorScheme: 'light' });
+  const page = await light.newPage();
+  await page.addInitScript(() => {
+    Storage.prototype.getItem = () => {
+      throw new Error('storage blocked');
+    };
+  });
+  await page.goto('/en');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await light.close();
+});
+
+test('canonical and hreflang links are absolute', async ({ page }) => {
+  await page.goto('/en');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /^https?:\/\/.*\/en$/);
+  await expect(page.locator('link[rel="alternate"][hreflang="ar"]')).toHaveAttribute('href', /^https?:\/\//);
+});
+
+test('the language redirect is never shared-cached and keeps the query string', async ({ request }) => {
+  const ar = await request.get('/', { headers: { 'accept-language': 'ar-BH' }, maxRedirects: 0 });
+  expect(ar.status()).toBe(307);
+  expect(ar.headers().location).toMatch(/\/ar$/);
+  expect(ar.headers().vary).toContain('Accept-Language');
+  expect(ar.headers()['cache-control']).toContain('no-store');
+  const en = await request.get('/?utm=1', { headers: { 'accept-language': 'en-US' }, maxRedirects: 0 });
+  expect(en.headers().location).toMatch(/\/en\?utm=1$/);
+});
+
+test('security headers are set, and HSTS has no includeSubDomains or preload', async ({ request }) => {
+  const h = (await request.get('/en')).headers();
+  expect(h['x-content-type-options']).toBe('nosniff');
+  expect(h['referrer-policy']).toBe('strict-origin-when-cross-origin');
+  expect(h['x-frame-options']).toBe('DENY');
+  expect(h['permissions-policy']).toContain('camera=()');
+  expect(h['strict-transport-security']).toBe('max-age=31536000');
 });
 
 test('www redirects permanently to the bare domain', async ({ request }) => {

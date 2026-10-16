@@ -18,6 +18,7 @@ export async function generateMetadata({
   if (!isLocale(locale)) return {};
   const { seo } = getHome(locale);
   return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://zakydev.com'),
     title: seo.title,
     description: seo.description,
     alternates: { canonical: `/${locale}`, languages: { en: '/en', ar: '/ar', 'x-default': '/en' } },

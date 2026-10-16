@@ -45,3 +45,9 @@ No dependency reported an unreviewed install script (`npm install-scripts ls`), 
 | @zakydev/shared, @zakydev/config | `*` | workspace packages |
 
 No dependency reported an unreviewed install script.
+
+## Fix wave: @types/node on the Node 24 line
+
+| Package | Installed | Where |
+| --- | --- | --- |
+| @types/node | 24.19.2 | devDependency of `apps/web` and `packages/shared`, replacing 26.6.5 to match the Node 24 runtime (npm resolved 24.19.2 under min-release-age) |
