@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "**",
+      "!docs/prototype",
+      "!**/dist",
+      "!**/.next",
+      "!**/test-results",
+      "!**/playwright-report"
+    ]
+  },
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
+  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always" } },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "linter": { "rules": { "preset": "recommended", "correctness": { "noUndeclaredDependencies": "error" } } }
+}
