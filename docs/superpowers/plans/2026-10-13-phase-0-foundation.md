@@ -722,7 +722,6 @@ Adjust to the installed version.
 
 - [ ] **Step 1: Create the app and copy assets**
 
-```bash
 All from the repo root:
 ```bash
 npm init -y -w apps/web
