@@ -34,12 +34,13 @@ Performance ≥ 90 · route JavaScript ≤ 150 kB gzip before the background sha
 ## 2. Scope
 
 **Phase 0 — foundation.** Monorepo, tooling, CI, tokens, fonts, i18n routing, content
-model, API skeleton with a health check, deploy pipeline proven end to end.
+model, deploy pipeline proven end to end. No API service (owner decision 2026-10-16:
+nothing in Phase 0 or 1 calls one).
 
 **Phase 1 — home page.** Everything in sections 4 to 9, in both locales and both themes,
 with the full reduced-motion and no-script experience.
 
-**Later phases (not planned here):** contact form with API and database, case-study pages
+**Later phases (not planned here):** API service (section 6.6) with the contact form and database, case-study pages
 for the three projects, About page, playful 404, admin, gaming data from the Riot API,
 content/blog.
 
@@ -316,23 +317,24 @@ all three projects and all five process steps shown in full.
 
 ### 6.1 Repository
 
-pnpm + Turborepo monorepo in this repository. The old Vite app (`src/`, `api/`,
+npm workspaces + Turborepo monorepo in this repository (npm bundled with Node 24, the same npm the host runs). The old Vite app (`src/`, `api/`,
 `index.html`, `vite.config.ts`, `tailwind.config.ts`, `eslint.config.js`, `vercel.json`,
 `emailjs-template.html`, `components.json`, `tsconfig*.json`, `package-lock.json`,
 `public/`, `README.md`, `DEPLOYMENT.md`, `PRODUCTION_SETUP.md`) is removed in Phase 0.
 
 ```
 apps/web        Next.js (App Router, React Server Components), TypeScript, Tailwind 4
-apps/api        NestJS on Fastify (Phase 0: health only)
 packages/shared zod schemas, locale constants, typed content
 packages/config tsconfig and Biome bases
 docs/           specs, plans, prototype
 ```
 
-Versions: use the current stable releases at install time and record them in the plan's
-first task (the archived spec targeted Next.js 16.3, React 19.3, NestJS 12, Tailwind 4,
-next-intl 4, Drizzle, Biome 2, Vitest, Playwright; confirm each against its docs before
-installing). Node version pinned in `.nvmrc`.
+`apps/api` (NestJS) joins later (6.6). Versions: use the current stable releases at
+install time and record them in `docs/VERSIONS.md`. Checked on 2026-10-16: Node 24 LTS,
+npm 11 workspaces, Turborepo 2, TypeScript 7, Next.js 16.4, React 19.3, Tailwind 4.3, zod 4, Biome 2.5,
+Vitest 5, Playwright 1.64; the Phase 0 plan's "Stack notes" list what changed from older
+versions. Locale routing is our own (`[locale]` segment + `proxy.ts`), no i18n library.
+Node version pinned in `.nvmrc`.
 
 ### 6.2 Web application
 
@@ -346,15 +348,15 @@ installing). Node version pinned in `.nvmrc`.
   added later behind a dynamic import if a specific effect needs it, but it is not in the
   Phase 1 budget. No three.js. The shader is ~60 lines of raw WebGL.
 - Styling: Tailwind 4 with the tokens of 3.2 as CSS variables via `@theme`; logical
-  properties everywhere (`ms-*`, `pe-*`, `start`, `end`); no physical left/right except
+  properties everywhere (`ms-*`, `pe-*`, `inset-s-*`, `inset-e-*`); no physical left/right except
   inside drawings that are deliberately not mirrored (all SVG scenes are forced LTR).
 - Fonts through `next/font` (self-hosted, `display: swap`, subsets; Arabic faces only in
   the `ar` layout). No third-party font or script requests at runtime.
 - Icons: tool logos are Simple Icons SVGs (CC0) plus the devicon Playwright mark, stored in
   the repo and rendered as CSS masks so they take the theme colour. Interface icons are
   inline SVG components.
-- Images: the three screenshots via `next/image` (AVIF/WebP, explicit sizes, the first one
-  `priority` because it is revealed by the hero zoom).
+- Images: the three screenshots via `next/image` (AVIF/WebP via `images.formats`, explicit
+  sizes, the first one `preload` because it is revealed by the hero zoom).
 
 ### 6.3 Content model (`packages/shared`)
 
@@ -413,16 +415,18 @@ scroll length. **The real build must not.** Required structure:
 - Interrupted transitions must end in the visible state (the prototype bug where text
   stayed transparent after fast scrolling must not be possible: use explicit end states).
 
-### 6.6 API (`apps/api`, Phase 0)
+### 6.6 API (`apps/api`, deferred to the contact-form phase)
 
-NestJS on Fastify with `GET /v1/health` (process and, once added, database), env validated
-by zod at boot, structured logging with redaction, Helmet. No public write endpoints yet.
-Postgres and Drizzle are introduced with the contact form in a later phase.
+Not built in Phase 0 or Phase 1. When the contact form arrives: NestJS on Fastify with
+`GET /v1/health` (process and database), env validated by zod at boot, structured logging
+with redaction, Helmet, rate limiting on every write endpoint. Postgres and Drizzle arrive
+with it. Revisit then whether a Next.js route handler is enough for the form alone.
 
 ### 6.7 SEO and sharing
 
 Per-locale `title` and `description`, canonical, `hreflang` for `en`, `ar`, `x-default`;
-Open Graph and Twitter images generated at build (mark + headline, per locale);
+Open Graph and Twitter images generated at build (mark + headline, per locale; rendered
+with a satori version that shapes Arabic, because the one bundled in `next/og` does not);
 `Person` JSON-LD (name, alternateName ZakyDev, jobTitle, address Bahrain, sameAs GitHub and
 LinkedIn, email); `sitemap.xml`, `robots.txt`, web manifest, favicon and app icons from
 `brand/`.
@@ -434,14 +438,17 @@ LinkedIn, email); `sitemap.xml`, `robots.txt`, web manifest, favicon and app ico
   owner must rotate or delete that database user; removing the file does not undo the leak.
 - Response headers from Next: a Content-Security-Policy that restricts everything to the
   site's own origin. Pages are statically generated, so per-request script nonces are not
-  available: use a hash-based `script-src` if the installed Next.js supports it for static
-  pages, otherwise allow inline scripts and document why (no user content, no third-party
-  scripts). Also HSTS,
+  available, and Next 16 static pages carry inline RSC scripts that no hash can cover:
+  allow inline scripts and document why (no user content, no third-party scripts). Also HSTS,
   `Referrer-Policy: strict-origin-when-cross-origin`, minimal `Permissions-Policy`,
   `X-Content-Type-Options: nosniff`.
 - External links use `rel="noopener"`. No third-party scripts, analytics or fonts in Phase 1.
-- Hosting target from earlier decisions: Cloudways Velocity (Next standalone for web, Node
-  for API). The deploy pipeline is proven in Phase 0 with a placeholder page.
+- Hosting (owner decision 2026-10-16): Cloudways Velocity, Starter plan, one Node app running
+  `next start` from the repo root (a second app for the API comes later). The domain stays on
+  Cloudflare DNS with the Velocity records set to DNS only; Google Workspace mail
+  (`youssef@zakydev.com`) records on the domain are never touched. HSTS is sent without
+  `preload`; `www` redirects permanently to the bare domain. The deploy pipeline is proven in
+  Phase 0 with a placeholder page.
 
 ## 7. Accessibility
 
@@ -481,7 +488,9 @@ units so mobile browser chrome cannot cause jumps. Test widths: 360, 390, 430, 7
 - **Accessibility:** axe on each locale and theme, zero violations.
 - **Visual snapshots** at fixed scroll positions (S = 0, 1.3, 1.9, 3.5, 4.4, 5.2, 6.2) with
   animations frozen, per locale and theme.
-- **Budgets:** Lighthouse CI with the gates of section 1; bundle-size check in CI.
+- **Budgets:** Lighthouse CI with the gates of section 1; bundle-size check in CI (a script
+  that gzips the scripts each locale's HTML loads; `next build` no longer reports sizes).
+- Visual snapshots are made and compared only inside the pinned Playwright Docker image.
 
 ## 10. Do not port from the prototype
 
@@ -496,9 +505,9 @@ units so mobile browser chrome cannot cause jumps. Test widths: 360, 390, 430, 7
 
 ## 11. Phases and exit criteria
 
-- **Phase 0 exit:** `pnpm lint typecheck test build` green in CI; `/en` and `/ar`
+- **Phase 0 exit:** `npm run lint`, `typecheck`, `test`, `build` green in CI; `/en` and `/ar`
   placeholder pages deployed with correct `lang`/`dir`, fonts, tokens and both themes;
-  API health reachable; Lighthouse gates met on the placeholder.
+  Lighthouse gates met on the placeholder.
 - **Phase 1 exit:** every item of sections 5 to 9 implemented and tested; owner sign-off on
   desktop and on a real phone in both languages; all section 12 items resolved.
 

@@ -2,13 +2,48 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the old Vite app with a pnpm/Turborepo monorepo (Next.js web, NestJS API, shared package) that serves a tested bilingual placeholder page with the ZakyDev tokens, fonts, themes and typed content.
+**Goal:** Replace the old Vite app with an npm-workspaces/Turborepo monorepo (Next.js web app and a shared package) that serves a tested bilingual placeholder page with the ZakyDev tokens, fonts, themes and typed content.
 
-**Architecture:** `apps/web` is a statically generated Next.js App Router site with `/en` and `/ar`. `packages/shared` holds locale constants and the zod-validated home content that both apps import. `apps/api` is a NestJS/Fastify service with a health endpoint only.
+**Architecture:** `apps/web` is a statically generated Next.js App Router site with `/en` and `/ar`, deployed to Cloudways Velocity (Starter) as one Node app running `next start`. `packages/shared` holds locale constants and the zod-validated home content. There is no API service in Phase 0 or Phase 1 (owner decision 2026-10-16); it is added with the contact form in a later phase, and `apps/` keeps room for it.
 
-**Tech Stack:** pnpm, Turborepo, TypeScript, Next.js (App Router), Tailwind CSS 4, next-intl, NestJS + Fastify, zod, Biome, Vitest, Playwright, GitHub Actions.
+**Tech Stack:** Node 24 LTS with its bundled npm 11 (workspaces), Turborepo 2, TypeScript 7, Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS 4, zod 4, Biome 2, Vitest 5, Playwright, GitHub Actions. Locale routing is our own (`[locale]` segment + `proxy.ts`); no i18n library.
 
 **Spec:** `docs/superpowers/specs/2026-10-13-zakydev-home-design.md` (read sections 3, 4, 6, 7 before starting). Visual reference: `docs/prototype/home-v23/`.
+
+## Stack notes (checked against current docs on 2026-10-16)
+
+Versions at that date: next 16.4.2, react 19.3.1, typescript 7.0.2, tailwindcss 4.3.3, @biomejs/biome 2.5.15, vitest 5.0.5, @playwright/test 1.64.1, turbo 2.11.8, zod 4.6.7; Node 24 bundles npm 11.19. Still check each before installing and record what was installed. Because of `min-release-age=3` (below), npm resolves anything published in the last three days to its previous version. That is intended.
+
+- **npm 11** (bundled with Node 24, the same npm Cloudways Velocity runs). Owner decision 2026-10-16: npm, not pnpm. Do not install npm 12 globally: it is `latest`, but the host runs npm 11.
+  - Workspaces are declared in the root `package.json`. An internal package is referenced as `"@zakydev/shared": "*"`, because `workspace:*` is pnpm-only and npm rejects it.
+  - Keep the range `*`. A range the local package cannot satisfy makes npm fetch a public package of that name instead, and the `@zakydev` scope is unclaimed on npmjs.org.
+  - Install with `npm install <pkg> -w <workspace>` and run with `npm run <script> -w <workspace>` or `npm exec -w apps/web -- <bin>`. Always run from the repo root; there is one `package-lock.json`.
+  - The root `.npmrc` (Task 1) holds the supply-chain defaults: exact versions, a three-day minimum release age, no git or remote tarball dependencies, and no unreviewed install scripts.
+    - None of our tools need an install script (checked: next, sharp, vitest, biome, playwright, tailwind, typescript, turbo).
+    - If npm reports one, run `npm install-scripts ls` and approve it in the root `allowScripts` only if it is truly needed.
+  - Turborepo needs the root `devEngines.packageManager` field.
+  - Biome's `noUndeclaredDependencies` catches imports a workspace did not declare. npm hoists, so a missing declaration would otherwise go unnoticed.
+    - It does not read JSON, so `@zakydev/config` (used only by `tsconfig.json` `extends`) is declared by hand.
+    - If it wrongly flags the `@/…` path alias, report it rather than turning the rule off.
+- **TypeScript 7** is the native compiler.
+  - It has no JS API and no editor plugins, so the `next` editor plugin is inactive. `next build` uses the `tsc` command line and supports TS 7.
+  - Defaults changed: `types` is `[]`, so every package that uses Node globals sets `"types": ["node"]`. `strict` is on, and `baseUrl` is removed.
+  - Before `tsc --noEmit`, the web app runs `next typegen` so route types and `next-env.d.ts` exist on a clean checkout.
+- **Next.js 16.**
+  - The interception file is `src/proxy.ts`, exporting `proxy`. It runs on Node.js and must sit beside `src/app`.
+  - Because the root layout lives in `app/[locale]/`, an unknown URL needs `app/global-not-found.tsx` with `experimental.globalNotFound: true` (documented for exactly this case; still marked experimental).
+  - `next build` no longer prints First Load JS sizes. Phase 1 measures them with a script.
+  - No `output: 'standalone'`. Cloudways Velocity runs the app with `next start` behind NGINX + PM2 and gives it a `PORT`. `next start` reads `PORT`, so no port is hard-coded. Next finds the monorepo root from `package-lock.json`, with no extra config.
+  - `next/image` serves only WebP unless `images.formats` lists AVIF. Use `preload`, not the deprecated `priority`.
+  - Amiri and IBM Plex Sans Arabic are not variable fonts, so `weight` is required.
+- **Biome 2.**
+  - Use `files.includes` with `!` exclusions; `files.ignore` no longer exists. Enable VCS ignore-file support.
+  - Set `css.parser.tailwindDirectives: true`, or `@theme` fails to parse.
+- **Tailwind 4.3.** `start-*`/`end-*` are deprecated; use `inset-s-*`/`inset-e-*`. `ms-*`, `pe-*` and `size-*` are unchanged.
+- **zod 4.** Use `z.url()` and `z.email()`. `z.string().url()` and `.email()` are deprecated.
+- **Vitest 5.** `vite` is a peer dependency, so install it next to `vitest`. A config file is not looked up in parent folders.
+- **GitHub Actions.** Use `actions/checkout@v7`, `actions/setup-node@v7` (`cache: npm`) and `actions/upload-artifact@v7`. Install with `npm ci`, then run `npm audit signatures`. Do not cache Playwright browsers; Playwright's docs advise against it.
+- **Turborepo** strict env mode passes `CI`, `NEXT_*`, `GITHUB_*`, `PATH` and `HOME` through. `PLAYWRIGHT_*` must be declared in `passThroughEnv`. Its cache hashes git-tracked files, so `.next/` and `.turbo/` must be gitignored before the first build.
 
 ## Global Constraints
 
@@ -18,7 +53,7 @@
 - No third-party runtime requests from the web app (no CDN scripts, no Google Fonts links).
 - No animation library and no three.js in this phase.
 - Colours, fonts and mark geometry exactly as in spec section 3.
-- Logical CSS properties only (`ms-`, `pe-`, `start`, `end`).
+- Logical CSS properties only (`ms-`, `pe-`, `inset-s-`, `inset-e-`).
 - Commit message format: `<type>: <description>` (feat, fix, refactor, docs, test, chore, perf, ci).
 - Email address anywhere in code or content: `youssef@zakydev.com`.
 
@@ -28,7 +63,8 @@
 - An unknown locale such as `/fr` must return 404, not crash. (Task 4)
 - A visitor whose system theme is light must get light on first paint with no flash. (Task 4)
 - Content with a missing Arabic key must fail the build, not render `undefined`. (Task 3)
-- The API must refuse to boot with an invalid `PORT`, with a readable message. (Task 5)
+- The end-to-end tests run against a production build served by `next start`, which is what Velocity runs, not `next dev`. (Task 4)
+- `www.zakydev.com` must permanently redirect to `https://zakydev.com`. (Task 4)
 
 ---
 
@@ -36,7 +72,7 @@
 
 **Files:**
 - Delete: `src/`, `api/`, `public/`, `index.html`, `vite.config.ts`, `tailwind.config.ts`, `eslint.config.js`, `vercel.json`, `emailjs-template.html`, `components.json`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `package.json`, `package-lock.json`, `README.md`, `DEPLOYMENT.md`, `PRODUCTION_SETUP.md`, `node_modules/`
-- Create: `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `.nvmrc`, `biome.json`, `.env.example`, `README.md`, `docs/VERSIONS.md`, `packages/config/tsconfig.base.json`, `packages/config/package.json`
+- Create: `package.json`, `.npmrc`, `turbo.json`, `.nvmrc`, `biome.json`, `.env.example`, `README.md`, `docs/VERSIONS.md`, `packages/config/tsconfig.base.json`, `packages/config/package.json`
 - Modify: `.gitignore`
 
 **Interfaces:**
@@ -63,23 +99,30 @@ Then delete the untracked `node_modules` directory by hand (it belongs to the ol
 24
 ```
 
-`pnpm-workspace.yaml`:
-```yaml
-packages:
-  - "apps/*"
-  - "packages/*"
+`.npmrc` (supply-chain defaults; npm 11.19+ understands every key; npm 10 would silently ignore them, which is why Node 24 is required):
+```
+save-exact=true
+engine-strict=true
+fund=false
+min-release-age=3
+allow-git=none
+allow-remote=none
+strict-allow-scripts=true
 ```
 
-`package.json`:
+`package.json` (the `start` script is what Velocity runs; `devEngines` is required by Turborepo):
 ```json
 {
   "name": "zakydev",
   "private": true,
   "type": "module",
+  "workspaces": ["apps/*", "packages/*"],
   "engines": { "node": ">=24" },
+  "devEngines": { "packageManager": { "name": "npm", "version": ">=11.19.0" } },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "start": "npm run start -w web",
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "turbo run typecheck",
@@ -93,25 +136,27 @@ packages:
 `turbo.json`:
 ```json
 {
-  "$schema": "https://turbo.build/schema.json",
+  "$schema": "https://turborepo.dev/schema.json",
   "tasks": {
     "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**", "!.next/cache/**"], "env": ["REQUIRE_CONFIRMED", "NEXT_PUBLIC_*", "NODE_ENV"] },
     "typecheck": { "dependsOn": ["^build"] },
     "test": { "dependsOn": ["^build"] },
-    "e2e": { "dependsOn": ["build"], "cache": false },
+    "e2e": { "dependsOn": ["build"], "cache": false, "passThroughEnv": ["PLAYWRIGHT_*"] },
     "dev": { "cache": false, "persistent": true }
   }
 }
 ```
 
-`biome.json`:
+`biome.json` (Biome 2 syntax; `$schema` points at the installed copy so it always matches the version):
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/latest/schema.json",
-  "files": { "ignore": ["**/dist", "**/.next", "**/node_modules", "docs/prototype", "**/test-results", "**/playwright-report"] },
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "includes": ["**", "!docs/prototype", "!**/dist", "!**/.next", "!**/test-results", "!**/playwright-report"] },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "always" } },
-  "linter": { "rules": { "recommended": true } }
+  "css": { "parser": { "tailwindDirectives": true } },
+  "linter": { "rules": { "recommended": true, "correctness": { "noUndeclaredDependencies": "error" } } }
 }
 ```
 
@@ -121,9 +166,6 @@ packages:
 NEXT_PUBLIC_SITE_URL=
 # set to 1 for production builds: the build fails while any text is still unconfirmed
 REQUIRE_CONFIRMED=
-# apps/api
-PORT=
-LOG_LEVEL=
 ```
 
 `packages/config/package.json`:
@@ -155,6 +197,7 @@ Append to `.gitignore`:
 .turbo/
 .next/
 out/
+next-env.d.ts
 test-results/
 playwright-report/
 ```
@@ -163,12 +206,13 @@ playwright-report/
 ```markdown
 # ZakyDev
 
-Personal site of Youssef Zaky. Monorepo: `apps/web` (Next.js), `apps/api` (NestJS),
-`packages/shared` (content and schemas).
+Personal site of Youssef Zaky. Monorepo: `apps/web` (Next.js) and `packages/shared`
+(content and schemas). An API service joins `apps/` in a later phase.
 
-    pnpm install
-    pnpm dev        # web on :3000, api on :4000
-    pnpm lint && pnpm typecheck && pnpm test && pnpm build
+    nvm use            # Node 24 from .nvmrc (bundles npm 11)
+    npm ci
+    npm run dev        # web on :3000
+    npm run lint && npm run typecheck && npm test && npm run build
 
 Design: `DESIGN.md`. Spec and plans: `docs/superpowers/`. Visual reference: `docs/prototype/home-v23/`.
 ```
@@ -176,22 +220,23 @@ Design: `DESIGN.md`. Spec and plans: `docs/superpowers/`. Visual reference: `doc
 - [ ] **Step 4: Install tooling and record versions**
 
 ```bash
-corepack enable && corepack prepare pnpm@latest --activate
-pnpm add -D -w turbo typescript @biomejs/biome
-pnpm pkg set packageManager="pnpm@$(pnpm --version)"
+node -v && npm -v        # 24.x and 11.19+; stop and report if not
+npm install -D turbo typescript @biomejs/biome
 ```
 
-Create `docs/VERSIONS.md` with a table of package and installed version (from `pnpm ls -w --depth 0`), and append to it in every later task that installs something.
+If npm reports a dependency with an unreviewed install script, run `npm install-scripts ls`. Approve it in the root `allowScripts` only if the package cannot work without it, and note why in `docs/VERSIONS.md`. Do the same in every later task.
+
+Create `docs/VERSIONS.md` with a table of package and installed version (from `npm ls --workspaces --include-workspace-root --depth 0`) and the Node and npm versions. Append to it in every later task that installs something.
 
 - [ ] **Step 5: Verify**
 
-Run: `pnpm lint`
-Expected: exits 0 ("Checked N files", no errors). If Biome reports a schema or key mismatch for its current version, run `pnpm biome migrate --write` and re-run.
+Run: `npm run lint`
+Expected: exits 0 ("Checked N files", no errors). If Biome reports a schema or key mismatch for its current version, run `npx biome migrate --write` and re-run.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "chore: replace the Vite app with a pnpm and Turborepo workspace"
+git add -A && git commit -m "chore: replace the Vite app with an npm workspaces and Turborepo monorepo"
 ```
 
 ---
@@ -223,8 +268,10 @@ git add -A && git commit -m "chore: replace the Vite app with a pnpm and Turbore
 
 `packages/shared/tsconfig.json`:
 ```json
-{ "extends": "@zakydev/config/tsconfig.base.json", "compilerOptions": { "noEmit": true }, "include": ["src"] }
+{ "extends": "@zakydev/config/tsconfig.base.json", "compilerOptions": { "noEmit": true, "types": ["node"] }, "include": ["src"] }
 ```
+
+(`types` is needed under TypeScript 7, whose default is `[]`; the tests use `structuredClone`, which comes from `@types/node` here.)
 
 `packages/shared/vitest.config.ts`:
 ```ts
@@ -234,8 +281,9 @@ export default defineConfig({ test: { include: ['src/**/*.test.ts'] } });
 ```
 
 ```bash
-pnpm --filter @zakydev/shared add zod
-pnpm --filter @zakydev/shared add -D vitest typescript @zakydev/config@workspace:*
+npm install zod -w packages/shared
+npm install -D vitest vite typescript @types/node -w packages/shared
+npm pkg set 'devDependencies.@zakydev/config=*' -w packages/shared && npm install
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -271,7 +319,7 @@ describe('locales', () => {
 
 - [ ] **Step 3: Run it and see it fail**
 
-Run: `pnpm --filter @zakydev/shared test`
+Run: `npm run test -w @zakydev/shared`
 Expected: FAIL, cannot resolve `./locales`.
 
 - [ ] **Step 4: Implement**
@@ -300,7 +348,7 @@ export * from './locales';
 
 - [ ] **Step 5: Run it and see it pass**
 
-Run: `pnpm --filter @zakydev/shared test`
+Run: `npm run test -w @zakydev/shared`
 Expected: 4 tests pass.
 
 - [ ] **Step 6: Commit**
@@ -369,7 +417,7 @@ describe('home content', () => {
 
 - [ ] **Step 2: Run it and see it fail**
 
-Run: `pnpm --filter @zakydev/shared test`
+Run: `npm run test -w @zakydev/shared`
 Expected: FAIL, cannot resolve `./index`.
 
 - [ ] **Step 3: Schema**
@@ -406,7 +454,7 @@ export const homeContentSchema = z.object({
       z.object({
         id: z.enum(['nuammer', 'wazifi', 'talmeeha']),
         name: z.string(),
-        url: z.string().url(),
+        url: z.url(),
         image: z.string(),
         imageAlt: z.string(),
         category: z.string(),
@@ -434,12 +482,12 @@ export const homeContentSchema = z.object({
     label: z.string(),
     heading: z.string(),
     sentence: z.string(),
-    email: z.string().email(),
+    email: z.email(),
     copy: z.string(),
     copied: z.string(),
     meta: z.tuple([z.string(), z.string(), text]),
-    github: z.string().url(),
-    linkedin: z.string().url(),
+    github: z.url(),
+    linkedin: z.url(),
     footer: z.string(),
   }),
   seo: z.object({ title: z.string(), description: z.string() }),
@@ -641,7 +689,7 @@ export * from './content';
 
 - [ ] **Step 7: Run tests**
 
-Run: `pnpm --filter @zakydev/shared test && pnpm --filter @zakydev/shared typecheck`
+Run: `npm run test -w @zakydev/shared && npm run typecheck -w @zakydev/shared`
 Expected: all tests pass, typecheck exits 0.
 
 - [ ] **Step 8: Commit**
@@ -655,32 +703,53 @@ git add -A && git commit -m "feat: add typed bilingual home content with a confi
 ### Task 4: Web app — scaffold, tokens, fonts, locales, themes, placeholder page
 
 **Files:**
-- Create: `apps/web/package.json`, `apps/web/tsconfig.json`, `apps/web/next.config.ts`, `apps/web/postcss.config.mjs`, `apps/web/src/app/globals.css`, `apps/web/src/app/[locale]/layout.tsx`, `apps/web/src/app/[locale]/page.tsx`, `apps/web/src/app/[locale]/not-found.tsx`, `apps/web/src/proxy.ts`, `apps/web/src/lib/fonts.ts`, `apps/web/src/lib/theme-script.ts`, `apps/web/src/components/Mark.tsx`, `apps/web/src/components/ThemeToggle.tsx`, `apps/web/public/projects/{nuammer,wazifi,talmeeha}.jpg`, `apps/web/public/icons/*.svg`, `apps/web/playwright.config.ts`
+- Create: `apps/web/package.json`, `apps/web/tsconfig.json`, `apps/web/next.config.ts`, `apps/web/postcss.config.mjs`, `apps/web/src/app/globals.css`, `apps/web/src/app/global-not-found.tsx`, `apps/web/src/app/[locale]/layout.tsx`, `apps/web/src/app/[locale]/page.tsx`, `apps/web/src/app/[locale]/not-found.tsx`, `apps/web/src/proxy.ts`, `apps/web/src/lib/fonts.ts`, `apps/web/src/lib/theme-script.ts`, `apps/web/src/components/Mark.tsx`, `apps/web/src/components/ThemeToggle.tsx`, `apps/web/public/projects/{nuammer,wazifi,talmeeha}.jpg`, `apps/web/public/icons/*.svg`, `apps/web/playwright.config.ts`
 - Test: `apps/web/e2e/foundation.spec.ts`
 
 **Interfaces:**
 - Consumes: `LOCALES`, `isLocale`, `dirOf`, `pickLocale`, `getHome`, `plain` from `@zakydev/shared`.
 - Produces: `<Mark size?: number className?: string />`; CSS variables of spec 3.2 on `:root` and `[data-theme="light"]`; font-face variables `--face-display`, `--face-body`, `--face-mono`, `--face-display-ar`, `--face-body-ar` and the per-language stacks `--stack-display`, `--stack-body`, `--lh-display`, `--lh-body`; `data-theme` attribute on `<html>` set before paint.
 
-Before writing config, read the current Next.js docs for: App Router project structure, `next/font/google`, the request interception file (named `proxy.ts` in Next 16; `middleware.ts` before), and Tailwind 4 with PostCSS. Adjust file names to the installed version.
+Before writing config, read the current Next.js docs, which ship inside the package at `node_modules/next/dist/docs/`, for:
+- App Router project structure and `global-not-found`
+- `next/font/google`
+- `proxy.ts`
+- `next start` and the `PORT` variable
+- "Preventing flash before hydration"
+- Tailwind 4 with PostCSS
+
+Adjust to the installed version.
 
 - [ ] **Step 1: Create the app and copy assets**
 
 ```bash
-mkdir -p apps/web && cd apps/web
-pnpm init
-pnpm add next react react-dom @zakydev/shared@workspace:*
-pnpm add -D typescript @types/node @types/react @types/react-dom tailwindcss @tailwindcss/postcss @playwright/test @axe-core/playwright @zakydev/config@workspace:*
-pnpm exec playwright install chromium
-mkdir -p public/projects public/icons public/brand
-cp ../../docs/prototype/home-v23/img/*.jpg public/projects/
-cp ../../docs/prototype/home-v23/icons/*.svg public/icons/
-cp ../../docs/prototype/home-v23/brand/*.svg public/brand/
+All from the repo root:
+```bash
+npm init -y -w apps/web
+npm install next react react-dom -w apps/web
+npm install -D typescript @types/node @types/react @types/react-dom tailwindcss @tailwindcss/postcss @playwright/test @axe-core/playwright -w apps/web
+npm pkg set 'dependencies.@zakydev/shared=*' 'devDependencies.@zakydev/config=*' -w apps/web && npm install
+npm exec -w apps/web -- playwright install chromium
+mkdir -p apps/web/public/projects apps/web/public/icons apps/web/public/brand
+cp docs/prototype/home-v23/img/*.jpg apps/web/public/projects/
+cp docs/prototype/home-v23/icons/*.svg apps/web/public/icons/
+cp docs/prototype/home-v23/brand/*.svg apps/web/public/brand/
 ```
 
-Set `"name": "web"`, `"private": true` and `"type": "module"` in `apps/web/package.json`, and these scripts:
+In `apps/web/package.json`:
+- Set `"name": "web"`, `"private": true` and `"type": "module"`.
+- Remove the `main` field and the dummy `test` script that `npm init` writes.
+- Add the scripts below.
+
+`start` is what Velocity runs (through the root `start` script). Next reads `PORT` from the environment and falls back to 3000 locally. `typecheck` generates Next's route types first, so it works on a clean checkout.
 ```json
-{ "dev": "next dev -p 3000", "build": "next build", "start": "next start -p 3000", "typecheck": "tsc --noEmit", "e2e": "playwright test" }
+{
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "typecheck": "next typegen && tsc --noEmit",
+  "e2e": "playwright test"
+}
 ```
 
 - [ ] **Step 2: Write the failing end-to-end test**
@@ -694,7 +763,8 @@ export default defineConfig({
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   use: { baseURL: 'http://localhost:3000', trace: 'on-first-retry' },
-  webServer: { command: 'pnpm build && pnpm start', url: 'http://localhost:3000/en', reuseExistingServer: !process.env.CI, timeout: 180_000 },
+  // In CI, Turborepo has already built the app (`e2e` depends on `build`); locally, build first.
+  webServer: { command: process.env.CI ? 'npm start' : 'npm run build && npm start', url: 'http://localhost:3000/en', reuseExistingServer: !process.env.CI, timeout: 180_000 },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
     { name: 'phone', use: { ...devices['Pixel 7'] } },
@@ -732,9 +802,11 @@ test('root redirects by preferred language', async ({ browser }) => {
   await expect(frPage).toHaveURL(/\/en$/);
 });
 
-test('unknown locale is a 404', async ({ page }) => {
+test('unknown locale is a 404 with our own page, not the built-in one', async ({ page }) => {
   const response = await page.goto('/fr');
   expect(response?.status()).toBe(404);
+  // only our global-not-found runs the theme script; the built-in page has no data-theme
+  await expect(page.locator('html')).toHaveAttribute('data-theme', /^(dark|light)$/);
 });
 
 test('theme follows the system on first paint and the toggle after', async ({ browser }) => {
@@ -746,6 +818,12 @@ test('theme follows the system on first paint and the toggle after', async ({ br
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+});
+
+test('www redirects permanently to the bare domain', async ({ request }) => {
+  const response = await request.get('/en', { headers: { host: 'www.zakydev.com' }, maxRedirects: 0 });
+  expect(response.status()).toBe(308);
+  expect(response.headers().location).toBe('https://zakydev.com/en');
 });
 
 test('makes no third-party requests', async ({ page }) => {
@@ -767,7 +845,7 @@ for (const path of ['/en', '/ar']) {
 
 - [ ] **Step 3: Run it and see it fail**
 
-Run: `pnpm --filter web e2e`
+Run: `npm run e2e -w web`
 Expected: FAIL (no app to build).
 
 - [ ] **Step 4: Config, fonts, tokens**
@@ -776,7 +854,7 @@ Expected: FAIL (no app to build).
 ```json
 {
   "extends": "@zakydev/config/tsconfig.base.json",
-  "compilerOptions": { "lib": ["dom", "dom.iterable", "ES2023"], "jsx": "preserve", "noEmit": true, "incremental": true, "plugins": [{ "name": "next" }], "paths": { "@/*": ["./src/*"] } },
+  "compilerOptions": { "lib": ["dom", "dom.iterable", "ES2023"], "jsx": "react-jsx", "types": ["node"], "noEmit": true, "incremental": true, "plugins": [{ "name": "next" }], "paths": { "@/*": ["./src/*"] } },
   "include": ["next-env.d.ts", "src", ".next/types/**/*.ts", "e2e", "playwright.config.ts"],
   "exclude": ["node_modules"]
 }
@@ -790,20 +868,30 @@ const security = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  // no `preload`: joining the browser preload list is the owner's later, deliberate choice
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
 ];
 
 const config: NextConfig = {
-  output: 'standalone',
   transpilePackages: ['@zakydev/shared'],
   poweredByHeader: false,
+  // the root layout lives in app/[locale]/, so unknown URLs need app/global-not-found.tsx
+  experimental: { globalNotFound: true },
+  // the default is WebP only
+  images: { formats: ['image/avif', 'image/webp'] },
   async headers() {
     return [{ source: '/(.*)', headers: security }];
+  },
+  // one canonical host; Velocity serves both names
+  async redirects() {
+    return [{ source: '/:path*', has: [{ type: 'host', value: 'www.zakydev.com' }], destination: 'https://zakydev.com/:path*', permanent: true }];
   },
 };
 
 export default config;
 ```
+
+Next finds the monorepo root from `package-lock.json` and uses it for both `outputFileTracingRoot` and `turbopack.root` (checked with npm workspaces and `transpilePackages`). Do not set them unless the build warns; if you do set one, set both to the same value. The `jsx`, `types` and `plugins` values in `tsconfig.json` are what Next 16 writes itself. The `next` plugin does nothing under TypeScript 7, which is expected. If Next's generated files under `.next/types` fail with `exactOptionalPropertyTypes`, stop and report it. Do not switch the option off silently.
 
 `apps/web/postcss.config.mjs`:
 ```js
@@ -822,7 +910,7 @@ export const displayAr = Amiri({ subsets: ['arabic'], weight: ['400', '700'], va
 export const bodyAr = IBM_Plex_Sans_Arabic({ subsets: ['arabic'], weight: ['400', '500', '600'], variable: '--face-body-ar', display: 'swap', preload: false });
 ```
 
-`next/font` downloads the files at build time and serves them from the site, so there are no runtime requests to Google.
+`next/font` downloads the files at build time and serves them from the site, so there are no runtime requests to Google. The build therefore needs network access, and a failed fetch fails it. Amiri and IBM Plex Sans Arabic are not variable fonts, so `weight` is required. Both use `preload: false`: a font in the root layout is otherwise preloaded on every route, including `/en`. Their `@font-face` rules still ship on `/en`, but the files download only where the Arabic stack is applied (`html[lang="ar"]`).
 
 `apps/web/src/app/globals.css`:
 ```css
@@ -909,6 +997,8 @@ export function ThemeToggle({ label }: { label: string }) {
   );
 }
 ```
+
+This is the pattern from the Next guide "Preventing flash before hydration". In development only, React Strict Mode remounts and can clear attributes on `<html>`. If `data-theme` disappears in `next dev`, re-apply the stored theme in a `useLayoutEffect` in `ThemeToggle`, as the guide shows. The production tests are not affected.
 
 - [ ] **Step 6: Mark, layout, page, 404, locale redirect**
 
@@ -1014,6 +1104,40 @@ export default function NotFound() {
 }
 ```
 
+That page handles `notFound()` inside a valid locale. URLs that match no route at all, such as `/fr`, never reach a layout, so they need their own complete document.
+
+`apps/web/src/app/global-not-found.tsx`:
+```tsx
+import type { Metadata } from 'next';
+import { Mark } from '@/components/Mark';
+import { body, display, mono } from '@/lib/fonts';
+import { themeScript } from '@/lib/theme-script';
+import './globals.css';
+
+export const metadata: Metadata = { title: '404 | ZakyDev' };
+
+export default function GlobalNotFound() {
+  return (
+    <html lang="en" dir="ltr" className={[display.variable, body.variable, mono.variable].join(' ')} suppressHydrationWarning>
+      <head>
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static string defined in this repo, must run before paint */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body>
+        <main className="grid min-h-svh place-items-center gap-6 p-6">
+          <a href="/en" aria-label="ZakyDev">
+            <Mark size={48} />
+          </a>
+          <h1 className="font-display text-5xl">404</h1>
+        </main>
+      </body>
+    </html>
+  );
+}
+```
+
+The playful 404 is a later phase (spec section 2), and this page invents no copy.
+
 `apps/web/src/proxy.ts` (name it `middleware.ts` and export `middleware` if the installed Next version predates `proxy.ts`):
 ```ts
 import { pickLocale } from '@zakydev/shared';
@@ -1027,12 +1151,12 @@ export function proxy(request: NextRequest) {
 export const config = { matcher: ['/'] };
 ```
 
-Because `dynamicParams = false`, `/fr` is not generated and returns 404.
+Because `dynamicParams = false`, `/fr` is not generated and returns 404, rendered by `global-not-found.tsx`. `proxy.ts` sits in `src/` because `app/` does; Next silently ignores it anywhere else.
 
 - [ ] **Step 7: Run the tests**
 
-Run: `pnpm --filter web typecheck && pnpm --filter web e2e`
-Expected: typecheck exits 0; 16 tests pass (8 per project). If axe reports a contrast violation, fix the token usage on the page, not the test.
+Run: `npm run typecheck -w web && npm run e2e -w web`
+Expected: typecheck exits 0; 18 tests pass (9 per project). If axe reports a contrast violation, fix the token usage on the page, not the test.
 
 - [ ] **Step 8: Commit**
 
@@ -1042,183 +1166,9 @@ git add -A && git commit -m "feat: scaffold the web app with tokens, fonts, loca
 
 ---
 
-### Task 5: API — health endpoint with validated environment
+### Task 5: Removed — API deferred
 
-**Files:**
-- Create: `apps/api/package.json`, `apps/api/tsconfig.json`, `apps/api/vitest.config.ts`, `apps/api/src/main.ts`, `apps/api/src/app.module.ts`, `apps/api/src/config/env.ts`, `apps/api/src/health/health.controller.ts`
-- Test: `apps/api/src/config/env.test.ts`, `apps/api/test/health.e2e.test.ts`
-
-**Interfaces:**
-- Produces: `parseEnv(source: Record<string, string | undefined>): { PORT: number; LOG_LEVEL: 'fatal'|'error'|'warn'|'info'|'debug'|'trace' }`; `GET /v1/health` → `200 { "status": "ok" }`.
-
-Read the current NestJS docs for the Fastify adapter and for ESM/`vitest` setup before installing; use the decorator and compiler settings they give for the installed version.
-
-- [ ] **Step 1: Install**
-
-```bash
-mkdir -p apps/api && cd apps/api && pnpm init
-pnpm add @nestjs/common @nestjs/core @nestjs/platform-fastify reflect-metadata rxjs zod @fastify/helmet
-pnpm add -D typescript @types/node vitest unplugin-swc @swc/core @nestjs/testing @zakydev/config@workspace:*
-```
-
-Set `"type": "module"` and `"private": true` in `apps/api/package.json` (`pnpm init` does not, and `main.ts` uses ES modules with top-level `await`). Scripts in `apps/api/package.json`:
-```json
-{ "build": "tsc -p tsconfig.json", "start": "node dist/main.js", "dev": "node --watch --import @swc-node/register/esm-register src/main.ts", "typecheck": "tsc --noEmit", "test": "vitest run" }
-```
-If `dev` needs `@swc-node/register`, add it as a dev dependency.
-
-`apps/api/tsconfig.json`:
-```json
-{
-  "extends": "@zakydev/config/tsconfig.base.json",
-  "compilerOptions": { "module": "NodeNext", "moduleResolution": "NodeNext", "outDir": "dist", "rootDir": "src", "experimentalDecorators": true, "emitDecoratorMetadata": true, "exactOptionalPropertyTypes": false },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"]
-}
-```
-
-`apps/api/vitest.config.ts`:
-```ts
-import swc from 'unplugin-swc';
-import { defineConfig } from 'vitest/config';
-
-export default defineConfig({
-  plugins: [swc.vite({ module: { type: 'es6' } })],
-  test: { include: ['src/**/*.test.ts', 'test/**/*.test.ts'] },
-});
-```
-
-- [ ] **Step 2: Write the failing tests**
-
-`apps/api/src/config/env.test.ts`:
-```ts
-import { describe, expect, it } from 'vitest';
-import { parseEnv } from './env.js';
-
-describe('parseEnv', () => {
-  it('applies defaults', () => {
-    expect(parseEnv({})).toEqual({ PORT: 4000, LOG_LEVEL: 'info' });
-  });
-  it('reads values', () => {
-    expect(parseEnv({ PORT: '8080', LOG_LEVEL: 'debug' })).toEqual({ PORT: 8080, LOG_LEVEL: 'debug' });
-  });
-  it('refuses an invalid port with a readable message', () => {
-    expect(() => parseEnv({ PORT: 'abc' })).toThrow(/PORT/);
-    expect(() => parseEnv({ PORT: '70000' })).toThrow(/PORT/);
-  });
-  it('refuses an unknown log level', () => {
-    expect(() => parseEnv({ LOG_LEVEL: 'loud' })).toThrow(/LOG_LEVEL/);
-  });
-});
-```
-
-`apps/api/test/health.e2e.test.ts`:
-```ts
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { Test } from '@nestjs/testing';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { AppModule } from '../src/app.module.js';
-
-describe('GET /v1/health', () => {
-  let app: NestFastifyApplication;
-  beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
-    app.setGlobalPrefix('v1');
-    await app.init();
-    await app.getHttpAdapter().getInstance().ready();
-  });
-  afterAll(async () => {
-    await app.close();
-  });
-  it('answers ok', async () => {
-    const res = await app.inject({ method: 'GET', url: '/v1/health' });
-    expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: 'ok' });
-  });
-  it('answers 404 for unknown routes without a stack trace', async () => {
-    const res = await app.inject({ method: 'GET', url: '/v1/nope' });
-    expect(res.statusCode).toBe(404);
-    expect(res.body).not.toMatch(/at .*\.ts/);
-  });
-});
-```
-
-- [ ] **Step 3: Run and see them fail**
-
-Run: `pnpm --filter api test`
-Expected: FAIL, modules not found.
-
-- [ ] **Step 4: Implement**
-
-`apps/api/src/config/env.ts`:
-```ts
-import { z } from 'zod';
-
-const schema = z.object({
-  PORT: z.coerce.number().int().min(1).max(65535).default(4000),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-});
-export type Env = z.infer<typeof schema>;
-
-export const parseEnv = (source: Record<string, string | undefined>): Env => {
-  const result = schema.safeParse(source);
-  if (!result.success) {
-    const problems = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
-    throw new Error(`Invalid environment: ${problems}`);
-  }
-  return result.data;
-};
-```
-
-`apps/api/src/health/health.controller.ts`:
-```ts
-import { Controller, Get } from '@nestjs/common';
-
-@Controller('health')
-export class HealthController {
-  @Get()
-  check(): { status: 'ok' } {
-    return { status: 'ok' };
-  }
-}
-```
-
-`apps/api/src/app.module.ts`:
-```ts
-import { Module } from '@nestjs/common';
-import { HealthController } from './health/health.controller.js';
-
-@Module({ controllers: [HealthController] })
-export class AppModule {}
-```
-
-`apps/api/src/main.ts`:
-```ts
-import 'reflect-metadata';
-import helmet from '@fastify/helmet';
-import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { AppModule } from './app.module.js';
-import { parseEnv } from './config/env.js';
-
-const env = parseEnv(process.env);
-const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ logger: { level: env.LOG_LEVEL } }));
-await app.register(helmet);
-app.setGlobalPrefix('v1');
-await app.listen(env.PORT, '0.0.0.0');
-```
-
-- [ ] **Step 5: Run and see them pass**
-
-Run: `pnpm --filter api test && pnpm --filter api typecheck && pnpm --filter api build`
-Expected: 6 tests pass; typecheck and build exit 0.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add -A && git commit -m "feat: add the API service with a health endpoint and validated env"
-```
+The owner decided on 2026-10-16 that Phase 0 and Phase 1 have no API service. Nothing on the home page calls one. The API (`apps/api`, NestJS on Fastify) arrives with the contact form, and spec section 6.6 keeps its requirements. Task numbers stay as they are, so Task 7 is still the deployment stop.
 
 ---
 
@@ -1248,21 +1198,24 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm build
-      - run: pnpm --filter web exec playwright install --with-deps chromium
-      - run: pnpm e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
+          cache: npm
+      - run: npm ci
+      # registry signatures of every installed package
+      - run: npm audit signatures
+      # the lockfile must keep the Linux binaries Velocity needs (guards against a damaged lockfile)
+      - run: grep -q '"node_modules/@next/swc-linux-x64-gnu"' package-lock.json
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm exec -w apps/web -- playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
         with:
           name: playwright-report
           path: apps/web/playwright-report
@@ -1270,7 +1223,7 @@ jobs:
 
 - [ ] **Step 2: Verify locally**
 
-Run: `pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm e2e`
+Run: `npm ci && npm run lint && npm run typecheck && npm test && npm run build && npm run e2e`
 Expected: every command exits 0.
 
 - [ ] **Step 3: Commit and push**
@@ -1284,27 +1237,80 @@ Open the Actions tab and confirm the run is green. If it fails, fix the cause an
 
 ---
 
-### Task 7: Deployment proof (needs the owner)
+### Task 7: Deployment proof on Cloudways Velocity (needs the owner)
 
-This task cannot be completed without the owner's hosting account. Stop and ask for access before starting; do not invent credentials.
+This task cannot be done without the owner's Cloudways and Cloudflare accounts. Stop and ask before starting. Never invent credentials, and never ask for passwords in chat: the owner clicks through the dashboards while you give the exact values.
+
+Owner decisions (2026-10-16):
+- **Host:** Cloudways Velocity, **Starter** plan (2 GB, 2 vCPU, 5 apps; personal projects and portfolio). One app now; the API becomes a second app later.
+- **Domain:** `zakydev.com` is registered at Cloudflare, and DNS stays there. Velocity does not need the nameservers moved.
+- **Email:** Google Workspace runs on the domain (`youssef@zakydev.com`). Its MX, SPF, DKIM, DMARC and `google-site-verification` records must not be changed.
+
+Sources: Cloudways support articles "How to launch an application on Cloudways Velocity", "How to manage deployments…", "How to add a domain…", "Manage Cloudflare Enterprise on Cloudways Velocity" and "How to configure Web Rules…", plus the official template github.com/CloudwaysbyDO/cloudways-next-template. Re-read them before starting; the product is new and changes.
 
 **Files:**
 - Create: `docs/DEPLOY.md`
 
-- [ ] **Step 1: Confirm with the owner** which host is used (the earlier decision was Cloudways Velocity), that `zakydev.com` points to it, and how secrets are entered. Record the answers in `docs/DEPLOY.md`.
-- [ ] **Step 2: Deploy `apps/web`** as a Node app running `node apps/web/.next/standalone/apps/web/server.js` after copying `apps/web/public` and `apps/web/.next/static` next to it (verify the exact standalone path in the build output). Set `NEXT_PUBLIC_SITE_URL`.
-- [ ] **Step 3: Deploy `apps/api`** running `node apps/api/dist/main.js` with `PORT` and `LOG_LEVEL`.
-- [ ] **Step 4: Verify from outside**
+- [ ] **Step 1: Prepare.**
+  - Confirm CI is green on `rebuild/zakydev`.
+  - In Cloudflare DNS, take a screenshot or export of the current records, so nothing about email can be lost.
+  - Start `docs/DEPLOY.md` with what follows: the app settings, the DNS records added, and the records that must never be touched.
+
+- [ ] **Step 2: Create the app.**
+  - In Velocity, launch an application from the GitHub repository, pick the server location closest to Bahrain from the list offered, and record it.
+  - Deployment settings:
+    - Framework preset: Next.js
+    - Branch: `rebuild/zakydev` for now, `main` after the Phase 1 merge
+    - Node version: **24.x**
+    - Package manager: **npm**
+    - Root directory: `./`, the repo root, because the workspaces and the lockfile live there
+    - Build command: `npm run build`
+    - Start command: `npm start`
+  - Leave auto-deploy **off** until Phase 1 is merged; deploy with Redeploy. Do not hard-code a port: Velocity gives the app its `PORT`, and `next start` reads it.
+
+- [ ] **Step 3: Environment variables** (dashboard, Environment Variables; used at build and at run time):
+  - `NEXT_PUBLIC_SITE_URL=https://zakydev.com`
+  - Leave `REQUIRE_CONFIRMED` unset until Phase 1 Task 14.
+  - `NEXT_PUBLIC_*` values are baked in at build time, so set them before the first deploy and redeploy after any change.
+
+- [ ] **Step 4: First deploy on the temporary `*.cloudwaysnodeapps.com` address.**
+  - Read the build log.
+  - **If the build fails because TypeScript or Tailwind is missing**, Velocity installed without devDependencies. Change the build command to `npm ci --include=dev && npm run build` and record that.
+  - Watch memory in the Monitoring tab during the build. Starter has 2 GB shared by the build and the running app; record the peak.
+  - Check `/en`, `/ar`, `/`, and `/fr` (must be 404) on the temporary address.
+
+- [ ] **Step 5: Connect the domain.**
+  - In Velocity Domain Management, add `zakydev.com` and `www.zakydev.com`. Velocity then shows the DNS records to create; at the time of writing that is a CNAME for `@` and for `www` to `secure.cloudwaysnodeapps.com`, or A records if the apex CNAME is refused. **Copy the values from the dashboard, not from this plan.**
+  - In Cloudflare DNS:
+    1. Delete only the existing **A, AAAA or CNAME** records on `@` and `www`, if there are any.
+    2. Add the Velocity records with **Proxy status: DNS only (grey cloud)**. Cloudways requires this: its CDN is its own Cloudflare Enterprise account, and an orange cloud in our zone would sit in front of it.
+    3. Do **not** touch any MX record, any TXT record (SPF `v=spf1 … include:_spf.google.com`, DMARC `_dmarc`, DKIM `google._domainkey`, `google-site-verification`), or any other subdomain.
+  - Wait until Velocity marks the domain Active (up to 24 h; it emails on success).
+
+- [ ] **Step 6: CDN settings** (Velocity, Cloudflare Enterprise panel):
+  - Caching on.
+  - Image Optimization (Polish) **Off**, because Next already optimises images.
+  - Leave WAF, rate limiting and Browser Integrity Check at their defaults.
+  - Velocity does not cache HTML at the edge, and nothing documents a purge on deploy. After every deploy, press **Purge** so optimised images and other cached files are fresh. Write this into `docs/DEPLOY.md`.
+
+- [ ] **Step 7: Verify from outside**
 
 ```bash
-curl -sI https://zakydev.com/en | head -n 1          # HTTP/2 200
-curl -s  https://zakydev.com/ar | grep -o '<html[^>]*>'   # contains lang="ar" dir="rtl"
-curl -s  https://api.zakydev.com/v1/health            # {"status":"ok"}
+curl -sI https://zakydev.com/en | head -n 1                                         # HTTP/2 200
+curl -s  https://zakydev.com/ar | grep -o '<html[^>]*>'                             # lang="ar" dir="rtl"
+curl -sI -H 'Accept-Language: ar-BH' https://zakydev.com/ | grep -i '^location'     # /ar
+curl -sI https://zakydev.com/fr | head -n 1                                         # 404
+curl -sI https://www.zakydev.com/en | grep -i '^location'                           # https://zakydev.com/en
+curl -sI https://zakydev.com/en | grep -i 'strict-transport-security'               # no "preload"
+dig +short MX zakydev.com                                                           # still the Google Workspace hosts
 ```
 
-- [ ] **Step 5: Run Lighthouse (mobile) on `/en` and `/ar`** and record the scores in `docs/DEPLOY.md`. Gates: Performance ≥ 90, Accessibility 100, Best Practices 100, SEO 100.
-- [ ] **Step 6: Commit**
+Then ask the owner to send a test email to `youssef@zakydev.com` from another account and confirm that it arrives.
+
+- [ ] **Step 8: Run Lighthouse (mobile) on `https://zakydev.com/en` and `/ar`** and record the scores and the server location in `docs/DEPLOY.md`. Gates: Performance ≥ 90, Accessibility 100, Best Practices 100, SEO 100. HTML is served from the origin, not the CDN, so if LCP or TTFB misses the gate, record the time to first byte. Discuss the server location with the owner before changing code.
+
+- [ ] **Step 9: Commit**
 
 ```bash
-git add docs/DEPLOY.md && git commit -m "docs: record the deployment procedure and first results"
+git add docs/DEPLOY.md && git commit -m "docs: record the Velocity deployment and first results" && git push
 ```
