@@ -1,0 +1,29 @@
+/* The one button style (DESIGN.md): an ink outline; the primary is a gold fill with dark text. */
+[data-button] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  padding: 0 24px;
+  border: 1px solid var(--ink);
+  border-radius: 99px;
+  color: var(--ink);
+  font: 500 16px var(--stack-body);
+  text-decoration: none;
+  transition:
+    background-color var(--std),
+    color var(--std),
+    border-color var(--std);
+}
+[data-button="primary"] {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--on-gold);
+}
+@media (hover: hover) {
+  [data-button]:hover {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--bg);
+  }
+}

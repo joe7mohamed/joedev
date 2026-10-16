@@ -1,0 +1,296 @@
+/* Hero motion (spec 5.3), only under html.enhanced. Every animation fills backwards only, so its end state is
+   the element's own resting style and an interrupted one still ends visible. HeroMotion writes the scroll state
+   as custom properties: --zx/--zy/--zs (zoom), --others, --img, --shown (headline), --side (around it). */
+
+/* Load: English rises letter by letter while its weight and softness settle; Arabic rises word by word. */
+html.enhanced [data-headline="words"] [data-word] {
+  animation: hero-word 0.95s cubic-bezier(0.215, 0.61, 0.355, 1) backwards;
+  animation-delay: calc(150ms + var(--i, 0) * 100ms);
+}
+/* The visible English letter is drawn by ::before over its own transparent glyph, which keeps the resting
+   width: weight changes (load, pointer) never move the layout. Forced colours keep the plain text. */
+@media (forced-colors: none) {
+  html.enhanced [data-headline="letters"] [data-ch] {
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    animation: hero-letter 0.95s cubic-bezier(0.215, 0.61, 0.355, 1) backwards;
+    animation-delay: calc(150ms + var(--i, 0) * 28ms);
+  }
+  html.enhanced [data-headline="letters"] [data-ch]::before {
+    content: attr(data-c);
+    position: absolute;
+    inset: 0;
+    text-align: center;
+    -webkit-text-fill-color: currentColor;
+    text-shadow: var(--hero-shadow);
+    font-variation-settings: var(--fv, "wght" 560, "SOFT" 0);
+    transition: font-variation-settings 0.35s var(--ease);
+    animation: hero-weight 1.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 150ms backwards;
+  }
+}
+@keyframes hero-letter {
+  from {
+    opacity: 0;
+    transform: perspective(700px) translateY(115%) rotateX(-85deg);
+  }
+}
+@keyframes hero-word {
+  from {
+    opacity: 0;
+    transform: translateY(115%);
+  }
+}
+@keyframes hero-weight {
+  from {
+    font-variation-settings:
+      "wght" 220,
+      "SOFT" 100;
+  }
+}
+
+/* Scroll: the headline swells around the zoom word, the other words fade, the zoom word fills with the first
+   project's screenshot, and the headline is gone by the end of the zoom. */
+html.enhanced [data-headline] {
+  transform: translate3d(var(--zx, 0px), var(--zy, 0px), 0) scale(var(--zs, 1));
+  opacity: var(--shown, 1);
+}
+html.enhanced [data-headline] [data-key] > [data-ink] {
+  opacity: calc(1 - var(--img, 0));
+}
+html.enhanced [data-headline] [data-word]:not([data-key]) > [data-ink] {
+  opacity: var(--others, 1);
+}
+html.enhanced [data-headline] [data-key]::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  background: var(--shot) 50% 20% / cover;
+  -webkit-background-clip: text;
+  background-clip: text;
+  opacity: var(--img, 0);
+  pointer-events: none;
+}
+
+/* Everything around the headline fades in after it builds and leaves as the zoom starts. */
+html.enhanced [data-hero] [data-side] {
+  opacity: var(--side, 1);
+  translate: 0 calc((var(--side, 1) - 1) * 24px);
+}
+html.enhanced [data-hero][data-side-off] [data-side] {
+  pointer-events: none;
+}
+html.enhanced [data-hero] [data-side] > * {
+  animation: hero-in 0.9s cubic-bezier(0.65, 0, 0.35, 1) 1.05s backwards;
+}
+@keyframes hero-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The title: brackets slide in, a caret blinks after the typed text. */
+html.enhanced [data-bracket] {
+  animation: hero-bracket 0.8s var(--ease) backwards;
+}
+html.enhanced [data-bracket="open"] {
+  --from: -18px;
+}
+html.enhanced [data-bracket="close"] {
+  --from: 18px;
+}
+@keyframes hero-bracket {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, 0));
+  }
+}
+html.enhanced [data-typed]::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-inline-start: 3px;
+  vertical-align: -0.16em;
+  background: var(--gold);
+  animation: hero-blink 1s steps(1) infinite;
+}
+@keyframes hero-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+html.enhanced [data-pulse] {
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold) 70%, transparent);
+  animation: hero-pulse 1.8s ease-out infinite;
+}
+@keyframes hero-pulse {
+  to {
+    box-shadow: 0 0 0 9px transparent;
+  }
+}
+
+/* The step strip: a 5 s loop, a gold line runs Design → Build → Launch and the rocket lifts on arrival. */
+html.enhanced [data-step-icon] {
+  animation: step-a 5s infinite;
+}
+html.enhanced [data-step]:nth-child(2) [data-step-icon] {
+  animation-name: step-b;
+}
+html.enhanced [data-step]:nth-child(3) [data-step-icon] {
+  animation-name: step-c;
+}
+html.enhanced [data-step] + [data-step]::before {
+  animation: step-line-1 5s infinite;
+}
+html.enhanced [data-step]:nth-child(3)::before {
+  animation-name: step-line-2;
+}
+@keyframes step-a {
+  0%,
+  90% {
+    border-color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 16%, transparent);
+  }
+  96%,
+  100% {
+    border-color: var(--hair);
+    background: transparent;
+  }
+}
+@keyframes step-b {
+  0%,
+  28% {
+    border-color: var(--hair);
+    background: transparent;
+  }
+  34%,
+  90% {
+    border-color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 16%, transparent);
+  }
+  96%,
+  100% {
+    border-color: var(--hair);
+    background: transparent;
+  }
+}
+@keyframes step-c {
+  0%,
+  58% {
+    border-color: var(--hair);
+    background: transparent;
+    transform: none;
+  }
+  64% {
+    transform: translateY(-6px);
+  }
+  70%,
+  90% {
+    border-color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 16%, transparent);
+    transform: none;
+  }
+  96%,
+  100% {
+    border-color: var(--hair);
+    background: transparent;
+  }
+}
+@keyframes step-line-1 {
+  0%,
+  8% {
+    background-size:
+      0% 100%,
+      auto;
+  }
+  30%,
+  90% {
+    background-size:
+      100% 100%,
+      auto;
+  }
+  96%,
+  100% {
+    background-size:
+      0% 100%,
+      auto;
+  }
+}
+@keyframes step-line-2 {
+  0%,
+  38% {
+    background-size:
+      0% 100%,
+      auto;
+  }
+  60%,
+  90% {
+    background-size:
+      100% 100%,
+      auto;
+  }
+  96%,
+  100% {
+    background-size:
+      0% 100%,
+      auto;
+  }
+}
+
+/* The scroll cue, centred at the bottom of the pinned scene; not on phones. */
+html.enhanced [data-cue] {
+  position: absolute;
+  inset: auto 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  color: var(--muted);
+  font:
+    500 12px var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+html.enhanced[lang="ar"] [data-cue] {
+  font-family: var(--stack-body);
+  font-size: 14px;
+}
+html.enhanced [data-cue] i {
+  position: relative;
+  overflow: hidden;
+  width: 44px;
+  height: 1px;
+  background: var(--hair);
+}
+html.enhanced [data-cue] i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  animation: hero-cue 1.8s var(--ease) infinite;
+}
+html.enhanced[dir="rtl"] [data-cue] i::after {
+  animation-direction: reverse;
+}
+@keyframes hero-cue {
+  0% {
+    transform: translateX(-100%);
+  }
+  60%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (max-width: 860px) {
+  html.enhanced [data-cue] {
+    display: none;
+  }
+}

@@ -1,6 +1,7 @@
 import { getHome, isLocale } from '@zakydev/shared';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/header/Header';
+import { Hero } from '@/components/hero/Hero';
 import { TempWorkSlot } from '@/components/work/TempWorkSlot';
 import { EngineProvider } from '@/motion/EngineProvider';
 import { GoldElement } from '@/motion/GoldElement';
@@ -16,11 +17,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       <GoldElement />
       <main id="main">
         <Scene id="hero" length={2} tail={0.5}>
-          <div data-fade>
-            <h1 className="text-[clamp(2.6rem,11vw,10rem)]">
-              {c.hero.headline.map((line) => line.map((w) => w.t).join(' ')).join(' ')}
-            </h1>
-          </div>
+          <Hero content={c.hero} projectImage={c.projects[0]?.image ?? ''} locale={locale} />
         </Scene>
         <Scene id="work" length={3.2} tail={0.4}>
           <div data-fade>

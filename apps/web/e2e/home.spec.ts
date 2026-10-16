@@ -408,3 +408,91 @@ test('the page never scrolls sideways', async ({ page }) => {
     }
   }
 });
+
+test('hero shows title, place, availability, headline, sentence and both actions', async ({ page }) => {
+  await page.goto('/en');
+  const hero = page.locator('#hero');
+  await expect(hero.getByRole('heading', { level: 1 })).toHaveAccessibleName(
+    'I build software that holds up under pressure.',
+  );
+  await expect(hero.getByText('Bahrain')).toBeVisible();
+  await expect(hero.getByText('Available for new projects')).toBeVisible();
+  await expect(hero.getByRole('link', { name: 'See my work' })).toHaveAttribute('href', '#work');
+  await expect(hero.getByRole('link', { name: 'Start a project' })).toHaveAttribute('href', '#contact');
+});
+
+test('typed title alternates between the two titles', async ({ page }) => {
+  await page.goto('/en');
+  const title = page.locator('[data-typed]');
+  await expect(title).toHaveText('Software engineer', { timeout: 6000 });
+  await expect(title).toHaveText('Full-stack developer', { timeout: 12000 });
+});
+
+test('Arabic headline is never split into letters', async ({ page }) => {
+  await page.goto('/ar');
+  await expect(page.locator('#hero h1 [data-ch]')).toHaveCount(0);
+  await expect(page.locator('#hero h1')).toHaveAccessibleName('أبني برمجيات تصمد تحت الضغط.');
+});
+
+test('headline zooms into the key word and is gone by the end of the scene', async ({ page }) => {
+  await page.goto('/en');
+  const scaleAt = async (f: number) => {
+    await gotoScene(page, 'hero', f);
+    return page.locator('#hero h1').evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+  };
+  expect(await scaleAt(0)).toBeCloseTo(1, 1);
+  expect(await scaleAt(1)).toBeGreaterThan(2);
+});
+
+// Spec 5.0: from S 0 to 0.5 the gold element is the underline of the zoom word, never the work frame.
+for (const path of ['/en', '/ar']) {
+  test(`at the top of the hero the gold element is the underline of the zoom word on ${path}`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    await gotoScene(page, 'hero', 0);
+    const measure = () =>
+      page.evaluate(() => {
+        const g = (document.querySelector('[data-gold]') as HTMLElement).getBoundingClientRect();
+        const k = (document.querySelector('#hero [data-key]') as HTMLElement).getBoundingClientRect();
+        return {
+          g: { x: g.left, y: g.top, w: g.width, h: g.height },
+          k: { x: k.left, y: k.top, w: k.width, h: k.height },
+        };
+      });
+    // the line is drawn in after the headline builds
+    await expect
+      .poll(
+        async () => {
+          const { g, k } = await measure();
+          return Math.abs(g.w - k.w);
+        },
+        { timeout: 5000 },
+      )
+      .toBeLessThanOrEqual(2);
+    const { g, k } = await measure();
+    expect(g.h).toBeLessThan(12);
+    expect(Math.abs(g.x - k.x)).toBeLessThanOrEqual(1);
+    // it sits on the word's baseline: in the lowest part of the word's box, not below it
+    expect(g.y).toBeGreaterThanOrEqual(k.y + k.h * 0.75);
+    expect(g.y + g.h).toBeLessThanOrEqual(k.y + k.h + 2);
+  });
+}
+
+test('with reduced motion the hero is fully visible and still', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const path of ['/en', '/ar']) {
+    await page.goto(path);
+    await expect(page.locator('html')).not.toHaveClass(/enhanced/);
+    await page.waitForTimeout(1500);
+    const opacities = await page
+      .locator('#hero [data-ch], #hero [data-word]')
+      .evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)));
+    expect(opacities.length).toBeGreaterThan(0);
+    expect(opacities).toEqual(opacities.map(() => 1));
+    const first = path === '/en' ? 'Software engineer' : 'مهندس برمجيات';
+    await expect(page.locator('[data-typed]')).toHaveText(first);
+    const transform = await page.locator('#hero h1').evaluate((el) => getComputedStyle(el).transform);
+    expect(transform).toBe('none');
+  }
+});

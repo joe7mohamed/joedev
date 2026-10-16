@@ -1,0 +1,284 @@
+/* Hero (spec 5.3). The layout works without script; everything that moves is under html.enhanced, so reduced
+   motion and no script show every part in its finished state. */
+[data-hero] {
+  --hero-shadow: 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.4vh, 26px);
+  width: 100%;
+}
+
+/* The row of three: title, place, availability. No boxes; hairlines between. */
+[data-tags] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+[data-tags] li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font:
+    500 12px / 1.5 var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+html[lang="ar"] [data-tags] li {
+  font-family: var(--stack-body);
+  font-size: 15px;
+}
+[data-tags] li + li::before {
+  content: "";
+  width: 1px;
+  height: 13px;
+  margin-inline: 16px;
+  background: var(--hair);
+}
+[data-tags] svg {
+  width: 15px;
+  height: 15px;
+  color: var(--accent);
+}
+[data-tags] [data-open] {
+  color: var(--ink);
+}
+[data-pulse] {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+/* The title between the mark's brackets. Every title sits in one grid cell, so the widest reserves the width. */
+[data-tags] [data-role] {
+  direction: ltr;
+  color: var(--ink);
+  letter-spacing: 0.12em;
+}
+[data-title] {
+  display: inline-grid;
+}
+[data-title] > * {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+}
+[data-sizer] {
+  visibility: hidden;
+  padding-inline: 8px;
+}
+[data-title-row] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+}
+html[dir="rtl"] [data-title-row] {
+  justify-content: flex-end;
+}
+[data-bracket] {
+  color: var(--accent);
+  font:
+    600 13px var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0;
+}
+
+/* The headline. The zoom word's slot is the gold underline (spec 5.0). */
+[data-headline] {
+  position: relative;
+  margin: 0;
+  font-family: var(--stack-display);
+  font-size: clamp(44px, 11.4vw, 168px);
+  font-weight: 560;
+  font-variation-settings:
+    "wght" 560,
+    "SOFT" 0;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  text-shadow: var(--hero-shadow);
+}
+html[lang="ar"] [data-headline] {
+  font-size: clamp(44px, 10.5vw, 150px);
+  font-weight: 700;
+  font-variation-settings: normal;
+  line-height: 1.32;
+}
+[data-headline] [data-line] {
+  display: block;
+  white-space: nowrap;
+}
+[data-headline] [data-word],
+[data-headline] [data-ch] {
+  display: inline-block;
+  position: relative;
+}
+[data-headline] [data-ch] {
+  transform-origin: 50% 100%;
+}
+[data-headline] [data-slot] {
+  position: absolute;
+  inset-inline: 0;
+  top: 92%;
+  height: 4.5%;
+  pointer-events: none;
+}
+html[lang="ar"] [data-headline] [data-slot] {
+  top: 84%;
+}
+
+/* The sentence, the step strip and the two actions. */
+[data-foot] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 40px;
+  margin-top: clamp(10px, 2.2vh, 26px);
+}
+[data-pitch] {
+  display: grid;
+  gap: 16px;
+}
+[data-lead] {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(18px, 1.75vw, 25px);
+  text-shadow: var(--hero-shadow);
+}
+[data-rot] {
+  display: inline-block;
+  perspective: 600px;
+}
+[data-rot] > span {
+  padding-bottom: 1px;
+  border-bottom: 2px solid var(--gold);
+  color: var(--accent);
+  white-space: nowrap;
+}
+[data-steps] {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+[data-step] {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+[data-step] + [data-step]::before {
+  content: "";
+  width: clamp(22px, 4vw, 60px);
+  height: 2px;
+  margin-inline: 12px;
+  border-radius: 2px;
+  background:
+    linear-gradient(var(--gold), var(--gold)) 0 0 / 0% 100% no-repeat,
+    var(--hair);
+}
+html[dir="rtl"] [data-step] + [data-step]::before {
+  background-position:
+    100% 0,
+    0 0;
+}
+[data-step-icon] {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--hair);
+  border-radius: 50%;
+  color: var(--accent);
+}
+[data-step-icon] svg {
+  width: 16px;
+  height: 16px;
+}
+[data-actions] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+/* The scroll cue only means something while scenes are pinned. */
+[data-cue] {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  [data-hero] {
+    align-items: center;
+    text-align: center;
+  }
+  [data-tags] {
+    justify-content: center;
+  }
+  [data-tags] li {
+    gap: 6px;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+  }
+  html[lang="ar"] [data-tags] li {
+    font-size: 13.5px;
+  }
+  [data-tags] li + li::before {
+    height: 11px;
+    margin-inline: 10px;
+  }
+  [data-tags] svg {
+    width: 13px;
+    height: 13px;
+  }
+  /* availability takes its own line */
+  [data-tags] [data-open] {
+    flex-basis: 100%;
+    justify-content: center;
+    margin-top: 6px;
+  }
+  [data-tags] [data-open]::before {
+    display: none;
+  }
+  [data-title-row],
+  html[dir="rtl"] [data-title-row] {
+    justify-content: center;
+  }
+  [data-bracket] {
+    font-size: 11.5px;
+  }
+  [data-headline] {
+    font-size: clamp(36px, 12vw, 84px);
+  }
+  html[lang="ar"] [data-headline] {
+    font-size: clamp(40px, 12.4vw, 84px);
+  }
+  [data-foot] {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  [data-pitch] {
+    justify-items: center;
+  }
+  [data-lead] {
+    font-size: 17px;
+  }
+  [data-steps] {
+    font-size: 12.5px;
+  }
+  [data-step-icon] {
+    width: 32px;
+    height: 32px;
+  }
+  [data-actions] {
+    justify-content: center;
+  }
+}

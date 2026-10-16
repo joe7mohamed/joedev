@@ -76,9 +76,11 @@ html.enhanced [data-scene][data-unpinned] + [data-scene] > [data-sticky] {
   --enter: 1;
 }
 
-/* The first scene is visible from the start; the last one never leaves. */
+/* The first scene is visible from the start and leaves by its own zoom (hero-motion.css), not by the shared fade;
+   the last one never leaves. */
 html.enhanced #hero [data-sticky] {
   --enter: 1;
+  --exit: 1;
 }
 html.enhanced #contact [data-sticky] {
   --exit: 1;
