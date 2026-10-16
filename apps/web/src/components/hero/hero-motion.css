@@ -22,7 +22,7 @@ html.enhanced [data-headline] [data-key]::after {
   color: transparent;
   -webkit-text-fill-color: transparent;
   text-shadow: none;
-  background: var(--shot) 50% 20% / cover;
+  background: var(--zoom-shot) 50% 20% / cover;
   -webkit-background-clip: text;
   background-clip: text;
   opacity: var(--img, 0);

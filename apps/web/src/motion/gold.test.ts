@@ -37,6 +37,11 @@ describe('resolveGold', () => {
     expect(resolveGold(order, at(1), 999, read)).toEqual(B);
     expect(resolveGold(order, at(1), 1000, read)).toEqual(B);
   });
+  it('blends the frame tilt in during the handoff, treating a missing tilt as none', () => {
+    const tilted: Partial<Record<SceneId, GoldShape>> = { hero: A, work: { ...B, tilt: 1 } };
+    const mid = resolveGold(order, at(0.5), 750, (id) => tilted[id] ?? null);
+    expect(mid?.tilt).toBe(0.5);
+  });
   it('returns null when nothing is registered', () => {
     expect(resolveGold(order, at(0), 0, () => null)).toBeNull();
   });

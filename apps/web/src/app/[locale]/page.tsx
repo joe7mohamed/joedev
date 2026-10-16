@@ -2,7 +2,7 @@ import { getHome, isLocale } from '@zakydev/shared';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/header/Header';
 import { Hero } from '@/components/hero/Hero';
-import { TempWorkSlot } from '@/components/work/TempWorkSlot';
+import { Work } from '@/components/work/Work';
 import { EngineProvider } from '@/motion/EngineProvider';
 import { GoldElement } from '@/motion/GoldElement';
 import { Scene } from '@/motion/Scene';
@@ -20,10 +20,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <Hero content={c.hero} projectImage={c.projects[0]?.image ?? ''} locale={locale} />
         </Scene>
         <Scene id="work" length={3.2} tail={0.4}>
-          <div data-fade>
-            <h2 className="text-4xl">{c.work.label}</h2>
-            <TempWorkSlot />
-          </div>
+          <Work work={c.work} projects={c.projects} />
         </Scene>
         <Scene id="process" length={2.6} tail={0.3}>
           <div data-fade>

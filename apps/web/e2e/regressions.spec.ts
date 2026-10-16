@@ -53,3 +53,22 @@ test('gold element re-aligns after a viewport resize', async ({ page }) => {
   expect(d.dx).toBeLessThanOrEqual(1);
   expect(d.dy).toBeLessThanOrEqual(1);
 });
+
+test('project text is fully opaque after rapid scrolling between projects', async ({ page }) => {
+  await page.goto('/ar');
+  for (const f of [0.2, 0.5, 0.85, 0.2, 0.55, 0.15, 0.9, 0.5]) {
+    await page.evaluate((fraction) => {
+      const el = document.getElementById('work') as HTMLElement;
+      window.scrollTo({
+        top: el.offsetTop + (el.offsetHeight - window.innerHeight) * 0.75 * fraction,
+        behavior: 'instant',
+      });
+    }, f);
+    await page.waitForTimeout(90);
+  }
+  await page.waitForTimeout(1500);
+  const opacities = await page
+    .locator('#work [data-current] :is(h3, p, li, a, figure)')
+    .evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)));
+  expect(Math.min(...opacities)).toBe(1);
+});

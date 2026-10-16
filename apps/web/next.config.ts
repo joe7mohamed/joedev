@@ -15,8 +15,14 @@ const config: NextConfig = {
   poweredByHeader: false,
   // the root layout lives in app/[locale]/, so unknown URLs need app/global-not-found.tsx
   experimental: { globalNotFound: true },
-  // the default is WebP only
-  images: { formats: ['image/avif', 'image/webp'] },
+  images: {
+    // the default is WebP only
+    formats: ['image/avif', 'image/webp'],
+    // The screenshots are 1280 px wide, so nothing larger is ever useful. Ending the list at 1280 also gives a
+    // 1280 px image a single srcset candidate, so the hero zoom (a CSS background) and the work frame load the
+    // same optimised URL at every viewport and pixel density (components/work/screenshot.ts).
+    deviceSizes: [640, 750, 828, 1080, 1280],
+  },
   async headers() {
     return [{ source: '/(.*)', headers: security }];
   },

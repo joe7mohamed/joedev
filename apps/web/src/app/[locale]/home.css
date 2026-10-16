@@ -98,17 +98,69 @@ html.enhanced [data-gold-layer] {
   pointer-events: none;
   overflow: clip;
 }
+/* The box sits exactly on the slot; the face inside it draws the shape and is the only part that floats and tilts. */
 html.enhanced [data-gold] {
   position: absolute;
   top: 0;
   left: 0;
-  overflow: hidden;
-  border: 2px solid var(--gold);
-  background: rgb(212 175 55 / var(--fill, 0));
   will-change: transform, width, height;
 }
-html.enhanced [data-gold][data-thin="true"] {
+html.enhanced [data-gold-face] {
+  --turn-y: calc(var(--px, 0) * 9deg);
+  --turn-x: calc(var(--py, 0) * -7deg);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 2px solid var(--gold);
+  border-radius: inherit;
+  background: rgb(212 175 55 / var(--fill, 0));
+  box-shadow: 0 40px 90px -40px rgb(0 0 0 / 0.75);
+  /* --tilt (0..1) comes from the slot: only the project frame floats, tilts with the pointer and sways */
+  transform: translateY(calc(var(--bob, 0) * 6px * var(--tilt, 0))) perspective(1100px)
+    rotateY(calc(var(--turn-y) * var(--tilt, 0))) rotateX(calc(var(--turn-x) * var(--tilt, 0)));
+}
+html.enhanced [data-gold][data-thin="true"] > [data-gold-face] {
   background: var(--gold);
+}
+@media (max-width: 860px) {
+  /* phones have no pointer to follow: the frame sways instead */
+  html.enhanced [data-gold-face] {
+    --turn-y: calc(var(--sway, 0) * 2.5deg);
+    --turn-x: 0deg;
+  }
+}
+@property --bob {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --sway {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-gold][data-tilt] > [data-gold-face] {
+    animation:
+      gold-bob 3.5s ease-in-out infinite alternate,
+      gold-sway 4.5s ease-in-out infinite alternate;
+  }
+}
+@keyframes gold-bob {
+  from {
+    --bob: -1;
+  }
+  to {
+    --bob: 1;
+  }
+}
+@keyframes gold-sway {
+  from {
+    --sway: -1;
+  }
+  to {
+    --sway: 1;
+  }
 }
 /* a scene that is not pinned has no fixed position for the gold element to sit on */
 html.enhanced:has([data-scene][data-unpinned]) [data-gold-layer] {

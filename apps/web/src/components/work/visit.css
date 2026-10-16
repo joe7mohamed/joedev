@@ -1,0 +1,206 @@
+/* The visit control (spec 5.4): on desktop a solid gold button. The loops run only in enhanced mode with motion
+   allowed. */
+[data-visit] {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px;
+  padding-inline-start: 22px;
+  overflow: hidden;
+  border: 1px solid var(--gold);
+  border-radius: 99px;
+  background: var(--gold);
+  box-shadow: 0 14px 34px -16px var(--gold);
+  color: var(--on-gold);
+  text-decoration: none;
+  transition:
+    translate var(--std) var(--ease),
+    box-shadow var(--std);
+}
+/* the light that sweeps across it */
+[data-visit]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.55) 50%, transparent 70%);
+  transform: translateX(-120%);
+}
+[data-visit] > * {
+  position: relative;
+}
+[data-visit-text] {
+  display: grid;
+  line-height: 1.25;
+  text-align: start;
+}
+[data-visit-text] small {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--on-gold);
+  font:
+    500 10.5px var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+html[lang="ar"] [data-visit-text] small {
+  font-family: var(--stack-body);
+  font-size: 12.5px;
+}
+[data-visit-text] small::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--on-gold);
+}
+[data-visit-text] b {
+  font:
+    500 15.5px var(--face-mono),
+    ui-monospace,
+    monospace;
+}
+[data-visit-arrow] {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--on-gold);
+  box-shadow: 0 0 0 0 rgb(20 18 14 / 0.45);
+  color: var(--gold);
+}
+[data-visit-arrow] svg {
+  width: 22px;
+  height: 22px;
+}
+@media (hover: hover) {
+  [data-visit]:hover {
+    translate: 0 -3px;
+    box-shadow: 0 22px 40px -16px var(--gold);
+  }
+}
+
+/* On phones: a centred row under a hairline, the address underlined in gold, and a gold arrow circle. */
+@media (max-width: 860px) {
+  [data-visit] {
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px 2px 0;
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--hair);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--ink);
+  }
+  [data-visit]::before {
+    display: none;
+  }
+  [data-visit-text] {
+    justify-items: center;
+    text-align: center;
+  }
+  [data-visit-text] small {
+    color: var(--muted);
+    opacity: 1;
+  }
+  [data-visit-text] small::before {
+    background: var(--gold);
+  }
+  [data-visit-text] b {
+    padding-bottom: 3px;
+    background: linear-gradient(var(--gold), var(--gold)) 0 100% / 100% 2px no-repeat;
+    font-size: 17px;
+  }
+  html[dir="rtl"] [data-visit-text] b {
+    background-position: 100% 100%;
+  }
+  [data-visit-arrow] {
+    background: var(--gold);
+    box-shadow: none;
+    color: var(--on-gold);
+  }
+  [data-visit]:hover {
+    translate: none;
+    box-shadow: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-visit]::before {
+    animation: visit-sweep 3.2s ease-in-out infinite;
+  }
+  html.enhanced [data-visit-arrow] {
+    animation: visit-pulse 2s ease-out infinite;
+  }
+  html.enhanced [data-visit-arrow] svg {
+    animation: visit-fly 2.2s var(--ease) infinite;
+  }
+  html.enhanced [data-visit-text] small::before {
+    animation: visit-live 1.8s ease-in-out infinite;
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 860px) {
+  html.enhanced [data-visit-text] b {
+    animation: visit-underline 2.2s var(--ease) infinite;
+  }
+  html.enhanced [data-visit-arrow] {
+    animation: none;
+  }
+}
+@keyframes visit-sweep {
+  0%,
+  55% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes visit-pulse {
+  to {
+    box-shadow: 0 0 0 12px rgb(20 18 14 / 0);
+  }
+}
+@keyframes visit-fly {
+  0%,
+  55%,
+  86%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+  70% {
+    transform: translate(14px, -14px);
+    opacity: 0;
+  }
+  71% {
+    transform: translate(-14px, 14px);
+    opacity: 0;
+  }
+}
+@keyframes visit-live {
+  50% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+}
+@keyframes visit-underline {
+  0%,
+  100% {
+    background-size: 0 2px;
+  }
+  45%,
+  80% {
+    background-size: 100% 2px;
+  }
+}

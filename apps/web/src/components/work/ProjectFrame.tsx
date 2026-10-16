@@ -1,0 +1,100 @@
+'use client';
+
+import Image from 'next/image';
+import { type RefObject, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { engine, type SceneFrame } from '@/motion/engine';
+import { smooth, stepAt } from '@/motion/math';
+import { FINE_POINTER, MOTION_OK, useMedia } from '@/motion/useMedia';
+import type { Project } from './ProjectText';
+import { SHOT } from './screenshot';
+import { addressOf } from './VisitLink';
+import './frame.css';
+
+type FrameProps = { projects: Project[]; current: number; previous: number };
+
+/**
+ * How visible the screenshots inside the gold element are. Only this scene decides (spec 6.4): they fade in over
+ * the end of the hero's handoff, stay while work's body plays, fade over the first half of work's tail, and are
+ * gone in every other scene, so nothing shows inside the ring or the contact flood.
+ */
+export const shotOpacity = (hero: SceneFrame | undefined, work: SceneFrame, scrollY: number): number => {
+  if (scrollY + 1 < work.top) return hero ? smooth((hero.out - 0.6) / 0.4) : 0;
+  return 1 - smooth(work.out / 0.5);
+};
+
+/** Writes `--shot` on the gold content and drifts the current screenshot from its top to its bottom. */
+function usePaint(target: HTMLElement | null, shots: RefObject<HTMLDivElement | null>): void {
+  useEffect(() => {
+    if (!target) return;
+    return engine.subscribe((frames, scroll) => {
+      const work = frames.get('work');
+      if (!work) return;
+      target.style.setProperty('--shot', shotOpacity(frames.get('hero'), work, scroll.y).toFixed(3));
+      const { index, local } = stepAt(work.body, shots.current?.children.length || 1);
+      const image = shots.current?.children[index] as HTMLElement | undefined;
+      if (image) image.style.objectPosition = `50% ${(local * 100).toFixed(1)}%`;
+    });
+  }, [target, shots]);
+}
+
+/** Desktop with a mouse: the frame tilts toward the pointer (home.css reads --px and --py on the gold layer). */
+function usePointerTilt(target: HTMLElement | null): void {
+  const fine = useMedia(FINE_POINTER);
+  const moving = useMedia(MOTION_OK);
+  useEffect(() => {
+    const layer = target?.closest<HTMLElement>('[data-gold-layer]');
+    if (!layer || !fine || !moving) return;
+    const onMove = (event: PointerEvent): void => {
+      if (event.pointerType !== 'mouse') return;
+      layer.style.setProperty('--px', (event.clientX / window.innerWidth - 0.5).toFixed(3));
+      layer.style.setProperty('--py', (event.clientY / window.innerHeight - 0.5).toFixed(3));
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      layer.style.removeProperty('--px');
+      layer.style.removeProperty('--py');
+    };
+  }, [target, fine, moving]);
+}
+
+/**
+ * The project frame inside the gold element (spec 5.4): a browser bar with the address, and the three screenshots
+ * stacked. The current one is uncovered, the previous one stays beneath it, and a new one wipes in from the bottom
+ * (work.css). It renders into `#gold-content`, which is aria-hidden and never takes pointer events, so the frame
+ * holds nothing interactive and its images need no alt text; the articles carry the described screenshots.
+ */
+export function ProjectFrame({ projects, current, previous }: FrameProps) {
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+  const shots = useRef<HTMLDivElement>(null);
+  useEffect(() => setTarget(document.getElementById('gold-content')), []);
+  usePaint(target, shots);
+  usePointerTilt(target);
+  const shown = projects[current];
+  if (!target || !shown) return null;
+  return createPortal(
+    <>
+      <div data-browser>
+        <i />
+        <i />
+        <i />
+        <span dir="ltr">{addressOf(shown.url)}</span>
+      </div>
+      <div ref={shots} data-shots>
+        {projects.map((p, i) => (
+          <Image
+            key={p.id}
+            src={p.image}
+            alt=""
+            {...SHOT}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            data-on={i === current || undefined}
+            data-was={(i === previous && i !== current) || undefined}
+          />
+        ))}
+      </div>
+    </>,
+    target,
+  );
+}

@@ -9,7 +9,7 @@ type HeadlineProps = {
   lines: Lines;
   /** English builds letter by letter; Arabic is never split into letters (spec 3.3). */
   byLetter: boolean;
-  /** The first project's screenshot, which fills the zoom word's letters during the zoom. */
+  /** The optimised URL of the first project's screenshot (work/screenshot.ts), which fills the zoom word's letters. */
   image: string;
 };
 
@@ -31,7 +31,7 @@ const place = (lines: Lines): Placed[][] => {
 function HeadWord({ word, index, firstLetter, byLetter, image }: Placed & Omit<HeadlineProps, 'lines'>) {
   const style =
     word.key && image
-      ? ({ ...indexed(index), '--shot': `url(${JSON.stringify(image)})` } as CSSProperties)
+      ? ({ ...indexed(index), '--zoom-shot': `url(${JSON.stringify(image)})` } as CSSProperties)
       : indexed(index);
   return (
     <span

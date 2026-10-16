@@ -47,6 +47,8 @@ export const homeContentSchema = z.object({
         description: z.string().min(1),
         meta: z.tuple([z.string().min(1), text, z.string().min(1)]),
         diagram,
+        /** The words drawn inside the diagram (prototype app.js SIGS), in the order the drawing places them. */
+        diagramLabels: z.array(z.string().min(1)).min(1),
         caption: z.string().min(1),
         tools: z.array(z.string().min(1)).min(1),
       }),

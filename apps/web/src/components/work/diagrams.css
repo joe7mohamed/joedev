@@ -1,0 +1,158 @@
+/* The "how it works" panel (spec 5.4). The resting styles are each drawing's finished still state; the loops run
+   only in enhanced mode with motion allowed. */
+
+[data-diagram] {
+  display: grid;
+  gap: 6px;
+  padding: 14px 18px;
+  border: 1px solid var(--hair);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
+}
+[data-diagram] figcaption {
+  color: var(--muted);
+  font-size: 14px;
+}
+[data-sig] {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+[data-sg~="line"] {
+  fill: none;
+  stroke: var(--hair);
+  stroke-width: 1.5;
+}
+[data-sg~="node"] {
+  fill: var(--bg);
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+[data-sg~="dot"] {
+  fill: var(--gold);
+}
+[data-sg~="cross"] {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+[data-sg~="label"] {
+  fill: var(--muted);
+  font:
+    500 10.5px var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.06em;
+}
+@media (max-width: 860px) {
+  [data-diagram] {
+    width: 100%;
+    max-width: 300px;
+    margin-inline: auto;
+    padding: 10px 14px;
+  }
+  [data-diagram] figcaption {
+    font-size: 13px;
+  }
+}
+/* the finished state of each story: the request has reached the data, B has answered, every player is lit */
+[data-sg~="run"] {
+  transform: translateX(196px);
+}
+[data-sg~="try"] {
+  transform: translate(120px, 18px);
+}
+[data-sg~="ok"] {
+  stroke: var(--gold);
+}
+[data-sg~="player"] {
+  fill: var(--gold);
+}
+[data-sg~="pulse"] {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  vector-effect: non-scaling-stroke;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-sg~="run"] {
+    animation: sg-run 3.2s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+  }
+  html.enhanced [data-sg~="try"] {
+    animation: sg-try 3.6s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+  }
+  html.enhanced [data-sg~="ok"] {
+    animation: sg-ok 3.6s infinite;
+  }
+  html.enhanced [data-sg~="pulse"] {
+    animation: sg-pulse 2.4s ease-out infinite;
+  }
+  html.enhanced [data-sg~="player"] {
+    animation: sg-blink 2.4s infinite;
+  }
+}
+@keyframes sg-run {
+  0%,
+  100% {
+    transform: none;
+  }
+  45%,
+  55% {
+    transform: translateX(196px);
+  }
+}
+@keyframes sg-try {
+  0%,
+  45%,
+  100% {
+    transform: none;
+  }
+  25% {
+    transform: translate(120px, -18px);
+  }
+  35% {
+    transform: translate(104px, -18px);
+  }
+  70%,
+  88% {
+    transform: translate(120px, 18px);
+  }
+}
+@keyframes sg-ok {
+  0%,
+  60%,
+  100% {
+    stroke: var(--muted);
+  }
+  70%,
+  90% {
+    stroke: var(--gold);
+  }
+}
+@keyframes sg-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  70%,
+  100% {
+    transform: scale(9.25);
+    opacity: 0;
+  }
+}
+@keyframes sg-blink {
+  0%,
+  55%,
+  100% {
+    fill: var(--bg);
+  }
+  68%,
+  90% {
+    fill: var(--gold);
+  }
+}

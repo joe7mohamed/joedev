@@ -32,7 +32,7 @@ export function ToolChip({ name }: { name: string }) {
   return (
     <li
       dir="ltr"
-      className="inline-flex items-center gap-2 rounded-full border border-hair px-3 py-1 font-mono text-[12.5px]"
+      className="inline-flex items-center gap-[7px] rounded-full border border-hair px-[11px] py-1 font-mono text-[12.5px] leading-[normal]"
     >
       {slug ? (
         <span

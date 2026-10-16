@@ -1,5 +1,6 @@
 import { type HomeContent, type Locale, plain } from '@zakydev/shared';
 import { icons } from '@/components/icons';
+import { shotUrl } from '@/components/work/screenshot';
 import { Headline } from './Headline';
 import { HeroMotion } from './HeroMotion';
 import { RotatingWord } from './RotatingWord';
@@ -33,7 +34,7 @@ export function Hero({ content, projectImage, locale }: HeroProps) {
           <span>{plain(content.availability)}</span>
         </li>
       </ul>
-      <Headline lines={content.headline} byLetter={!rtl} image={projectImage} />
+      <Headline lines={content.headline} byLetter={!rtl} image={projectImage ? shotUrl(projectImage) : ''} />
       <div data-side data-foot>
         <div data-pitch>
           <p data-lead>

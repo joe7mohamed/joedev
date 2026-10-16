@@ -1,7 +1,11 @@
 import type { SceneFrame, SceneId } from './engine';
 import { lerpRect, mix, type Rect, smooth } from './math';
 
-export type GoldShape = Rect & { radius: number; fill: number; round: number };
+/**
+ * `tilt` (0..1, default 0) is how much the shape behaves as the floating project frame: it scales the pointer tilt,
+ * the phone sway and the float, which move only the element's face, never the box that sits on the slot.
+ */
+export type GoldShape = Rect & { radius: number; fill: number; round: number; tilt?: number };
 type Reader = (frame: SceneFrame, layer: HTMLElement) => GoldShape;
 
 const slots = new Map<SceneId, Reader>();
@@ -59,5 +63,6 @@ export const resolveGold = (
     radius: mix(current.radius, next.radius, t),
     fill: mix(current.fill, next.fill, t),
     round: mix(current.round, next.round, t),
+    tilt: mix(current.tilt ?? 0, next.tilt ?? 0, t),
   };
 };

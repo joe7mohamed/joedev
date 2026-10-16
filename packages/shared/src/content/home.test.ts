@@ -37,6 +37,13 @@ describe('home content', () => {
     expect(plain(home.en.nav.sections)).toBe('Sections');
     expect(plain(home.ar.nav.sections)).toBe('الأقسام');
   });
+  it('labels each project diagram in both locales', () => {
+    const counts = { 'request-path': 3, 'provider-fallback': 3, 'server-sync': 1 } as const;
+    for (const l of ['en', 'ar'] as const) {
+      for (const p of home[l].projects) expect(p.diagramLabels).toHaveLength(counts[p.diagram]);
+    }
+    expect(home.en.projects[0]?.diagramLabels).toEqual(['NEXT.JS', 'NESTJS', 'MYSQL']);
+  });
   it('rejects an empty string', () => {
     const broken = structuredClone(home.ar) as Record<string, unknown>;
     (broken.nav as Record<string, unknown>).work = '';

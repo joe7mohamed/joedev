@@ -693,3 +693,47 @@ test('the English build never moves a letter', async ({ page }) => {
   expect(early.length).toBeGreaterThan(0);
   expect(settled).toEqual(early);
 });
+
+test('work shows each project with a real screenshot and a safe external link', async ({ page }) => {
+  await page.goto('/en');
+  const expected = [
+    ['Nuammer', 'https://nuammer.com'],
+    ['Wazifi', 'https://wazifi.vercel.app'],
+    ['Talmeeha', 'https://talmeeha.vercel.app'],
+  ] as const;
+  for (let i = 0; i < 3; i++) {
+    await gotoScene(page, 'work', (i + 0.5) / 3);
+    const [name, url] = expected[i] as (typeof expected)[number];
+    await expect(page.locator('#work [data-current] h3')).toHaveText(name);
+    const link = page.locator('#work [data-current]').getByRole('link', { name: /Visit live site/ });
+    await expect(link).toHaveAttribute('href', url);
+    await expect(link).toHaveAttribute('rel', /noopener/);
+    await expect(link).toHaveAttribute('target', '_blank');
+  }
+});
+
+test('project bars are buttons that jump to a project', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'work', 0.1);
+  await page.locator('#work').getByRole('button', { name: 'Talmeeha' }).click();
+  await expect(page.locator('#work [data-current] h3')).toHaveText('Talmeeha');
+});
+
+// Controller ruling: the hero zoom and the work frame share one optimised URL for the first screenshot.
+test('the first screenshot is downloaded once for the hero zoom and the work frame', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('nuammer')) requests.push(request.url());
+  });
+  await page.goto('/en');
+  await gotoScene(page, 'hero', 0.6);
+  await gotoScene(page, 'work', 0.17);
+  const shot = page.locator('#gold-content img').first();
+  await expect
+    .poll(() =>
+      shot.evaluate((img) => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth),
+    )
+    .toBeGreaterThan(0);
+  await page.waitForTimeout(500);
+  expect(requests, requests.join('\n')).toHaveLength(1);
+});
