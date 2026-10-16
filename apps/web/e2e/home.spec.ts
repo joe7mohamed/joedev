@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { gotoScene, progressOf, test } from './helpers';
 
 const sections = ['hero', 'work', 'process', 'about', 'contact'];
@@ -52,6 +52,10 @@ test('reduced motion gives a stacked page, also when switched on later', async (
   await expect(page.locator('html')).toHaveClass(/enhanced/);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.locator('html')).not.toHaveClass(/enhanced/);
+  await expect(page.locator('#work')).not.toHaveAttribute('data-state');
+  expect(await page.locator('#work').evaluate((el) => el.style.getPropertyValue('--p'))).toBe('');
+  const restacked = await page.locator('#work [data-sticky]').evaluate((el) => getComputedStyle(el).position);
+  expect(restacked).not.toBe('sticky');
 });
 
 test('a scene whose content does not fit is not pinned', async ({ page }) => {
@@ -68,15 +72,21 @@ test('a scene whose content does not fit is not pinned', async ({ page }) => {
   }
 });
 
-// Chromium reports scrollHeight === clientHeight for any `overflow: clip` box, so the test above cannot see
-// clipping on its own: this one checks that every scene's content sits inside its box.
-test('large text makes a scene flow instead of overflowing its pinned box', async ({ page }) => {
+/** A short landscape screen with doubled text: some scenes no longer fit and must flow. */
+const largeText = async (page: Page): Promise<void> => {
   await page.setViewportSize({ width: 820, height: 360 });
   await page.goto('/ar');
   await expect(page.locator('html')).toHaveClass(/enhanced/);
   await page.addStyleTag({ content: 'html{font-size:200%}' });
   await page.evaluate(() => window.dispatchEvent(new Event('resize')));
   await page.waitForTimeout(400);
+};
+
+// Under `overflow: clip`, scrollHeight on this centred flex box ignores overflow into the padding area and
+// leading-edge overflow, so the test above cannot see content pushed under the header zone or into the bottom
+// padding: this one checks that every scene's content sits inside its padding box.
+test('large text makes a scene flow instead of overflowing its pinned box', async ({ page }) => {
+  await largeText(page);
   for (const id of sections) {
     const overflow = await page.locator(`#${id} [data-sticky]`).evaluate((el) => {
       const style = getComputedStyle(el);
@@ -96,6 +106,105 @@ test('large text makes a scene flow instead of overflowing its pinned box', asyn
     .evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)));
   expect(opacities.length).toBeGreaterThan(0);
   expect(opacities).toEqual(opacities.map(() => 1));
+});
+
+test('with scenes that flow, some scene is always active', async ({ page }) => {
+  await largeText(page);
+  await expect(page.locator('[data-unpinned]')).not.toHaveCount(0);
+  const total = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+  for (let y = 0; y <= total; y += Math.round(total / 60)) {
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+    await page.waitForTimeout(60);
+    const active = await page.locator('[data-scene][data-state="active"]').count();
+    expect(active, `scroll ${y}`).toBeGreaterThanOrEqual(1);
+  }
+});
+
+test('keyboard focus inside a scene that flows does not move the page', async ({ page }) => {
+  await largeText(page);
+  await expect(page.locator('#contact')).toHaveAttribute('data-unpinned', 'true');
+  await page.evaluate(() =>
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }),
+  );
+  await page.waitForTimeout(300);
+  const link = page.locator('#contact a[href^="mailto:"]');
+  const inView = async (): Promise<void> => {
+    const box = await link.boundingBox();
+    const height = page.viewportSize()?.height ?? 0;
+    expect(box?.y ?? -1).toBeGreaterThanOrEqual(0);
+    expect((box?.y ?? 0) + (box?.height ?? Number.POSITIVE_INFINITY)).toBeLessThanOrEqual(height);
+  };
+  await inView();
+  const y = await page.evaluate(() => window.scrollY);
+  await link.focus();
+  await page.waitForTimeout(900);
+  await inView();
+  expect(await page.evaluate(() => window.scrollY)).toBe(y);
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await page.waitForTimeout(900);
+  await expect(link).toBeFocused();
+  await inView();
+  expect(await page.evaluate(() => window.scrollY)).toBe(y);
+});
+
+test('finished scenes stay in the accessibility tree', async ({ page }) => {
+  await page.goto('/en');
+  await expect(page.locator('html')).toHaveClass(/enhanced/);
+  await gotoScene(page, 'contact', 1);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+  await expect(page.getByRole('heading', { level: 2 })).toHaveCount(4);
+  const visibility = await page
+    .locator('#hero [data-sticky]')
+    .evaluate((el) => getComputedStyle(el).visibility);
+  expect(visibility).toBe('visible');
+});
+
+test('a scene whose content has faded out cannot be clicked', async ({ page }) => {
+  await page.goto('/en');
+  await expect(page.locator('html')).toHaveClass(/enhanced/);
+  await gotoScene(page, 'work', 0.5);
+  await expect(page.locator('#work')).not.toHaveAttribute('data-faded');
+  // 80% into the tail: still the active scene, but its content is gone
+  await page.evaluate(() => {
+    const el = document.getElementById('work') as HTMLElement;
+    const viewport = (el.querySelector('[data-sticky]') as HTMLElement).getBoundingClientRect().height;
+    const box = el.getBoundingClientRect();
+    const tail = Number(el.dataset.tail) * viewport;
+    window.scrollTo({
+      top: box.top + window.scrollY + box.height - viewport - tail * 0.2,
+      behavior: 'instant',
+    });
+  });
+  await page.waitForTimeout(700);
+  await expect(page.locator('#work')).toHaveAttribute('data-state', 'active');
+  await expect(page.locator('#work')).toHaveAttribute('data-faded', 'true');
+  const events = await page
+    .locator('#work [data-sticky]')
+    .evaluate((el) => getComputedStyle(el).pointerEvents);
+  expect(events).toBe('none');
+});
+
+test('a link to the hash already in the address lands on readable content', async ({ page }) => {
+  await page.goto('/en#process');
+  await page.waitForTimeout(900);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await page.evaluate(() => {
+    const link = document.createElement('a');
+    link.href = '#process';
+    link.id = 'jump';
+    link.textContent = 'Process';
+    link.style.cssText = 'position:fixed;top:0;left:0;z-index:10;padding:12px;background:#000';
+    document.body.append(link);
+  });
+  await page.locator('#jump').click();
+  await page.waitForTimeout(1200);
+  await expect(page).toHaveURL(/#process$/);
+  const opacity = await page
+    .locator('#process [data-fade]')
+    .first()
+    .evaluate((el) => Number(getComputedStyle(el).opacity));
+  expect(opacity).toBe(1);
 });
 
 test('without JavaScript every section is readable', async ({ browser }) => {

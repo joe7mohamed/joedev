@@ -42,13 +42,9 @@ html.enhanced [data-sticky] {
 html.enhanced [data-sticky] > [data-fade] {
   opacity: calc(var(--enter) * var(--exit));
 }
-/* a finished scene is still in the layout under the next one: take it out of the way */
-html.enhanced [data-scene][data-state="after"] [data-sticky],
-html.enhanced [data-scene][data-state="before"] [data-sticky] {
+/* Faded content stays in the accessibility tree and the focus order, but cannot be clicked. */
+html.enhanced [data-scene][data-faded] [data-sticky] {
   pointer-events: none;
-}
-html.enhanced [data-scene][data-state="after"] [data-sticky] {
-  visibility: hidden;
 }
 
 /* Content that does not fit a pinned scene flows naturally instead of being clipped. */
@@ -56,7 +52,7 @@ html.enhanced [data-scene][data-unpinned] {
   height: auto;
   margin-top: 0;
 }
-/* the next scene must not overlap the last viewport of a scene that flows */
+/* the next scene must not overlap the last viewport of a scene that flows, and arrives already visible */
 html.enhanced [data-scene][data-unpinned] + [data-scene] {
   margin-top: 0;
 }
@@ -64,10 +60,11 @@ html.enhanced [data-scene][data-unpinned] [data-sticky] {
   position: relative;
   height: auto;
   overflow: visible;
-  visibility: visible;
-  pointer-events: auto;
   --enter: 1;
   --exit: 1;
+}
+html.enhanced [data-scene][data-unpinned] + [data-scene] > [data-sticky] {
+  --enter: 1;
 }
 
 /* The first scene is visible from the start; the last one never leaves. */

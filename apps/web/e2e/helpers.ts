@@ -24,7 +24,8 @@ export const gotoScene = async (page: Page, id: string, fraction: number): Promi
       const viewport = sticky.clientHeight || window.innerHeight;
       const travel = Math.max(0, el.offsetHeight - viewport);
       const body = Math.max(0, travel - Number(el.dataset.tail ?? 0) * viewport);
-      window.scrollTo({ top: el.offsetTop + body * (f as number), behavior: 'instant' });
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: top + body * (f as number), behavior: 'instant' });
     },
     [id, fraction] as const,
   );
