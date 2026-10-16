@@ -207,6 +207,60 @@ test('a link to the hash already in the address lands on readable content', asyn
   expect(opacity).toBe(1);
 });
 
+test('the visible scene receives clicks, not the section that follows it', async ({ page }) => {
+  await page.goto('/en');
+  await expect(page.locator('html')).toHaveClass(/enhanced/);
+  for (const [id, fraction] of [
+    ['work', 0.97],
+    ['process', 0.5],
+  ] as const) {
+    await gotoScene(page, id, fraction);
+    const hit = await page
+      .locator(`#${id} [data-fade]`)
+      .first()
+      .evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        const target = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        return target?.closest('[data-scene]')?.id ?? null;
+      });
+    expect(hit, id).toBe(id);
+  }
+});
+
+test('content stays on screen next to a scene that flows', async ({ page }) => {
+  await largeText(page);
+  await expect(page.locator('#about')).not.toHaveAttribute('data-unpinned');
+  await expect(page.locator('#contact')).toHaveAttribute('data-unpinned', 'true');
+  const total = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+  let checked = 0;
+  for (let y = 0; y <= total; y += Math.round(total / 60)) {
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+    await page.waitForTimeout(60);
+    // null during a crossfade between two pinned scenes, where both may legitimately be near 0
+    const readable = await page.evaluate(() => {
+      const scenes = [...document.querySelectorAll<HTMLElement>('[data-scene]')];
+      const pinned = (el?: HTMLElement): boolean => Boolean(el) && !el?.hasAttribute('data-unpinned');
+      const crossfade = scenes.some((scene, i) => {
+        if (scene.dataset.state !== 'active' || !pinned(scene)) return false;
+        const style = getComputedStyle(scene);
+        const leaving = Number(style.getPropertyValue('--out')) > 0 && pinned(scenes[i + 1]);
+        const entering = Number(style.getPropertyValue('--p')) < 0.04 && pinned(scenes[i - 1]);
+        return leaving || entering;
+      });
+      if (crossfade) return null;
+      return [...document.querySelectorAll('[data-fade]')].some((el) => {
+        const box = el.getBoundingClientRect();
+        const onScreen = box.bottom > 0 && box.top < window.innerHeight;
+        return onScreen && Number(getComputedStyle(el).opacity) >= 0.99;
+      });
+    });
+    if (readable === null) continue;
+    checked += 1;
+    expect(readable, `scroll ${y}`).toBe(true);
+  }
+  expect(checked).toBeGreaterThan(0);
+});
+
 test('without JavaScript every section is readable', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();

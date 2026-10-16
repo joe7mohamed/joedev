@@ -23,6 +23,7 @@ type Geometry = {
   tail: number;
   unpinned: boolean;
   afterUnpinned: boolean;
+  beforeUnpinned: boolean;
 };
 type Entry = {
   section: HTMLElement;
@@ -68,7 +69,7 @@ const stateOf = (id: SceneId, top: number, g: Geometry): State => {
 const fadedOut = (id: SceneId, body: number, out: number, g: Geometry): boolean => {
   if (g.unpinned) return false;
   const entering = id !== FIRST && !g.afterUnpinned && body < ENTER;
-  const leaving = id !== LAST && out > EXIT;
+  const leaving = id !== LAST && !g.beforeUnpinned && out > EXIT;
   return entering || leaving;
 };
 
@@ -103,6 +104,12 @@ const fitScenes = (): void => {
     const box = section.getBoundingClientRect();
     const viewport = viewports.get(id) ?? window.innerHeight;
     const previous = section.previousElementSibling;
+    const next = section.nextElementSibling;
+    const beforeUnpinned =
+      !section.hasAttribute('data-unpinned') && (next?.hasAttribute('data-unpinned') ?? false);
+    // a pinned scene right before one that flows keeps its content until that one scrolls in (home.css)
+    if (beforeUnpinned) section.setAttribute('data-next-unpinned', 'true');
+    else section.removeAttribute('data-next-unpinned');
     entry.geometry = {
       top: box.top + window.scrollY,
       height: box.height,
@@ -110,6 +117,7 @@ const fitScenes = (): void => {
       tail: Number(section.dataset.tail ?? 0) * viewport,
       unpinned: section.hasAttribute('data-unpinned'),
       afterUnpinned: previous?.hasAttribute('data-unpinned') ?? false,
+      beforeUnpinned,
     };
   }
 };
@@ -195,7 +203,15 @@ const observe = (entry: Entry): void => {
   observer?.observe(entry.sticky);
 };
 
-const EMPTY: Geometry = { top: 0, height: 0, viewport: 0, tail: 0, unpinned: false, afterUnpinned: false };
+const EMPTY: Geometry = {
+  top: 0,
+  height: 0,
+  viewport: 0,
+  tail: 0,
+  unpinned: false,
+  afterUnpinned: false,
+  beforeUnpinned: false,
+};
 
 export const engine = {
   register(id: SceneId, section: HTMLElement, sticky: HTMLElement): () => void {
@@ -250,6 +266,7 @@ export const engine = {
     for (const entry of scenes.values()) {
       for (const name of ['--p', '--out', '--full', 'data-state', 'data-faded']) write(entry, name, null);
       entry.section.removeAttribute('data-unpinned');
+      entry.section.removeAttribute('data-next-unpinned');
       entry.written.clear();
     }
   },

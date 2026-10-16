@@ -11,10 +11,12 @@
   position: relative;
 }
 
-/* Enhanced: each section is a tall block with a pinned full-height scene. */
+/* Enhanced: each section is a tall block with a pinned full-height scene. Sections overlap by a viewport,
+   so only scene content takes clicks, never a section's box. */
 html.enhanced [data-scene] {
   height: calc(var(--len) * 100svh);
   padding: 0;
+  pointer-events: none;
 }
 html.enhanced [data-scene] + [data-scene] {
   margin-top: -100svh;
@@ -28,6 +30,7 @@ html.enhanced [data-sticky] {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  pointer-events: auto;
   /* content appears just after the scene starts and leaves in the first third of its tail */
   --enter: clamp(0, calc(var(--p, 0) / 0.04), 1);
   --exit: calc(1 - clamp(0, calc(var(--out, 0) / 0.35), 1));
@@ -51,8 +54,9 @@ html.enhanced [data-scene][data-faded] [data-sticky] {
 html.enhanced [data-scene][data-unpinned] {
   height: auto;
   margin-top: 0;
+  pointer-events: auto;
 }
-/* the next scene must not overlap the last viewport of a scene that flows, and arrives already visible */
+/* the next scene must not overlap the last viewport of a scene that flows */
 html.enhanced [data-scene][data-unpinned] + [data-scene] {
   margin-top: 0;
 }
@@ -61,6 +65,11 @@ html.enhanced [data-scene][data-unpinned] [data-sticky] {
   height: auto;
   overflow: visible;
   --enter: 1;
+  --exit: 1;
+}
+/* Neighbours of a scene that flows never fade toward it: the one before keeps its content, the one after
+   arrives visible. */
+html.enhanced [data-scene][data-next-unpinned] > [data-sticky] {
   --exit: 1;
 }
 html.enhanced [data-scene][data-unpinned] + [data-scene] > [data-sticky] {
