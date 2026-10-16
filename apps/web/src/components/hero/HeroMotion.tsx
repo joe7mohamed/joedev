@@ -12,8 +12,11 @@ import { trackPointerWeight } from './pointerWeight';
 const POINTER_UNTIL = 0.12;
 /** Spec 5.0: the underline is 4–7 px high. */
 const MIN_LINE = 4;
-/** The underline draws in once the headline has built (prototype `play()`: delay 1.05 s, 0.9 s). */
-const DRAW_DELAY = 1050;
+/**
+ * The underline draws in once the headline has built (prototype `play()`: delay 1.05 s, 0.9 s). The build starts
+ * with the first paint (hero-intro.css), so the delay is counted on the page clock, from navigation start.
+ */
+const DRAW_AT = 1050;
 const DRAW_MS = 900;
 const inOut = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
@@ -41,7 +44,7 @@ const measure = ({ h1, key, sticky }: Parts): Geometry => {
   return { cx: b.left - s.left + kx, cy: b.top - s.top + ky, w: sticky.clientWidth, h: sticky.clientHeight };
 };
 
-/** Writes the hero's scroll state as custom properties; hero.css turns them into styles under html.enhanced. */
+/** Writes the hero's scroll state as custom properties; hero-motion.css turns them into styles under html.enhanced. */
 const paint = ({ root, h1 }: Parts, g: Geometry, progress: number): void => {
   const z = range(progress, 0.1, 0.8);
   const pull = smooth(z * 1.5);
@@ -54,6 +57,79 @@ const paint = ({ root, h1 }: Parts, g: Geometry, progress: number): void => {
   h1.style.setProperty('--shown', (1 - range(z, 0.84, 0.16)).toFixed(3));
   root.style.setProperty('--side', side.toFixed(3));
   root.toggleAttribute('data-side-off', side < 0.5);
+};
+
+type Zoom = { apply(f: SceneFrame): void; remeasure(): void };
+
+/** Draws the underline in, from DRAW_AT on the page clock; reads 1 at once when motion is reduced. */
+const startDrawIn = (): { drawn(): number; stop(): void } => {
+  let drawn = window.matchMedia(MOTION_OK).matches ? 0 : 1;
+  let raf = 0;
+  const draw = (now: number): void => {
+    drawn = inOut(clamp((now - DRAW_AT) / DRAW_MS));
+    engine.invalidate();
+    raf = drawn < 1 ? requestAnimationFrame(draw) : 0;
+  };
+  if (drawn < 1) raf = requestAnimationFrame(draw);
+  return { drawn: () => drawn, stop: () => cancelAnimationFrame(raf) };
+};
+
+/**
+ * The hero's gold slot: the underline under the zoom word. This is a live slot (spec 6.4): it reads layout every
+ * frame, because the slot sits inside the zooming h1, and before reading it applies the zoom for the same frame.
+ * The gold element subscribes to the engine before the hero does, so it would otherwise read last frame's zoom.
+ * `zoom.apply` is idempotent per progress value and only writes the hero's custom properties.
+ */
+const registerHeroSlot = (parts: Parts, zoom: Zoom, drawn: () => number, rtl: boolean): (() => void) =>
+  registerSlot('hero', (f, layer) => {
+    zoom.apply(f);
+    const r = pinnedRect(parts.slot, f.sticky, layer);
+    const w = r.w * drawn();
+    return {
+      x: rtl ? r.x + r.w - w : r.x,
+      y: r.y,
+      w,
+      h: Math.max(MIN_LINE, r.h),
+      radius: 2,
+      fill: 0,
+      round: 0,
+    };
+  });
+
+/** The scroll zoom: measures the zoom word once per resize or font load, then only does arithmetic per frame. */
+const createZoom = (parts: Parts, onLive: (live: boolean) => void): Zoom => {
+  let geometry = measure(parts);
+  let last = Number.NaN;
+  const section = parts.root.closest('[data-scene]');
+  return {
+    apply(f) {
+      // a hero that flows (large text, short screens) does not zoom
+      const unpinned = section?.hasAttribute('data-unpinned') ?? false;
+      onLive(f.progress < POINTER_UNTIL && !unpinned);
+      const progress = unpinned ? 0 : f.progress;
+      if (progress === last) return;
+      last = progress;
+      paint(parts, geometry, progress);
+    },
+    remeasure() {
+      geometry = measure(parts);
+      last = Number.NaN;
+      engine.invalidate();
+    },
+  };
+};
+
+/** Re-measures whenever the scene, the hero column or the headline changes size, and when fonts load. */
+const watchLayout = (parts: Parts, remeasure: () => void): (() => void) => {
+  const observer = new ResizeObserver(remeasure);
+  for (const el of [parts.sticky, parts.root, parts.h1]) observer.observe(el);
+  const fonts = document.fonts;
+  fonts?.ready.then(remeasure).catch(() => undefined);
+  fonts?.addEventListener('loadingdone', remeasure);
+  return () => {
+    observer.disconnect();
+    fonts?.removeEventListener('loadingdone', remeasure);
+  };
 };
 
 /**
@@ -81,54 +157,14 @@ export function HeroMotion({
   useEffect(() => {
     const parts = partsOf(root.current);
     if (!parts) return;
-    let geometry = measure(parts);
-    let last = Number.NaN;
-    let drawn = window.matchMedia(MOTION_OK).matches ? 0 : 1;
-    let raf = 0;
-    /** Idempotent per progress value, so the gold reader and the frame callback can both call it. */
-    const section = parts.root.closest('[data-scene]');
-    const apply = (f: SceneFrame): void => {
-      // a hero that flows (large text, short screens) does not zoom
-      const unpinned = section?.hasAttribute('data-unpinned') ?? false;
-      const progress = unpinned ? 0 : f.progress;
-      const wasLive = live.current;
-      live.current = f.progress < POINTER_UNTIL && !unpinned;
-      if (wasLive && !live.current) weight.current?.clear();
-      if (progress === last) return;
-      last = progress;
-      paint(parts, geometry, progress);
-    };
-    frameRef.current = apply;
-    const remeasure = (): void => {
-      geometry = measure(parts);
-      last = Number.NaN;
-      engine.invalidate();
-    };
-    const observer = new ResizeObserver(remeasure);
-    observer.observe(parts.sticky);
-    observer.observe(parts.h1);
-    document.fonts?.ready.then(remeasure).catch(() => undefined);
-    const start = performance.now() + DRAW_DELAY;
-    const draw = (now: number): void => {
-      drawn = inOut(clamp((now - start) / DRAW_MS));
-      engine.invalidate();
-      raf = drawn < 1 ? requestAnimationFrame(draw) : 0;
-    };
-    if (drawn < 1) raf = requestAnimationFrame(draw);
-    const unregister = registerSlot('hero', (f, layer) => {
-      apply(f); // the zoom of this frame must be in place before the slot is read
-      const r = pinnedRect(parts.slot, f.sticky, layer);
-      const w = r.w * drawn;
-      return {
-        x: rtl ? r.x + r.w - w : r.x,
-        y: r.y,
-        w,
-        h: Math.max(MIN_LINE, r.h),
-        radius: 2,
-        fill: 0,
-        round: 0,
-      };
+    const zoom = createZoom(parts, (now) => {
+      if (live.current && !now) weight.current?.clear();
+      live.current = now;
     });
+    frameRef.current = zoom.apply;
+    const unwatch = watchLayout(parts, zoom.remeasure);
+    const drawIn = startDrawIn();
+    const unregister = registerHeroSlot(parts, zoom, drawIn.drawn, rtl);
     // a control that fades out with the scroll is brought back into view when it receives keyboard focus
     const onFocus = (): void => {
       if (Number(parts.root.style.getPropertyValue('--side') || 1) < 0.99)
@@ -136,8 +172,8 @@ export function HeroMotion({
     };
     parts.root.addEventListener('focusin', onFocus);
     return () => {
-      cancelAnimationFrame(raf);
-      observer.disconnect();
+      drawIn.stop();
+      unwatch();
       unregister();
       parts.root.removeEventListener('focusin', onFocus);
       frameRef.current = () => undefined;

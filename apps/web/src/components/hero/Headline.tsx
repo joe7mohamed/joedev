@@ -30,7 +30,9 @@ const place = (lines: Lines): Placed[][] => {
 
 function HeadWord({ word, index, firstLetter, byLetter, image }: Placed & Omit<HeadlineProps, 'lines'>) {
   const style =
-    word.key && image ? ({ ...indexed(index), '--shot': `url(${image})` } as CSSProperties) : indexed(index);
+    word.key && image
+      ? ({ ...indexed(index), '--shot': `url(${JSON.stringify(image)})` } as CSSProperties)
+      : indexed(index);
   return (
     <span
       data-word

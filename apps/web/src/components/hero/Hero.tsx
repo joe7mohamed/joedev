@@ -6,6 +6,7 @@ import { RotatingWord } from './RotatingWord';
 import { StepStrip } from './StepStrip';
 import { TypedTitle } from './TypedTitle';
 import './hero.css';
+import './hero-intro.css';
 import './hero-motion.css';
 import '@/components/button.css';
 

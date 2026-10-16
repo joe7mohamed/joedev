@@ -8,8 +8,9 @@ const EVERY_MS = 2400;
 
 /**
  * The sentence with its rotating last word, which flips to the next one every 2.4 s. Without motion it shows
- * the first word, still. Assistive technology reads the sentence with the first word; the flipping text is
- * hidden from it.
+ * the first word, still. Every word sits invisibly in the same grid cell, so the widest one reserves the width
+ * and the sentence never changes its line count while words flip. Assistive technology reads the sentence with
+ * the first word; the flipping text is hidden from it.
  */
 export function RotatingWord({ sentence, words }: { sentence: string; words: string[] }) {
   const moving = useMedia(MOTION_OK);
@@ -28,6 +29,11 @@ export function RotatingWord({ sentence, words }: { sentence: string; words: str
       <span aria-hidden="true">
         {sentence}{' '}
         <span data-rot>
+          {words.map((w) => (
+            <span key={w} data-sizer>
+              {w}
+            </span>
+          ))}
           <Swap value={words[index] ?? ''} />
         </span>
       </span>

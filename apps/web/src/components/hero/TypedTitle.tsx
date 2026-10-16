@@ -1,11 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { initialTyper, stepTyper, type TyperState, textOf } from '@/motion/typer';
+import { useEffect, useRef, useState } from 'react';
+import { HOLD_MS, stepTyper, type TyperState, textOf } from '@/motion/typer';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
 
-/** Typing starts once the brackets have slid in (prototype `typeRole`). */
-const START_MS = 650;
+/** The row around the title has faded in by then (hero-intro.css: 1.05 s delay + 0.9 s), on the page clock. */
+const ROW_SHOWN_MS = 1950;
+/** While paused (tab hidden, hero scrolled away) the title waits in place and checks again this often. */
+const PAUSE_MS = 400;
+
+/** The server-rendered first title, fully shown and holding, so hydration never cuts it back to one letter. */
+const holdingFirst = (titles: string[]): TyperState => ({
+  index: 0,
+  shown: (titles[0] ?? '').length,
+  phase: 'holding',
+});
 
 /**
  * The title typed between the mark's brackets `< … />`, alternating between the titles. Without motion it is
@@ -14,25 +23,35 @@ const START_MS = 650;
  */
 export function TypedTitle({ titles, dir }: { titles: string[]; dir: 'ltr' | 'rtl' }) {
   const moving = useMedia(MOTION_OK);
-  const [typer, setTyper] = useState<TyperState | null>(null);
+  const [typer, setTyper] = useState<TyperState>(() => holdingFirst(titles));
+  const node = useRef<HTMLSpanElement>(null);
   useEffect(() => {
-    setTyper(null);
+    const first = holdingFirst(titles);
+    setTyper(first);
     if (!moving || titles.length < 2) return;
+    const scene = node.current?.closest<HTMLElement>('[data-scene]');
+    // before the engine runs a scene has no state; it counts as active
+    const paused = (): boolean => document.hidden || (scene?.dataset.state ?? 'active') !== 'active';
     let timer = 0;
     // each tick shows the next state at once; its delay is how long that state stays
     const tick = (state: TyperState): void => {
+      if (paused()) {
+        timer = window.setTimeout(() => tick(state), PAUSE_MS);
+        return;
+      }
       const next = stepTyper(state, titles);
       setTyper(next.state);
       timer = window.setTimeout(() => tick(next.state), next.delay);
     };
-    timer = window.setTimeout(() => tick(initialTyper), START_MS);
+    // the first title holds for the usual time once the row is visible
+    const hold = Math.max(0, ROW_SHOWN_MS - performance.now()) + HOLD_MS;
+    timer = window.setTimeout(() => tick(first), hold);
     return () => window.clearTimeout(timer);
   }, [moving, titles]);
-  const shown = typer ? textOf(typer, titles) : (titles[0] ?? '');
   return (
     <>
       <span className="sr-only">{titles[0]}</span>
-      <span data-title aria-hidden="true">
+      <span ref={node} data-title aria-hidden="true">
         {titles.map((t) => (
           <span key={t} data-sizer>
             {'< '}
@@ -43,7 +62,7 @@ export function TypedTitle({ titles, dir }: { titles: string[]; dir: 'ltr' | 'rt
         <span data-title-row>
           <span data-bracket="open">{'<'}</span>
           <span data-typed dir={dir}>
-            {shown}
+            {textOf(typer, titles)}
           </span>
           <span data-bracket="close">{'/>'}</span>
         </span>

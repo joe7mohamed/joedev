@@ -1,52 +1,6 @@
-/* Hero motion (spec 5.3), only under html.enhanced. Every animation fills backwards only, so its end state is
-   the element's own resting style and an interrupted one still ends visible. HeroMotion writes the scroll state
-   as custom properties: --zx/--zy/--zs (zoom), --others, --img, --shown (headline), --side (around it). */
-
-/* Load: English rises letter by letter while its weight and softness settle; Arabic rises word by word. */
-html.enhanced [data-headline="words"] [data-word] {
-  animation: hero-word 0.95s cubic-bezier(0.215, 0.61, 0.355, 1) backwards;
-  animation-delay: calc(150ms + var(--i, 0) * 100ms);
-}
-/* The visible English letter is drawn by ::before over its own transparent glyph, which keeps the resting
-   width: weight changes (load, pointer) never move the layout. Forced colours keep the plain text. */
-@media (forced-colors: none) {
-  html.enhanced [data-headline="letters"] [data-ch] {
-    -webkit-text-fill-color: transparent;
-    text-shadow: none;
-    animation: hero-letter 0.95s cubic-bezier(0.215, 0.61, 0.355, 1) backwards;
-    animation-delay: calc(150ms + var(--i, 0) * 28ms);
-  }
-  html.enhanced [data-headline="letters"] [data-ch]::before {
-    content: attr(data-c);
-    position: absolute;
-    inset: 0;
-    text-align: center;
-    -webkit-text-fill-color: currentColor;
-    text-shadow: var(--hero-shadow);
-    font-variation-settings: var(--fv, "wght" 560, "SOFT" 0);
-    transition: font-variation-settings 0.35s var(--ease);
-    animation: hero-weight 1.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) 150ms backwards;
-  }
-}
-@keyframes hero-letter {
-  from {
-    opacity: 0;
-    transform: perspective(700px) translateY(115%) rotateX(-85deg);
-  }
-}
-@keyframes hero-word {
-  from {
-    opacity: 0;
-    transform: translateY(115%);
-  }
-}
-@keyframes hero-weight {
-  from {
-    font-variation-settings:
-      "wght" 220,
-      "SOFT" 100;
-  }
-}
+/* Hero motion driven by the app (spec 5.3), only under html.enhanced: the scroll state HeroMotion writes as
+   custom properties (--zx/--zy/--zs zoom, --others, --img, --shown headline, --side around it) and the loops.
+   The one-shot load build is in hero-intro.css. */
 
 /* Scroll: the headline swells around the zoom word, the other words fade, the zoom word fills with the first
    project's screenshot, and the headline is gone by the end of the zoom. */
@@ -75,7 +29,7 @@ html.enhanced [data-headline] [data-key]::after {
   pointer-events: none;
 }
 
-/* Everything around the headline fades in after it builds and leaves as the zoom starts. */
+/* Everything around the headline leaves as the zoom starts. */
 html.enhanced [data-hero] [data-side] {
   opacity: var(--side, 1);
   translate: 0 calc((var(--side, 1) - 1) * 24px);
@@ -83,31 +37,8 @@ html.enhanced [data-hero] [data-side] {
 html.enhanced [data-hero][data-side-off] [data-side] {
   pointer-events: none;
 }
-html.enhanced [data-hero] [data-side] > * {
-  animation: hero-in 0.9s cubic-bezier(0.65, 0, 0.35, 1) 1.05s backwards;
-}
-@keyframes hero-in {
-  from {
-    opacity: 0;
-  }
-}
 
-/* The title: brackets slide in, a caret blinks after the typed text. */
-html.enhanced [data-bracket] {
-  animation: hero-bracket 0.8s var(--ease) backwards;
-}
-html.enhanced [data-bracket="open"] {
-  --from: -18px;
-}
-html.enhanced [data-bracket="close"] {
-  --from: 18px;
-}
-@keyframes hero-bracket {
-  from {
-    opacity: 0;
-    transform: translateX(var(--from, 0));
-  }
-}
+/* The title: a caret blinks after the typed text. */
 html.enhanced [data-typed]::after {
   content: "";
   display: inline-block;

@@ -451,6 +451,8 @@ for (const path of ['/en', '/ar']) {
   }) => {
     await page.goto(path);
     await gotoScene(page, 'hero', 0);
+    // the Arabic display face is not preloaded; a late swap changes the word's width for one frame
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
     const measure = () =>
       page.evaluate(() => {
         const g = (document.querySelector('[data-gold]') as HTMLElement).getBoundingClientRect();
@@ -460,16 +462,17 @@ for (const path of ['/en', '/ar']) {
           k: { x: k.left, y: k.top, w: k.width, h: k.height },
         };
       });
-    // the line is drawn in after the headline builds
+    // the line is drawn in after the headline builds; wait until it is fully drawn (in RTL it grows from the
+    // right, so an unfinished draw also shows as an offset start edge)
     await expect
       .poll(
         async () => {
           const { g, k } = await measure();
-          return Math.abs(g.w - k.w);
+          return Math.max(Math.abs(g.w - k.w), Math.abs(g.x - k.x));
         },
         { timeout: 5000 },
       )
-      .toBeLessThanOrEqual(2);
+      .toBeLessThanOrEqual(1);
     const { g, k } = await measure();
     expect(g.h).toBeLessThan(12);
     expect(Math.abs(g.x - k.x)).toBeLessThanOrEqual(1);
@@ -495,4 +498,117 @@ test('with reduced motion the hero is fully visible and still', async ({ page })
     const transform = await page.locator('#hero h1').evaluate((el) => getComputedStyle(el).transform);
     expect(transform).toBe('none');
   }
+});
+
+type Samples = { at: string; values: number[] }[];
+
+// The server paints the hero; the build must already be running then, so the app taking over (html.enhanced)
+// never sends a visible letter back to transparent.
+for (const path of ['/en', '/ar']) {
+  test(`the headline builds from first paint and never restarts on ${path}`, async ({ page }) => {
+    await page.addInitScript(() => {
+      const samples: Samples = [];
+      (window as unknown as { heroSamples: Samples }).heroSamples = samples;
+      const sample = (at: string): void => {
+        const els = [...document.querySelectorAll('#hero [data-ch], #hero [data-word]')];
+        samples.push({ at, values: els.map((el) => Number(getComputedStyle(el).opacity)) });
+      };
+      let painted = false;
+      let enhanced = false;
+      new MutationObserver(() => {
+        if (!painted && document.querySelector('#hero [data-foot]')) {
+          painted = true;
+          requestAnimationFrame(() => sample('paint'));
+        }
+        if (!enhanced && document.documentElement?.classList.contains('enhanced')) {
+          enhanced = true;
+          sample('enhanced');
+        }
+      }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    });
+    await page.goto(path);
+    await expect(page.locator('html')).toHaveClass(/enhanced/);
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { heroSamples: Samples }).heroSamples.length))
+      .toBe(2);
+    const samples = await page.evaluate(() => (window as unknown as { heroSamples: Samples }).heroSamples);
+    expect(samples.map((s) => s.at)).toEqual(['paint', 'enhanced']);
+    const [before, after] = samples.map((s) => s.values) as [number[], number[]];
+    expect(before.length).toBeGreaterThan(0);
+    expect(after).toHaveLength(before.length);
+    before.forEach((a, i) => {
+      const b = after[i] ?? 0;
+      expect(a >= 0.99 && b < 0.5, `element ${i}: ${a} -> ${b}`).toBe(false);
+      expect(b, `element ${i} went back`).toBeGreaterThanOrEqual(a - 0.05);
+    });
+  });
+}
+
+// In Chromium the 17 px sentence fits one line at 360 px with every word; one pixel more (wider fallback or
+// platform metrics) makes some words wrap and others not, so that variant proves the width is reserved.
+for (const path of ['/en', '/ar'])
+  for (const wider of [false, true]) {
+    test(`the rotating word never moves the hero on a narrow phone on ${path}${wider ? ' with wider text' : ''}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 360, height: 780 });
+      await page.goto(path);
+      await expect(page.locator('html')).toHaveClass(/enhanced/);
+      if (wider) await page.addStyleTag({ content: '#hero [data-lead]{font-size:18px}' });
+      await page.evaluate(() => document.fonts.ready.then(() => undefined));
+      await page.waitForTimeout(300);
+      const read = () =>
+        page.evaluate(() => ({
+          lead: (document.querySelector('#hero [data-lead]') as HTMLElement).getBoundingClientRect().height,
+          top: (document.querySelector('#hero h1') as HTMLElement).getBoundingClientRect().top,
+        }));
+      const first = await read();
+      // two rotations (2.4 s each), sampled through the flips
+      for (let i = 0; i < 18; i += 1) {
+        await page.waitForTimeout(300);
+        const now = await read();
+        expect(Math.abs(now.lead - first.lead), `sentence height at ${i}`).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(now.top - first.top), `headline top at ${i}`).toBeLessThanOrEqual(0.5);
+      }
+    });
+  }
+
+test('at the end of the hero only the zoom word is left, fully scaled, and the headline is gone', async ({
+  page,
+}) => {
+  await page.goto('/en');
+  await expect(page.locator('html')).toHaveClass(/enhanced/);
+  await page.evaluate(() => {
+    const el = document.getElementById('hero') as HTMLElement;
+    const sticky = el.querySelector('[data-sticky]') as HTMLElement;
+    window.scrollTo({ top: el.offsetHeight - sticky.clientHeight, behavior: 'instant' });
+  });
+  await page.waitForTimeout(700);
+  const state = await page.locator('#hero h1').evaluate((h1) => ({
+    others: [...h1.querySelectorAll('[data-word]:not([data-key]) > [data-ink]')].map((el) =>
+      Number(getComputedStyle(el).opacity),
+    ),
+    scale: new DOMMatrix(getComputedStyle(h1).transform).a,
+    shown: Number(getComputedStyle(h1).opacity),
+  }));
+  expect(state.others.length).toBeGreaterThan(0);
+  expect(state.others).toEqual(state.others.map(() => 0));
+  expect(state.scale).toBeCloseTo(16, 1);
+  expect(state.shown).toBeLessThan(0.01);
+});
+
+test('the English build never moves a letter', async ({ page }) => {
+  await page.goto('/en');
+  const positions = () =>
+    page
+      .locator('#hero [data-ch]')
+      .evaluateAll((els) =>
+        (els as HTMLElement[]).map((el) => (el.offsetParent as HTMLElement).offsetLeft + el.offsetLeft),
+      );
+  await page.waitForFunction(() => performance.now() >= 200);
+  const early = await positions();
+  await page.waitForFunction(() => performance.now() >= 2000);
+  const settled = await positions();
+  expect(early.length).toBeGreaterThan(0);
+  expect(settled).toEqual(early);
 });

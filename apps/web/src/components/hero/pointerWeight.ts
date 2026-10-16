@@ -61,6 +61,11 @@ export function trackPointerWeight(h1: HTMLElement, live: () => boolean): { clea
   };
   const move = (event: PointerEvent): void => {
     if (event.pointerType !== 'mouse') return;
+    // nothing to weigh once the zoom has begun; the hero clears the letters when that happens
+    if (!live()) {
+      at = null;
+      return;
+    }
     at = { x: event.clientX, y: event.clientY };
     if (!raf) raf = requestAnimationFrame(flush);
   };

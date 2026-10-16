@@ -6,7 +6,7 @@ export type TyperState = {
 export const initialTyper: TyperState = { index: 0, shown: 0, phase: 'typing' };
 
 const TYPE_MS = 64;
-const HOLD_MS = 3000;
+export const HOLD_MS = 3000;
 const DELETE_MS = 26;
 const WAIT_MS = 380;
 

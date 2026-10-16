@@ -68,7 +68,7 @@ html[lang="ar"] [data-tags] li {
   grid-area: 1 / 1;
   white-space: nowrap;
 }
-[data-sizer] {
+[data-title] > [data-sizer] {
   visibility: hidden;
   padding-inline: 8px;
 }
@@ -152,15 +152,21 @@ html[lang="ar"] [data-headline] [data-slot] {
   font-size: clamp(18px, 1.75vw, 25px);
   text-shadow: var(--hero-shadow);
 }
+/* every word sits in one grid cell, so the widest reserves the width */
 [data-rot] {
-  display: inline-block;
+  display: inline-grid;
+  justify-items: start;
   perspective: 600px;
 }
 [data-rot] > span {
+  grid-area: 1 / 1;
   padding-bottom: 1px;
   border-bottom: 2px solid var(--gold);
   color: var(--accent);
   white-space: nowrap;
+}
+[data-rot] > [data-sizer] {
+  visibility: hidden;
 }
 [data-steps] {
   display: flex;
