@@ -20,11 +20,12 @@ export const sceneProgress = (
     return { progress: done, body: done, out: done };
   }
   const scrolled = clamp(-top, 0, travel);
-  const bodyTravel = Math.max(1, travel - clamp(tail, 0, travel));
+  const tailLength = clamp(tail, 0, travel);
+  const bodyTravel = travel - tailLength;
   return {
     progress: scrolled / travel,
-    body: clamp(scrolled / bodyTravel),
-    out: tail > 0 ? clamp((scrolled - bodyTravel) / tail) : 0,
+    body: bodyTravel > 0 ? clamp(scrolled / bodyTravel) : 1,
+    out: tailLength > 0 ? clamp((scrolled - bodyTravel) / tailLength) : 0,
   };
 };
 

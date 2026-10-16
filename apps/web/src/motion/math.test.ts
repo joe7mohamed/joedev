@@ -33,6 +33,11 @@ describe('math', () => {
     expect(sceneProgress(-800, 2000, 1000, 400)).toEqual({ progress: 0.8, body: 1, out: 0.5 });
     expect(sceneProgress(-1000, 2000, 1000, 400)).toEqual({ progress: 1, body: 1, out: 1 });
   });
+  it('reaches the end of the tail even when the tail fills the whole travel', () => {
+    expect(sceneProgress(-400, 1400, 1000, 500)).toEqual({ progress: 1, body: 1, out: 1 });
+    expect(sceneProgress(-200, 1400, 1000, 400).out).toBe(0.5);
+    expect(sceneProgress(-200, 1400, 1000, 400).body).toBe(1);
+  });
   it('does not divide by zero when the scene is one viewport tall', () => {
     expect(sceneProgress(0, 1000, 1000)).toEqual({ progress: 0, body: 0, out: 0 });
     expect(sceneProgress(-1, 1000, 1000)).toEqual({ progress: 1, body: 1, out: 1 });
