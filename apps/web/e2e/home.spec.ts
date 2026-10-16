@@ -280,6 +280,64 @@ test.fixme('without JavaScript every project and every process step is shown', a
     await expect(page.locator('#process').getByRole('heading', { name })).toBeVisible();
 });
 
+test('menu marks the section in view and links scroll to it', async ({ page }) => {
+  await page.goto('/en');
+  const nav = page.getByRole('navigation', { name: 'Sections' });
+  await expect(nav.locator('[aria-current="true"]')).toHaveCount(0);
+  await gotoScene(page, 'process', 0.5);
+  await expect(nav.locator('[aria-current="true"]')).toHaveText(/Process/);
+  await nav.getByRole('link', { name: 'About' }).click();
+  await expect.poll(() => page.locator('#about').getAttribute('data-state')).toBe('active');
+  await expect(nav.locator('[aria-current="true"]')).toHaveText(/About/);
+});
+
+test('menu is fully usable from the keyboard', async ({ page }) => {
+  await page.goto('/en');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+  for (const name of ['ZakyDev', 'Work', 'Process', 'About', 'Contact']) {
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('link', { name, exact: false }).first()).toBeFocused();
+  }
+});
+
+test('phone menu sits at the bottom with large targets', async ({ page }, info) => {
+  test.skip(info.project.name !== 'phone');
+  await page.goto('/ar');
+  const nav = page.getByRole('navigation');
+  const box = await nav.boundingBox();
+  const height = page.viewportSize()?.height ?? 0;
+  expect((box?.y ?? 0) + (box?.height ?? 0)).toBeGreaterThan(height - 40);
+  for (const link of await nav.getByRole('link').all())
+    expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+});
+
+// Spec 6.4 layers: background, gold element, scene content, header, loader.
+test('the header sits above the gold element', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'work', 0.5);
+  await expect(page.locator('header')).toHaveCSS('z-index', '5');
+  // the gold frame is stretched over the whole screen and made hit-testable, so only stacking decides the order
+  await page.addStyleTag({
+    content:
+      'html.enhanced [data-gold-layer],html.enhanced [data-gold]{pointer-events:auto}' +
+      'html.enhanced [data-gold]{transform:none!important;width:100vw!important;height:100vh!important;visibility:visible!important}',
+  });
+  const links = page.getByRole('navigation').getByRole('link');
+  await expect(links).toHaveCount(4);
+  for (const link of await links.all()) {
+    const hit = await link.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const stack = document.elementsFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return {
+        top: stack[0]?.closest('a') === el && Boolean(stack[0]?.closest('header')),
+        goldBelow: stack.some((node) => node.matches('[data-gold]')),
+      };
+    });
+    expect(hit).toEqual({ top: true, goldBelow: true });
+  }
+});
+
 test('the page never scrolls sideways', async ({ page }) => {
   for (const path of ['/en', '/ar']) {
     await page.goto(path);

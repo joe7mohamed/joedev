@@ -9,6 +9,7 @@ export const homeEn: HomeContent = {
     switchLanguage: 'Switch to Arabic',
     switchTheme: 'Switch theme',
     skip: 'Skip to content',
+    sections: u('Sections'),
   },
   hero: {
     titles: ['Software engineer', u('Full-stack developer')],

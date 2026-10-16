@@ -1,0 +1,183 @@
+/* The header: fixed above the scenes and the gold element (layers in home.css: gold 1, scenes 2, header 5). */
+[data-header] {
+  --cap: color-mix(in srgb, var(--bg) 60%, transparent);
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 5;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding-inline: clamp(16px, 3vw, 40px);
+  color: var(--ink);
+  transition: color 0.4s;
+}
+/* On the gold screen the header switches to dark ink (spec 5.2); the mark's lower half turns ivory (below). */
+[data-header][data-on-gold] {
+  --ink: var(--on-gold);
+  --muted: color-mix(in srgb, var(--on-gold) 75%, var(--gold));
+  --hair: rgb(20 18 14 / 0.3);
+  --accent: var(--on-gold);
+  --cap: rgb(20 18 14 / 0.1);
+}
+
+/* Off screen until focused. */
+.skip {
+  position: absolute;
+  inset-block-start: 10px;
+  inset-inline-start: 10px;
+  padding: 10px 18px;
+  border-radius: 99px;
+  background: var(--gold);
+  color: var(--on-gold);
+  font-weight: 500;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip:focus {
+  transform: none;
+}
+
+[data-brand] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font:
+    500 17px var(--face-body),
+    system-ui,
+    sans-serif;
+  text-decoration: none;
+}
+
+[data-controls] {
+  display: flex;
+  gap: 6px;
+}
+[data-controls] > * {
+  font-size: 14px;
+  text-decoration: none;
+  background: var(--cap);
+  backdrop-filter: blur(14px);
+  transition:
+    border-color var(--quick),
+    transform var(--std) var(--ease);
+}
+[data-theme-toggle] svg {
+  transition: transform 0.7s var(--ease);
+}
+[data-theme="light"] [data-theme-toggle] svg {
+  transform: rotate(180deg);
+}
+
+/* Hover only where there is a real hover; motion only where it is allowed. */
+@media (hover: hover) {
+  [data-controls] > :hover {
+    border-color: var(--accent);
+    transform: rotate(-10deg);
+  }
+  [data-brand] svg path {
+    transition: transform var(--std) var(--ease);
+  }
+  [data-brand]:hover svg path:first-child {
+    transform: translate(3px, -1px);
+  }
+  [data-brand]:hover svg path:last-child {
+    transform: translate(-3px, 1px);
+  }
+}
+[data-header][data-on-gold] [data-brand] svg {
+  --accent: #faf9f6;
+}
+
+/* Phone: mark and buttons on top; the menu moves to a bar at the bottom (menu.css). */
+@media (max-width: 860px) {
+  [data-header] {
+    height: 56px;
+  }
+  [data-brand] span {
+    display: none;
+  }
+  [data-controls] {
+    margin-inline-start: auto;
+  }
+}
+
+/* The page progress bar: gold, 2 px, at the very top, growing from the start side. */
+[data-progress] {
+  display: none;
+}
+html.enhanced [data-progress] {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+html.enhanced[dir="rtl"] [data-progress] {
+  transform-origin: 100% 50%;
+}
+html.enhanced [data-header][data-on-gold] [data-progress] {
+  background: var(--ink);
+}
+
+/* The pointer ring follows pointer coordinates, which are physical. */
+[data-ring] {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition:
+    translate 350ms var(--ease),
+    width var(--std) var(--ease),
+    height var(--std) var(--ease),
+    background var(--std),
+    opacity 0.3s;
+}
+[data-ring][data-live] {
+  opacity: 0.8;
+}
+[data-ring][data-big] {
+  width: 64px;
+  height: 64px;
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+}
+[data-header][data-on-gold] [data-ring] {
+  border-color: var(--ink);
+}
+
+/* The theme switch reveals the new theme in a circle growing from the button (ThemeToggle sets --vx/--vy). */
+::view-transition-old(root) {
+  animation: none;
+}
+::view-transition-new(root) {
+  animation: theme-reveal 0.7s var(--ease);
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--vx, 50%) var(--vy, 0));
+  }
+  to {
+    clip-path: circle(150% at var(--vx, 50%) var(--vy, 0));
+  }
+}
+
+/* Without the engine the page is a plain document: in-page jumps clear the fixed header and the bottom bar. */
+html:not(.enhanced) {
+  scroll-padding-block: 72px 0;
+}
+@media (max-width: 860px) {
+  html:not(.enhanced) {
+    scroll-padding-block: 64px 88px;
+  }
+  html:not(.enhanced) main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+}

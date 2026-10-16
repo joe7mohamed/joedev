@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getHome, home, homeContentSchema, unconfirmedPaths } from './index';
+import { getHome, home, homeContentSchema, plain, unconfirmedPaths } from './index';
 
 describe('home content', () => {
   it('is valid in both locales', () => {
@@ -32,6 +32,18 @@ describe('home content', () => {
     const broken = structuredClone(home.ar) as Record<string, unknown>;
     delete (broken.hero as Record<string, unknown>).headline;
     expect(() => homeContentSchema.parse(broken)).toThrow();
+  });
+  it('names the section menu in both locales', () => {
+    expect(plain(home.en.nav.sections)).toBe('Sections');
+    expect(plain(home.ar.nav.sections)).toBe('الأقسام');
+  });
+  it('rejects an empty string', () => {
+    const broken = structuredClone(home.ar) as Record<string, unknown>;
+    (broken.nav as Record<string, unknown>).work = '';
+    expect(() => homeContentSchema.parse(broken)).toThrow();
+    const brokenStep = structuredClone(home.ar);
+    brokenStep.process.steps[0].tools = [''];
+    expect(() => homeContentSchema.parse(brokenStep)).toThrow();
   });
   it('lists unconfirmed text and can refuse it', () => {
     expect(unconfirmedPaths(home.en).length).toBeGreaterThan(0);

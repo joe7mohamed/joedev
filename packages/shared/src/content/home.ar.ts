@@ -9,6 +9,7 @@ export const homeAr: HomeContent = {
     switchLanguage: 'Switch to English',
     switchTheme: 'تبديل المظهر',
     skip: 'انتقل إلى المحتوى',
+    sections: u('الأقسام'),
   },
   hero: {
     titles: ['مهندس برمجيات', u('مطوّر Full-Stack')],

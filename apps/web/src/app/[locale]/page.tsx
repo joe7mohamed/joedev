@@ -1,7 +1,6 @@
 import { getHome, isLocale } from '@zakydev/shared';
 import { notFound } from 'next/navigation';
-import { Mark } from '@/components/Mark';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { Header } from '@/components/header/Header';
 import { TempWorkSlot } from '@/components/work/TempWorkSlot';
 import { EngineProvider } from '@/motion/EngineProvider';
 import { GoldElement } from '@/motion/GoldElement';
@@ -13,14 +12,8 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const c = getHome(locale, { requireConfirmed: process.env.REQUIRE_CONFIRMED === '1' });
   return (
     <EngineProvider>
+      <Header locale={locale} nav={c.nav} />
       <GoldElement />
-      <header className="flex items-center gap-3 p-6">
-        <Mark />
-        <span className="font-medium">zakydev</span>
-        <span className="ms-auto">
-          <ThemeToggle label={c.nav.switchTheme} />
-        </span>
-      </header>
       <main id="main">
         <Scene id="hero" length={2} tail={0.5}>
           <div data-fade>
