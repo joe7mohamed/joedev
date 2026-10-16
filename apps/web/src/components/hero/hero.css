@@ -55,41 +55,6 @@ html[lang="ar"] [data-tags] li {
   background: var(--gold);
 }
 
-/* The title between the mark's brackets. Every title sits in one grid cell, so the widest reserves the width. */
-[data-tags] [data-role] {
-  direction: ltr;
-  color: var(--ink);
-  letter-spacing: 0.12em;
-}
-[data-title] {
-  display: inline-grid;
-}
-[data-title] > * {
-  grid-area: 1 / 1;
-  white-space: nowrap;
-}
-[data-title] > [data-sizer] {
-  visibility: hidden;
-  padding-inline: 8px;
-}
-[data-title-row] {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 7px;
-}
-html[dir="rtl"] [data-title-row] {
-  justify-content: flex-end;
-}
-[data-bracket] {
-  color: var(--accent);
-  font:
-    600 13px var(--face-mono),
-    ui-monospace,
-    monospace;
-  letter-spacing: 0;
-}
-
 /* The headline. The zoom word's slot is the gold underline (spec 5.0). */
 [data-headline] {
   position: relative;
@@ -286,5 +251,25 @@ html[dir="rtl"] [data-step] + [data-step]::before {
   }
   [data-actions] {
     justify-content: center;
+  }
+}
+
+/* Small phones: the step strip is decoration, not a target, so its circles, lines and gaps shrink to fit. At full
+   size it is 344 px wide, which fits the 20 px-padded column from 384 px up (the 390 px reference keeps it). */
+@media (max-width: 383px) {
+  [data-step] {
+    gap: 6px;
+  }
+  [data-step] + [data-step]::before {
+    width: 14px;
+    margin-inline: 8px;
+  }
+  [data-step-icon] {
+    width: 28px;
+    height: 28px;
+  }
+  [data-step-icon] svg {
+    width: 14px;
+    height: 14px;
   }
 }

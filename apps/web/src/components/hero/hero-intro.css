@@ -40,6 +40,15 @@
   html.intro [data-hero] [data-side] > * {
     animation: hero-in 0.9s cubic-bezier(0.65, 0, 0.35, 1) 1.05s backwards;
   }
+  /* The first title types in: the server's whole title is revealed one letter step at a time, from the start
+     side (the right in Arabic). TypedTitle sets --n (letters), --type-at and --type-step. */
+  html.intro [data-typed] {
+    animation: hero-type-ltr calc(var(--n, 1) * var(--type-step, 68ms)) steps(var(--n, 1), end)
+      var(--type-at, 1050ms) backwards;
+  }
+  html.intro [data-typed][dir="rtl"] {
+    animation-name: hero-type-rtl;
+  }
   html.intro [data-bracket] {
     animation: hero-bracket 0.8s var(--ease) backwards;
   }
@@ -79,5 +88,21 @@
   from {
     opacity: 0;
     transform: translateX(var(--from, 0));
+  }
+}
+@keyframes hero-type-ltr {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+@keyframes hero-type-rtl {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+  to {
+    clip-path: inset(0);
   }
 }

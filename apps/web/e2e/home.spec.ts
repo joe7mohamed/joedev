@@ -501,17 +501,40 @@ test('with reduced motion the hero is fully visible and still', async ({ page })
 });
 
 type Samples = { at: string; values: number[] }[];
+type Restarts = { oneShot: number; restarted: string[] };
+const ONE_SHOT = ['hero-letter', 'hero-word', 'hero-weight', 'hero-in', 'hero-bracket', 'hero-type'];
 
 // The server paints the hero; the build must already be running then, so the app taking over (html.enhanced)
-// never sends a visible letter back to transparent.
+// never sends a visible letter back to transparent, and never restarts any one-shot hero animation.
 for (const path of ['/en', '/ar']) {
   test(`the headline builds from first paint and never restarts on ${path}`, async ({ page }) => {
-    await page.addInitScript(() => {
+    await page.addInitScript((names: string[]) => {
       const samples: Samples = [];
-      (window as unknown as { heroSamples: Samples }).heroSamples = samples;
+      const result: Restarts = { oneShot: 0, restarted: [] };
+      const w = window as unknown as { heroSamples: Samples; heroRestarts: Restarts };
+      w.heroSamples = samples;
+      w.heroRestarts = result;
+      const oneShot = (): CSSAnimation[] =>
+        (document.getElementById('hero')?.getAnimations({ subtree: true }) ?? []).filter(
+          (a): a is CSSAnimation => a instanceof CSSAnimation && names.includes(a.animationName),
+        );
+      let first = new Map<CSSAnimation, number | null>();
       const sample = (at: string): void => {
         const els = [...document.querySelectorAll('#hero [data-ch], #hero [data-word]')];
         samples.push({ at, values: els.map((el) => Number(getComputedStyle(el).opacity)) });
+        const running = oneShot();
+        if (at === 'paint') {
+          first = new Map(running.map((a) => [a, a.startTime === null ? null : Number(a.startTime)]));
+          result.oneShot = first.size;
+          return;
+        }
+        // a restarted CSS animation is a new object, or the same one with a new start time
+        for (const a of running) {
+          const known = first.has(a);
+          const was = first.get(a);
+          const moved = known && was !== null && was !== undefined && Number(a.startTime) !== was;
+          if (!known || moved) result.restarted.push(`${a.animationName} ${known ? 'restarted' : 'new'}`);
+        }
       };
       let painted = false;
       let enhanced = false;
@@ -525,7 +548,7 @@ for (const path of ['/en', '/ar']) {
           sample('enhanced');
         }
       }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-    });
+    }, ONE_SHOT);
     await page.goto(path);
     await expect(page.locator('html')).toHaveClass(/enhanced/);
     await expect
@@ -541,6 +564,64 @@ for (const path of ['/en', '/ar']) {
       expect(a >= 0.99 && b < 0.5, `element ${i}: ${a} -> ${b}`).toBe(false);
       expect(b, `element ${i} went back`).toBeGreaterThanOrEqual(a - 0.05);
     });
+    const restarts = await page.evaluate(
+      () => (window as unknown as { heroRestarts: Restarts }).heroRestarts,
+    );
+    expect(restarts.oneShot, 'one-shot animations running at first paint').toBeGreaterThan(0);
+    expect(restarts.restarted).toEqual([]);
+  });
+}
+
+// Spec 5.3: the first title types in. It is server-rendered whole and revealed by a stepped clip from first paint.
+for (const path of ['/en', '/ar']) {
+  test(`the first title types in from first paint on ${path}`, async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { typedClip: string | null };
+      w.typedClip = null;
+      // the reveal starts 1.05 s after navigation start; sample 0.3 s into it
+      setTimeout(() => {
+        const el = document.querySelector('[data-typed]');
+        w.typedClip = el ? getComputedStyle(el).clipPath : 'missing';
+      }, 1350 - performance.now());
+    });
+    await page.goto(path);
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { typedClip: string | null }).typedClip))
+      .not.toBeNull();
+    const mid = await page.evaluate(() => (window as unknown as { typedClip: string }).typedClip);
+    expect(mid).toMatch(/^inset\(/);
+    expect(mid).not.toBe('inset(0px)');
+    await page.waitForFunction(() => performance.now() >= 4000);
+    const end = await page.locator('[data-typed]').evaluate((el) => getComputedStyle(el).clipPath);
+    expect(['none', 'inset(0px)']).toContain(end);
+  });
+}
+
+// Spec 8: nothing is clipped at any test width; the step strip is decoration, not a target, so it may shrink.
+for (const path of ['/en', '/ar']) {
+  test(`the step strip fits a 360 px phone on ${path}`, async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 780 });
+    await page.goto(path);
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    const strip = await page.locator('#hero [data-steps]').evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const column = (el.closest('[data-hero]') as HTMLElement).getBoundingClientRect();
+      return {
+        scroll: el.scrollWidth,
+        client: el.clientWidth,
+        left: box.left,
+        right: box.right,
+        vw: innerWidth,
+        columnLeft: column.left,
+        columnRight: column.right,
+      };
+    });
+    expect(strip.scroll).toBeLessThanOrEqual(strip.client);
+    expect(strip.left).toBeGreaterThanOrEqual(0);
+    expect(strip.right).toBeLessThanOrEqual(strip.vw);
+    // and inside the hero column, not in its side padding
+    expect(strip.left).toBeGreaterThanOrEqual(strip.columnLeft - 0.5);
+    expect(strip.right).toBeLessThanOrEqual(strip.columnRight + 0.5);
   });
 }
 

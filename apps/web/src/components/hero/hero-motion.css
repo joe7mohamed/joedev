@@ -173,8 +173,9 @@ html.enhanced [data-step]:nth-child(3)::before {
   }
 }
 
-/* The scroll cue, centred at the bottom of the pinned scene; not on phones. */
-html.enhanced [data-cue] {
+/* The scroll cue, centred at the bottom of the scene; not on phones. It shows from first paint with the rest of
+   the row (html.intro), so its fade-in never starts over when the app takes over. */
+html:is(.intro, .enhanced) [data-cue] {
   position: absolute;
   inset: auto 0 22px;
   display: flex;
@@ -190,25 +191,25 @@ html.enhanced [data-cue] {
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-html.enhanced[lang="ar"] [data-cue] {
+html:is(.intro, .enhanced)[lang="ar"] [data-cue] {
   font-family: var(--stack-body);
   font-size: 14px;
 }
-html.enhanced [data-cue] i {
+html:is(.intro, .enhanced) [data-cue] i {
   position: relative;
   overflow: hidden;
   width: 44px;
   height: 1px;
   background: var(--hair);
 }
-html.enhanced [data-cue] i::after {
+html:is(.intro, .enhanced) [data-cue] i::after {
   content: "";
   position: absolute;
   inset: 0;
   background: var(--gold);
   animation: hero-cue 1.8s var(--ease) infinite;
 }
-html.enhanced[dir="rtl"] [data-cue] i::after {
+html:is(.intro, .enhanced)[dir="rtl"] [data-cue] i::after {
   animation-direction: reverse;
 }
 @keyframes hero-cue {
@@ -221,7 +222,7 @@ html.enhanced[dir="rtl"] [data-cue] i::after {
   }
 }
 @media (max-width: 860px) {
-  html.enhanced [data-cue] {
+  html:is(.intro, .enhanced) [data-cue] {
     display: none;
   }
 }
