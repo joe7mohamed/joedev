@@ -18,3 +18,14 @@ Recorded from `npm ls --workspaces --include-workspace-root --depth 0`. Append a
 | @zakydev/config | 0.0.0 | workspace `packages/config` |
 
 No dependency reported an unreviewed install script (`npm install-scripts ls`), so no `allowScripts` entry was added.
+
+## Task 2: shared package locales
+
+| Package | Installed | Where |
+| --- | --- | --- |
+| zod | 4.6.7 | dependency of `packages/shared` |
+| vitest | 5.0.4 | devDependency of `packages/shared` (5.0.5 was too new for min-release-age) |
+| vite | 8.3.4 | devDependency of `packages/shared`, peer of vitest |
+| @types/node | 26.6.5 | devDependency of `packages/shared` |
+| typescript | 7.0.2 | devDependency of `packages/shared` (also at root) |
+| @zakydev/config | 0.0.0 | devDependency `*` of `packages/shared` |
