@@ -2,7 +2,9 @@ import { getHome, isLocale } from '@zakydev/shared';
 import { notFound } from 'next/navigation';
 import { Mark } from '@/components/Mark';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { TempWorkSlot } from '@/components/work/TempWorkSlot';
 import { EngineProvider } from '@/motion/EngineProvider';
+import { GoldElement } from '@/motion/GoldElement';
 import { Scene } from '@/motion/Scene';
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
@@ -11,6 +13,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const c = getHome(locale, { requireConfirmed: process.env.REQUIRE_CONFIRMED === '1' });
   return (
     <EngineProvider>
+      <GoldElement />
       <header className="flex items-center gap-3 p-6">
         <Mark />
         <span className="font-medium">zakydev</span>
@@ -29,6 +32,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <Scene id="work" length={3.2} tail={0.4}>
           <div data-fade>
             <h2 className="text-4xl">{c.work.label}</h2>
+            <TempWorkSlot />
           </div>
         </Scene>
         <Scene id="process" length={2.6} tail={0.3}>

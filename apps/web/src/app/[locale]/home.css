@@ -83,3 +83,32 @@ html.enhanced #hero [data-sticky] {
 html.enhanced #contact [data-sticky] {
   --exit: 1;
 }
+
+/* The gold element: one fixed shape that travels between scene slots. */
+[data-gold-layer] {
+  display: none;
+}
+html.enhanced [data-gold-layer] {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: clip;
+}
+html.enhanced [data-gold] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  border: 2px solid var(--gold);
+  background: rgb(212 175 55 / var(--fill, 0));
+  will-change: transform, width, height;
+}
+html.enhanced [data-gold][data-thin="true"] {
+  background: var(--gold);
+}
+/* a scene that is not pinned has no fixed position for the gold element to sit on */
+html.enhanced:has([data-scene][data-unpinned]) [data-gold-layer] {
+  display: none;
+}

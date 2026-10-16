@@ -17,6 +17,8 @@ export const test = base.extend({
 
 /** Scroll so that the scene's body progress equals `fraction` (0..1). */
 export const gotoScene = async (page: Page, id: string, fraction: number): Promise<void> => {
+  // before hydration the page is stacked and short; measuring then would aim at the wrong layout
+  await page.waitForFunction(() => document.documentElement.classList.contains('enhanced'));
   await page.evaluate(
     ([sceneId, f]) => {
       const el = document.getElementById(sceneId as string) as HTMLElement;
