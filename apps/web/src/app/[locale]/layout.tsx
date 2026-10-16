@@ -1,5 +1,5 @@
 import { dirOf, getHome, isLocale, LOCALES } from '@zakydev/shared';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { body, bodyAr, display, displayAr, mono } from '@/lib/fonts';
@@ -9,6 +9,8 @@ import './home.css';
 
 export const dynamicParams = false;
 export const generateStaticParams = () => LOCALES.map((locale) => ({ locale }));
+// `cover` lets the phone menu bar read the home-indicator inset (env(safe-area-inset-bottom)).
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export async function generateMetadata({
   params,

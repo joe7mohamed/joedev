@@ -29,11 +29,24 @@ export function PointerRing() {
 
   useEffect(() => {
     if (!enabled) return;
+    let seeding = 0;
+    /** The first position is set without the lag, so the ring appears under the pointer instead of flying in. */
+    const seed = (el: HTMLElement): void => {
+      el.style.transition = 'none';
+      // one frame renders the position without a transition; the next turns the transition back on and shows it
+      seeding = requestAnimationFrame(() => {
+        seeding = requestAnimationFrame(() => {
+          seeding = 0;
+          el.style.transition = '';
+          el.toggleAttribute('data-live', true);
+        });
+      });
+    };
     const move = (event: PointerEvent): void => {
       const el = ring.current;
       if (!el || event.pointerType !== 'mouse') return;
       el.style.translate = `${event.clientX}px ${event.clientY}px`;
-      el.toggleAttribute('data-live', true);
+      if (!el.hasAttribute('data-live') && !seeding) seed(el);
       const big = Boolean((event.target as Element | null)?.closest?.(TARGETS));
       if (el.hasAttribute('data-big') !== big) el.toggleAttribute('data-big', big);
     };
@@ -44,6 +57,7 @@ export function PointerRing() {
     document.addEventListener('pointermove', move, { passive: true });
     document.addEventListener('pointerout', out);
     return () => {
+      cancelAnimationFrame(seeding);
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerout', out);
     };

@@ -8,16 +8,30 @@ import './menu.css';
 export type MenuItem = { id: MenuId; label: string };
 type MenuProps = { items: MenuItem[]; label: string };
 
-const ORDER: MenuId[] = ['work', 'process', 'about', 'contact'];
+const ORDER: SceneId[] = ['hero', 'work', 'process', 'about', 'contact'];
 /** The about ring has nearly filled the screen with gold from this point of its tail (spec 5.2). */
 const ON_GOLD_OUT = 0.6;
 
 const stateOf = (frame: SceneFrame | undefined): string | undefined =>
   frame?.sticky.parentElement?.dataset.state;
 
-/** The current section: the first active scene after the hero, in document order. */
-const currentOf = (frames: Map<SceneId, SceneFrame>): MenuId | null =>
-  ORDER.find((id) => stateOf(frames.get(id)) === 'active') ?? null;
+/**
+ * The current section is what the reader sees: the active scene covering the middle of the screen, else the last
+ * active one. Scenes that flow can be active together; the hero means no current item. Pure arithmetic on the
+ * engine's measured geometry, so nothing reads layout per frame.
+ */
+const currentOf = (frames: Map<SceneId, SceneFrame>, y: number): MenuId | null => {
+  const active = ORDER.flatMap((id) => {
+    const frame = frames.get(id);
+    return frame && stateOf(frame) === 'active' ? [frame] : [];
+  });
+  const covering = active.find((frame) => {
+    const middle = y + frame.viewport / 2;
+    return frame.top <= middle && middle < frame.end + frame.viewport;
+  });
+  const id = (covering ?? active.at(-1))?.id;
+  return id && id !== 'hero' ? id : null;
+};
 
 /**
  * The section menu. Marks the section in view with `aria-current` and a gold marker that follows it (or, with a
@@ -52,7 +66,9 @@ export function Menu({ items, label }: MenuProps) {
     placeLater.current = later;
     const enter = (event: PointerEvent): void => {
       const link = (event.target as Element).closest?.<HTMLAnchorElement>('a[href^="#"]');
-      if (event.pointerType !== 'mouse' || !link) return;
+      // the stacked page has no current section, so it has no marker either
+      if (event.pointerType !== 'mouse' || !link || !document.documentElement.classList.contains('enhanced'))
+        return;
       hovered.current = link.hash.slice(1) as MenuId;
       later();
     };
@@ -83,8 +99,8 @@ export function Menu({ items, label }: MenuProps) {
     const header = el?.closest('header');
     if (!el || !header) return;
     let progress = '';
-    const unsubscribe = engine.subscribe((frames) => {
-      const next = currentOf(frames);
+    const unsubscribe = engine.subscribe((frames, scroll) => {
+      const next = currentOf(frames, scroll.y);
       setCurrent(next);
       const value = next ? (frames.get(next)?.progress ?? 0).toFixed(3) : '0';
       if (value !== progress) {
@@ -99,6 +115,10 @@ export function Menu({ items, label }: MenuProps) {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     const reset = (): void => {
       if (!reduced.matches) return;
+      hovered.current = null;
+      progress = '';
+      for (const name of ['--section-p', '--marker-x', '--marker-w']) el.style.removeProperty(name);
+      el.removeAttribute('data-marked');
       setCurrent(null);
       header.removeAttribute('data-on-gold');
     };

@@ -8,7 +8,12 @@
   display: flex;
   align-items: center;
   gap: 26px;
-  padding-inline: clamp(16px, 3vw, 40px);
+  /* clear of a landscape notch (viewport-fit=cover) */
+  padding-inline: max(
+    clamp(16px, 3vw, 40px),
+    env(safe-area-inset-left, 0px),
+    env(safe-area-inset-right, 0px)
+  );
   color: var(--ink);
   transition: color 0.4s;
 }
@@ -154,11 +159,14 @@ html.enhanced [data-header][data-on-gold] [data-progress] {
 }
 
 /* The theme switch reveals the new theme in a circle growing from the button (ThemeToggle sets --vx/--vy). */
+/* `normal` blending: the default plus-lighter adds the two snapshots inside the circle and washes them out. */
 ::view-transition-old(root) {
   animation: none;
+  mix-blend-mode: normal;
 }
 ::view-transition-new(root) {
   animation: theme-reveal 0.7s var(--ease);
+  mix-blend-mode: normal;
 }
 @keyframes theme-reveal {
   from {
@@ -169,15 +177,20 @@ html.enhanced [data-header][data-on-gold] [data-progress] {
   }
 }
 
-/* Without the engine the page is a plain document: in-page jumps clear the fixed header and the bottom bar. */
+/* Without the engine the page is a plain document that starts below the fixed header and ends above the bottom
+   bar; in-page jumps clear both. */
 html:not(.enhanced) {
   scroll-padding-block: 72px 0;
+}
+html:not(.enhanced) main {
+  padding-top: 64px;
 }
 @media (max-width: 860px) {
   html:not(.enhanced) {
     scroll-padding-block: 64px 88px;
   }
   html:not(.enhanced) main {
+    padding-top: 56px;
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }

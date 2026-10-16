@@ -17,6 +17,7 @@
   align-items: center;
   gap: 7px;
   padding: 8px 14px;
+  min-height: 44px;
   border-radius: 99px;
   font-size: 14px;
   line-height: 1.55;
@@ -25,12 +26,6 @@
   transition:
     color var(--std),
     transform var(--quick);
-}
-/* the capsule keeps the prototype's 38 px links; the hit area reaches 44 px */
-[data-menu] a::before {
-  content: "";
-  position: absolute;
-  inset: -3px 0;
 }
 [data-menu] a:active {
   transform: scale(0.94);
@@ -168,10 +163,12 @@ html[dir="rtl"] [data-marker]::after {
 @media (max-width: 860px) {
   [data-menu] {
     position: fixed;
-    inset: auto 14px calc(12px + env(safe-area-inset-bottom, 0px));
+    inset: auto max(14px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)) 12px;
     gap: 0;
     margin: 0;
     padding: 6px;
+    /* the bar keeps its offset; below the links it reaches over the home indicator */
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
     justify-content: space-between;
   }
   [data-menu] a {
@@ -180,9 +177,6 @@ html[dir="rtl"] [data-marker]::after {
     justify-content: center;
     gap: 0;
     padding: 13px 4px;
-  }
-  [data-menu] a::before {
-    content: none;
   }
   [data-menu] a[aria-current] {
     flex: 2.3 1 0;
@@ -208,7 +202,7 @@ html[dir="rtl"] [data-marker]::after {
   }
   [data-marker] {
     top: 6px;
-    bottom: 6px;
+    bottom: calc(6px + env(safe-area-inset-bottom, 0px));
   }
   [data-marker]::after {
     inset: auto 18px 5px;

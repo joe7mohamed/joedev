@@ -73,5 +73,11 @@ h3 {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: 6px;
+}
+/* The outline follows each control's own radius; this is only the default for those without one. A layer, so
+   any radius a control sets (utility or component rule) wins. */
+@layer base {
+  :focus-visible {
+    border-radius: 6px;
+  }
 }

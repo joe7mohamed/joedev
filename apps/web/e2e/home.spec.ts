@@ -312,6 +312,64 @@ test('phone menu sits at the bottom with large targets', async ({ page }, info) 
     expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 });
 
+test('desktop menu targets are at least 44 px tall', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await page.goto('/en');
+  const links = page.getByRole('navigation').getByRole('link');
+  await expect(links).toHaveCount(4);
+  for (const link of await links.all()) expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+});
+
+test('the current menu item is the section under the middle of the screen', async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 360 });
+  await page.goto('/ar');
+  await expect(page.locator('html')).toHaveClass(/enhanced/);
+  // text so large that neighbouring scenes flow, so two of them can be active at once
+  await page.addStyleTag({ content: 'html{font-size:300%}' });
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+  await page.waitForTimeout(400);
+  for (const id of ['hero', 'work', 'about', 'contact'])
+    await expect(page.locator(`#${id}`)).toHaveAttribute('data-unpinned', 'true');
+  /** Scrolls so the section's top sits at this fraction of the viewport height. */
+  const placeTop = async (id: string, fraction: number): Promise<void> => {
+    await page.evaluate(
+      ([sceneId, f]) => {
+        const el = document.getElementById(sceneId as string) as HTMLElement;
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: top - window.innerHeight * (f as number), behavior: 'instant' });
+      },
+      [id, fraction] as const,
+    );
+    await page.waitForTimeout(300);
+  };
+  const current = page.getByRole('navigation').locator('[aria-current="true"]');
+  const bothActive = async (a: string, b: string): Promise<void> => {
+    await expect(page.locator(`#${a}`)).toHaveAttribute('data-state', 'active');
+    await expect(page.locator(`#${b}`)).toHaveAttribute('data-state', 'active');
+  };
+  // contact's top is above the middle while the end of about is still on screen
+  await placeTop('contact', 0.3);
+  await bothActive('about', 'contact');
+  await expect(current).toHaveAttribute('href', '#contact');
+  // about still covers the middle
+  await placeTop('contact', 0.7);
+  await bothActive('about', 'contact');
+  await expect(current).toHaveAttribute('href', '#about');
+  // the hero covers the middle: no item is current, even though work has started
+  await placeTop('work', 0.7);
+  await bothActive('hero', 'work');
+  await expect(current).toHaveCount(0);
+});
+
+test('on the stacked page the fixed header does not cover the headline', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/en');
+  await expect(page.locator('html')).not.toHaveClass(/enhanced/);
+  const header = await page.locator('header').boundingBox();
+  const h1 = await page.locator('h1').boundingBox();
+  expect(h1?.y ?? 0).toBeGreaterThanOrEqual((header?.y ?? 0) + (header?.height ?? Number.POSITIVE_INFINITY));
+});
+
 // Spec 6.4 layers: background, gold element, scene content, header, loader.
 test('the header sits above the gold element', async ({ page }) => {
   await page.goto('/en');
