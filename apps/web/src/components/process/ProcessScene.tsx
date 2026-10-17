@@ -1,24 +1,33 @@
 'use client';
 
-import { type HomeContent, plain } from '@zakydev/shared';
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import type { HomeContent } from '@zakydev/shared';
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
 import type { SceneFrame } from '@/motion/engine';
 import { pinnedRect, registerSlot } from '@/motion/gold';
 import { clamp, currentFirst, stepAt, stepDraw } from '@/motion/math';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
 import { useSceneFrame } from '@/motion/useSceneFrame';
-import { BuildScene } from './BuildScene';
 import { StepRail } from './StepRail';
 import { type Step, StepText } from './StepText';
 import './process.css';
 
-type ProcessProps = { content: HomeContent['process'] };
+type ProcessSceneProps = {
+  content: HomeContent['process'];
+  /** Rendered on the server (Process): the build drawing, each step's tool list, the gives tick, the rail tick. */
+  drawing: ReactNode;
+  tools: ReactNode[];
+  check: ReactNode;
+  tick: ReactNode;
+};
 type Progress = { current: number; flowing: boolean };
 
 /** The rail line is 3 px thick and centred on the stations (spec 5.0). */
 const LINE = 3;
 
 const pad = (n: number): string => String(n).padStart(2, '0');
+/** The build drawing, server-rendered markup inside the scene's drawing box (Process). */
+const drawingIn = (box: HTMLElement | null): SVGSVGElement | null =>
+  box?.querySelector<SVGSVGElement>('svg[data-build]') ?? null;
 const flowingOf = (f: SceneFrame): boolean => f.sticky.parentElement?.hasAttribute('data-unpinned') ?? false;
 
 /**
@@ -43,22 +52,20 @@ const drawingWriter = () => {
  * as on the stacked page), and the drawing's progress. With reduced motion the engine stops, so the drawing is
  * reset to its finished state here.
  */
-function useProcessStep(
-  count: number,
-  drawing: RefObject<SVGSVGElement | null>,
-  enhanced: boolean,
-): Progress {
+function useProcessStep(count: number, box: RefObject<HTMLDivElement | null>, enhanced: boolean): Progress {
   const [progress, setProgress] = useState<Progress>({ current: 0, flowing: false });
   const [write] = useState(drawingWriter);
   useSceneFrame('process', (f) => {
     const flowing = flowingOf(f);
-    if (drawing.current) write(drawing.current, flowing ? null : f.body, count);
+    const svg = drawingIn(box.current);
+    if (svg) write(svg, flowing ? null : f.body, count);
     const { index } = stepAt(f.body, count);
     setProgress((p) => (p.current === index && p.flowing === flowing ? p : { current: index, flowing }));
   });
   useEffect(() => {
-    if (!enhanced && drawing.current) write(drawing.current, null, count);
-  }, [enhanced, drawing, write, count]);
+    const svg = drawingIn(box.current);
+    if (!enhanced && svg) write(svg, null, count);
+  }, [enhanced, box, write, count]);
   return progress;
 }
 
@@ -95,12 +102,12 @@ function useRailSlot(slot: RefObject<HTMLDivElement | null>, count: number): voi
  * so does a scene too tall to pin. Otherwise all steps share one grid cell (the tallest decides the height) and
  * only the current one shows; it keeps its element (key `current`), so its name flips instead of being replaced.
  */
-export function Process({ content }: ProcessProps) {
-  const drawing = useRef<SVGSVGElement>(null);
+export function ProcessScene({ content, drawing, tools, check, tick }: ProcessSceneProps) {
+  const box = useRef<HTMLDivElement>(null);
   const slot = useRef<HTMLDivElement>(null);
   const enhanced = useMedia(MOTION_OK);
   const count = content.steps.length;
-  const progress = useProcessStep(count, drawing, enhanced);
+  const progress = useProcessStep(count, box, enhanced);
   useRailSlot(slot, count);
 
   const live = enhanced && !progress.flowing;
@@ -108,8 +115,8 @@ export function Process({ content }: ProcessProps) {
   return (
     <div data-fade data-process>
       <div data-process-main>
-        <div data-process-scene>
-          <BuildScene ref={drawing} live={plain(content.live)} />
+        <div ref={box} data-process-scene>
+          {drawing}
         </div>
         <div data-process-text>
           <h2 data-label>{content.label}</h2>
@@ -123,6 +130,8 @@ export function Process({ content }: ProcessProps) {
                 step={content.steps[i] as Step}
                 number={i + 1}
                 youGet={content.youGet}
+                check={check}
+                tools={tools[i]}
                 current={i === at}
                 hidden={live && i !== at}
               />
@@ -130,7 +139,7 @@ export function Process({ content }: ProcessProps) {
           </ol>
         </div>
       </div>
-      <StepRail names={content.steps.map((step) => step.name)} current={at} slot={slot} />
+      <StepRail names={content.steps.map((step) => step.name)} current={at} tick={tick} slot={slot} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import type { MouseEvent } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
@@ -18,9 +18,10 @@ const applyTheme = (): void => {
 
 /**
  * Switches between the dark and light themes. Where the View Transitions API exists and motion is allowed, the
- * new theme is revealed in a circle growing from the click (spec 5.9); otherwise it switches at once.
+ * new theme is revealed in a circle growing from the click (spec 5.9); otherwise it switches at once. `children` is
+ * its icon, rendered on the server (Header).
  */
-export function ThemeToggle({ label }: { label: string }) {
+export function ThemeToggle({ label, children }: { label: string; children: ReactNode }) {
   const toggle = (event: MouseEvent<HTMLButtonElement>): void => {
     if (typeof document.startViewTransition !== 'function' || window.matchMedia(REDUCED_MOTION).matches) {
       applyTheme();
@@ -44,10 +45,7 @@ export function ThemeToggle({ label }: { label: string }) {
       data-theme-toggle
       className="grid size-11 place-items-center rounded-full border border-hair"
     >
-      <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-        <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor" />
-      </svg>
+      {children}
     </button>
   );
 }

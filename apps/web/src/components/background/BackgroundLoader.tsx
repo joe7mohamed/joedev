@@ -1,11 +1,7 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { type ComponentType, useEffect, useState } from 'react';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
-
-// its own chunk, fetched only once the page is idle and motion is allowed
-const Background = dynamic(() => import('./Background'), { ssr: false });
 
 /** Safari has no requestIdleCallback: wait this long instead. */
 const FALLBACK_MS = 200;
@@ -28,10 +24,24 @@ const whenIdle = (run: () => void): (() => void) => {
  */
 export function BackgroundLoader() {
   const motionOk = useMedia(MOTION_OK);
-  const [idle, setIdle] = useState(false);
+  const [Background, setBackground] = useState<ComponentType | null>(null);
   useEffect(() => {
-    if (!motionOk || idle) return;
-    return whenIdle(() => setIdle(true));
-  }, [motionOk, idle]);
-  return motionOk && idle ? <Background /> : null;
+    if (!motionOk || Background) return;
+    let cancelled = false;
+    // its own chunk, fetched only once the page is idle and motion is allowed. A plain import(), not next/dynamic:
+    // the client never renders it on the server, and next/dynamic's loader would add to every page's scripts.
+    const stopWaiting = whenIdle(() => {
+      import('./Background')
+        .then((module) => {
+          if (!cancelled) setBackground(() => module.default);
+        })
+        // the chunk failed to load (offline, a new deployment): the CSS gradient stays, as without WebGL
+        .catch(() => undefined);
+    });
+    return () => {
+      cancelled = true;
+      stopWaiting();
+    };
+  }, [motionOk, Background]);
+  return motionOk && Background ? <Background /> : null;
 }

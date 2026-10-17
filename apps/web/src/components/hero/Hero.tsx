@@ -1,4 +1,5 @@
-import { type HomeContent, type Locale, plain } from '@zakydev/shared';
+import type { HomeContent, Locale } from '@zakydev/shared';
+import { plain } from '@zakydev/shared/text';
 import { icons } from '@/components/icons';
 import { shotUrl } from '@/components/work/screenshot';
 import { Headline } from './Headline';

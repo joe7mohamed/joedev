@@ -1,4 +1,5 @@
-import { type HomeContent, plain } from '@zakydev/shared';
+import type { HomeContent } from '@zakydev/shared';
+import { plain } from '@zakydev/shared/text';
 import { FactScene } from './fact-scenes';
 
 type About = HomeContent['about'];

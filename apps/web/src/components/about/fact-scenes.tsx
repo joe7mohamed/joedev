@@ -1,5 +1,5 @@
 import type { HomeContent } from '@zakydev/shared';
-import { plain } from '@zakydev/shared';
+import { plain } from '@zakydev/shared/text';
 import type { CSSProperties, ReactNode } from 'react';
 import './fact-scenes.css';
 import './fact-motion.css';

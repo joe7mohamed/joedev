@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { getHome, home, homeContentSchema, plain, unconfirmedPaths } from './index';
+import { plain } from '../text';
+import { getHome, home, homeContentSchema, unconfirmedPaths } from './index';
 
 describe('home content', () => {
   it('is valid in both locales', () => {

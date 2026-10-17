@@ -1,16 +1,14 @@
 import { z } from 'zod';
+import type { Text } from '../text';
 
 // No JIT: zod probes for it with `Function("")`, which the site's Content-Security-Policy (no 'unsafe-eval') reports
 // as a violation wherever this module runs in the browser.
 z.config({ jitless: true });
 
-export const text = z.union([
+export const text: z.ZodType<Text> = z.union([
   z.string().min(1),
   z.object({ text: z.string().min(1), unconfirmed: z.literal(true) }),
 ]);
-export type Text = z.infer<typeof text>;
-export const u = (value: string): Text => ({ text: value, unconfirmed: true });
-export const plain = (value: Text): string => (typeof value === 'string' ? value : value.text);
 
 const word = z.object({ t: z.string().min(1), key: z.boolean().optional(), gold: z.boolean().optional() });
 const label = z.string().min(1);

@@ -1,7 +1,6 @@
-import { type HomeContent, plain } from '@zakydev/shared';
-import { type CSSProperties, Fragment } from 'react';
-import { icons } from '@/components/icons';
-import { ToolChip } from '@/components/ToolChip';
+import type { HomeContent } from '@zakydev/shared';
+import { plain } from '@zakydev/shared/text';
+import { type CSSProperties, Fragment, type ReactNode } from 'react';
 import { Swap } from '@/motion/Swap';
 
 export type Step = HomeContent['process']['steps'][number];
@@ -11,6 +10,9 @@ type StepTextProps = {
   /** Its position in the process (1–5), which keys its settle-in. */
   number: number;
   youGet: string;
+  /** The tick before what the client gets, and the step's tool list (StepTools), both rendered on the server. */
+  check: ReactNode;
+  tools: ReactNode;
   /** The step in view; in the stacked layout simply the first one. Only it carries the test hooks. */
   current: boolean;
   /** Enhanced and not in view: out of sight and out of the accessibility tree. */
@@ -25,7 +27,7 @@ const settle = (i: number): CSSProperties => ({ '--i': i }) as CSSProperties;
  * The name flips through `Swap` while the item stays current; the rest is keyed by the step, so a new step remounts
  * it and replays the settle-in, which only fills backwards and so always ends on the visible resting style.
  */
-export function StepText({ step, number, youGet, current, hidden }: StepTextProps) {
+export function StepText({ step, number, youGet, check, tools, current, hidden }: StepTextProps) {
   return (
     <li
       value={number}
@@ -42,19 +44,13 @@ export function StepText({ step, number, youGet, current, hidden }: StepTextProp
           {step.sentence}
         </p>
         <p data-step-get data-gives={current || undefined} data-settle style={settle(1)}>
-          <icons.CheckCircle />
+          {check}
           <span>
             <small>{youGet}</small>
             {plain(step.gives)}
           </span>
         </p>
-        {step.tools.length > 0 ? (
-          <ul data-step-tools data-settle dir="ltr" style={settle(2)}>
-            {step.tools.map((tool) => (
-              <ToolChip key={tool} name={tool} />
-            ))}
-          </ul>
-        ) : null}
+        {tools}
       </Fragment>
     </li>
   );

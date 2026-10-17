@@ -1,11 +1,12 @@
-import type { Ref } from 'react';
-import { icons } from '@/components/icons';
+import type { ReactNode, Ref } from 'react';
 import { engine } from '@/motion/engine';
 import './rail.css';
 
 type StepRailProps = {
   names: string[];
   current: number;
+  /** The tick a passed station shows, rendered on the server (Process). */
+  tick: ReactNode;
   /** The gold element's slot: a zero-height line from the first station's centre to the last one's. */
   slot: Ref<HTMLDivElement>;
 };
@@ -19,7 +20,7 @@ const stateOf = (i: number, current: number): string | undefined =>
  * scrolls to the middle of that step. Phones show only the current name; the others stay readable to assistive
  * technology.
  */
-export function StepRail({ names, current, slot }: StepRailProps) {
+export function StepRail({ names, current, tick, slot }: StepRailProps) {
   return (
     <div data-rail>
       <div ref={slot} data-slot data-rail-line aria-hidden="true" />
@@ -33,7 +34,7 @@ export function StepRail({ names, current, slot }: StepRailProps) {
             >
               <span data-station aria-hidden="true">
                 <b>{i + 1}</b>
-                <icons.Tick />
+                {tick}
               </span>
               <span data-station-name>{name}</span>
             </button>

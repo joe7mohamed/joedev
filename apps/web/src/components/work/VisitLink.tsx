@@ -1,14 +1,9 @@
 import type { CSSProperties } from 'react';
 import { icons } from '@/components/icons';
+import { addressOf } from './address';
 import './visit.css';
 
 type VisitLinkProps = { href: string; label: string; style?: CSSProperties };
-
-/** The address as people type it: host and path, without the scheme or a trailing slash. */
-export const addressOf = (href: string): string => {
-  const url = new URL(href);
-  return `${url.host}${url.pathname === '/' ? '' : url.pathname}`;
-};
 
 /**
  * The live-site link (spec 5.4): a solid gold button on desktop, a centred row under a hairline on phones (work.css).

@@ -1,7 +1,7 @@
 'use client';
 
 import type { HomeContent } from '@zakydev/shared';
-import { type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { type ReactNode, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { pinnedRect, registerSlot } from '@/motion/gold';
 import { currentFirst, stepAt } from '@/motion/math';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
@@ -9,9 +9,16 @@ import { useSceneFrame } from '@/motion/useSceneFrame';
 import { ProjectBars } from './ProjectBars';
 import { ProjectFrame } from './ProjectFrame';
 import { type Project, ProjectText } from './ProjectText';
+import type { Shot } from './screenshot';
 import './work.css';
 
-type WorkProps = { work: HomeContent['work']; projects: Project[] };
+type WorkSceneProps = {
+  work: HomeContent['work'];
+  projects: Project[];
+  /** Per project, in the same order: the article below its name (ProjectBody) and the screenshot (screenshot.ts). */
+  bodies: ReactNode[];
+  shots: Shot[];
+};
 type Step = { current: number; previous: number; flowing: boolean };
 
 const noop = (): (() => void) => () => undefined;
@@ -74,7 +81,7 @@ function useWorkSlot(slot: RefObject<HTMLDivElement | null>): void {
  * So does a scene too tall to pin. Otherwise only the current one shows, and the one that is current keeps its
  * element (key `current`), so its name flips instead of being replaced.
  */
-export function Work({ work, projects }: WorkProps) {
+export function WorkScene({ work, projects, bodies, shots }: WorkSceneProps) {
   const root = useRef<HTMLDivElement>(null);
   const slot = useRef<HTMLDivElement>(null);
   const enhanced = useMedia(MOTION_OK);
@@ -103,7 +110,8 @@ export function Work({ work, projects }: WorkProps) {
               <ProjectText
                 key={i === at ? 'current' : project.id}
                 project={project}
-                visit={work.visit}
+                body={bodies[i]}
+                shot={shots[i] as Shot}
                 current={i === at}
                 hidden={live && i !== at}
                 preload={i === 0}
@@ -114,7 +122,7 @@ export function Work({ work, projects }: WorkProps) {
         </div>
       </div>
       <div ref={slot} data-slot data-frame aria-hidden="true" />
-      <ProjectFrame projects={projects} current={at} previous={step.previous} />
+      <ProjectFrame projects={projects} images={shots} current={at} previous={step.previous} />
     </div>
   );
 }

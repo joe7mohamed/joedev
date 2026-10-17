@@ -1,4 +1,5 @@
-import { type HomeContent, u } from './schema';
+import { u } from '../text';
+import type { HomeContent } from './schema';
 
 export const homeEn: HomeContent = {
   nav: {

@@ -1,17 +1,16 @@
 'use client';
 
-import Image from 'next/image';
 import { type RefObject, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { engine, type SceneFrame } from '@/motion/engine';
 import { smooth, stepAt } from '@/motion/math';
 import { FINE_POINTER, MOTION_OK, useMedia } from '@/motion/useMedia';
+import { addressOf } from './address';
 import type { Project } from './ProjectText';
-import { SHOT } from './screenshot';
-import { addressOf } from './VisitLink';
+import type { Shot } from './screenshot';
 import './frame.css';
 
-type FrameProps = { projects: Project[]; current: number; previous: number };
+type FrameProps = { projects: Project[]; images: Shot[]; current: number; previous: number };
 
 /**
  * How visible the screenshots inside the gold element are. Only this scene decides (spec 6.4): they fade in over
@@ -81,7 +80,7 @@ function usePointerTilt(target: HTMLElement | null): void {
  * is near, so they never compete with the hero. It renders into `#gold-content`, which is aria-hidden and never takes pointer events, so the frame
  * holds nothing interactive and its images need no alt text; the articles carry the described screenshots.
  */
-export function ProjectFrame({ projects, current, previous }: FrameProps) {
+export function ProjectFrame({ projects, images, current, previous }: FrameProps) {
   const [target, setTarget] = useState<HTMLElement | null>(null);
   const shots = useRef<HTMLDivElement>(null);
   useEffect(() => setTarget(document.getElementById('gold-content')), []);
@@ -102,11 +101,11 @@ export function ProjectFrame({ projects, current, previous }: FrameProps) {
       <div ref={shots} data-shots>
         {projects.map((p, i) =>
           i === 0 || near ? (
-            <Image
+            // biome-ignore lint/performance/noImgElement: next/image's attributes, worked out on the server (screenshot.ts)
+            <img
               key={p.id}
-              src={p.image}
+              {...images[i]}
               alt=""
-              {...SHOT}
               loading="eager"
               data-index={i}
               data-on={i === current || undefined}

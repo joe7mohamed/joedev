@@ -29,3 +29,12 @@ describe('shotUrls', () => {
     ]);
   });
 });
+
+describe('shotOf', () => {
+  it('gives the <img> attributes next/image would render, lazy unless eager', () => {
+    const lazy = shot.shotOf('/projects/a.png', 'A home page');
+    expect(lazy).toMatchObject({ alt: 'A home page', width: 1280, height: 800, loading: 'lazy' });
+    expect(lazy.src).toBe(shot.shotUrl('/projects/a.png'));
+    expect(shot.shotOf('/projects/a.png', '', true).loading).toBeUndefined();
+  });
+});

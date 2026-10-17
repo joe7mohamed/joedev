@@ -1,8 +1,6 @@
 'use client';
 
-import { type CSSProperties, type RefObject, useEffect, useRef, useState } from 'react';
-import { icons } from '@/components/icons';
-import { Mark } from '@/components/Mark';
+import { type CSSProperties, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
 import { pinnedRect, registerSlot } from '@/motion/gold';
 import { loopAt } from '@/motion/math';
 import { Swap } from '@/motion/Swap';
@@ -11,18 +9,12 @@ import { useSceneFrame } from '@/motion/useSceneFrame';
 import './loop.css';
 
 export type Stage = { name: string; tools: string };
-type LoopRingProps = { stages: Stage[] };
-
-/** One icon per stage, clockwise from the top (prototype app.js LOOP_ICONS). */
-const ICONS = [
-  icons.Bulb,
-  icons.Pen,
-  icons.Code,
-  icons.Database,
-  icons.CheckCircle,
-  icons.Rocket,
-  icons.Pulse,
-];
+type LoopRingProps = {
+  stages: Stage[];
+  /** Rendered on the server (About): one icon per stage, and the mark in the centre. */
+  icons: ReactNode[];
+  mark: ReactNode;
+};
 /** A frame step longer than this (a stalled tab) does not jump the loop forward. */
 const MAX_STEP_MS = 100;
 
@@ -115,7 +107,7 @@ function useRingSlot(slot: RefObject<HTMLDivElement | null>): void {
  * mirrored. The stations are a list, so every stage and its tools stay readable to assistive technology while the
  * centre, which changes with time, is hidden from it.
  */
-export function LoopRing({ stages }: LoopRingProps) {
+export function LoopRing({ stages, icons, mark }: LoopRingProps) {
   const slot = useRef<HTMLDivElement>(null);
   const runner = useRef<HTMLDivElement>(null);
   const arc = useRef<HTMLDivElement>(null);
@@ -131,7 +123,6 @@ export function LoopRing({ stages }: LoopRingProps) {
       </div>
       <ol data-stations>
         {stages.map((s, i) => {
-          const Icon = ICONS[i] ?? icons.Pulse;
           const place = placeOf(i, stages.length);
           return (
             <li
@@ -144,7 +135,7 @@ export function LoopRing({ stages }: LoopRingProps) {
               style={place.style}
             >
               <span data-node aria-hidden="true">
-                <Icon />
+                {icons[i]}
               </span>
               <span data-station-name>{s.name}</span>
               <span className="sr-only" lang="en">
@@ -155,7 +146,7 @@ export function LoopRing({ stages }: LoopRingProps) {
         })}
       </ol>
       <span data-loop-mark aria-hidden="true">
-        <Mark size={64} />
+        {mark}
       </span>
       <div data-loop-centre aria-hidden="true">
         <p data-stage-name>

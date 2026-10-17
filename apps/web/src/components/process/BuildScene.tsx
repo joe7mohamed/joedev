@@ -1,12 +1,10 @@
-import type { CSSProperties, Ref } from 'react';
+import type { CSSProperties } from 'react';
 import './build-scene.css';
 
 /** Drawings are never mirrored, also on the Arabic page (spec 6.2). */
 const LTR: CSSProperties = { direction: 'ltr' };
 
 type BuildSceneProps = {
-  /** Receives `--p0…--p4` from Process every frame while the scene plays. */
-  ref?: Ref<SVGSVGElement>;
   /** The badge text once the app is live (content, `process.live`). */
   live: string;
 };
@@ -15,10 +13,11 @@ type BuildSceneProps = {
  * One app being built over the five steps (spec 5.5), transcribed from the prototype (index.html lines 74–105).
  * Classes `dN` draw their stroke and `oN` fade in with step N's progress `--pN` (build-scene.css); every `--pN`
  * rests at 1, so without the scene playing the drawing is finished. Never mirrored, also on the Arabic page.
+ * Rendered on the server; ProcessScene writes `--p0…--p4` on it every frame while the scene plays.
  */
-export function BuildScene({ ref, live }: BuildSceneProps) {
+export function BuildScene({ live }: BuildSceneProps) {
   return (
-    <svg ref={ref} viewBox="0 0 520 400" style={LTR} data-build aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 520 400" style={LTR} data-build aria-hidden="true" focusable="false">
       <g className="lift">
         <g className="talk">
           <path

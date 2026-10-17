@@ -9,6 +9,7 @@ import { Header } from '@/components/header/Header';
 import { Hero } from '@/components/hero/Hero';
 import { JsonLd } from '@/components/JsonLd';
 import { Loader } from '@/components/loader/Loader';
+import { LoaderArt } from '@/components/loader/LoaderArt';
 import { Process } from '@/components/process/Process';
 import { shotUrls } from '@/components/work/screenshot';
 import { Work } from '@/components/work/Work';
@@ -53,7 +54,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         </Scene>
       </main>
       <SiteFooter text={c.contact.footer} />
-      <Loader images={shotUrls(c.projects.map((p) => p.image))} />
+      <Loader images={shotUrls(c.projects.map((p) => p.image))}>
+        <LoaderArt />
+      </Loader>
       <JsonLd content={c} />
     </EngineProvider>
   );

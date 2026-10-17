@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { currentScene, sceneState } from '@/motion/current';
 import { engine, type SceneFrame, type SceneId } from '@/motion/engine';
-import { MenuIcon, type MenuId } from './menu-icons';
+import type { MenuId } from './menu-icons';
 import './menu.css';
 
-export type MenuItem = { id: MenuId; label: string };
+/** `icon` is the item's drawing (menu-icons), rendered on the server (Header). */
+export type MenuItem = { id: MenuId; label: string; icon: ReactNode };
 type MenuProps = { items: MenuItem[]; label: string };
 
 /** The about ring has nearly filled the screen with gold from this point of its tail (spec 5.2). */
@@ -126,7 +127,7 @@ export function Menu({ items, label }: MenuProps) {
           aria-label={item.label}
           aria-current={item.id === current ? 'true' : undefined}
         >
-          <MenuIcon id={item.id} />
+          {item.icon}
           <span>{item.label}</span>
         </a>
       ))}
