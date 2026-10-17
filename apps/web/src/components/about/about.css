@@ -9,17 +9,16 @@
   gap: 28px;
   width: 100%;
 }
-/* heights also follow the viewport's, so the scene still fits a short laptop screen and stays pinned */
 [data-about-text] {
   display: grid;
-  gap: clamp(10px, 2svh, 18px);
+  gap: 18px;
   min-width: 0;
 }
 [data-about-text] > * {
   margin: 0;
 }
 [data-about] [data-about-heading] {
-  font: 600 clamp(34px, min(5vw, 8.5svh), 76px) / 1.02 var(--stack-display);
+  font: 600 clamp(34px, 5vw, 76px) / 1.02 var(--stack-display);
   letter-spacing: -0.03em;
   text-wrap: balance;
   text-shadow: var(--about-shadow);
@@ -48,8 +47,6 @@ html[lang="ar"] [data-about] [data-about-heading] {
   display: block;
   width: 100%;
   aspect-ratio: 200 / 90;
-  /* on a short screen the box gets flatter and the drawing stays whole, centred in it */
-  max-height: 15svh;
   margin-bottom: 9px;
   overflow: hidden;
   border: 1px solid var(--hair);
@@ -90,15 +87,26 @@ html[lang="ar"] [data-about] [data-fact-label] {
   font-size: 11.5px;
 }
 
-/* the pinned scene: the text slides a little as it fades in and out, the ring stays on the gold element */
+/* The pinned scene: the text slides a little as it fades in and out, the ring stays on the gold element. Its
+   heights also follow the viewport's, so it still fits a short laptop screen and stays pinned; a card scene's box gets
+   flatter and its drawing stays whole, centred in it. Only here: a stacked or flowing About has room to grow. */
 html.enhanced #about:not([data-unpinned]) [data-about-text] {
   translate: 0 calc((1 - var(--enter, 1)) * 46px - (1 - var(--exit, 1)) * 46px);
+}
+html.enhanced #about:not([data-unpinned]) [data-fact-scene] {
+  max-height: 15svh;
 }
 
 @media (min-width: 861px) {
   [data-about] {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: clamp(24px, 5vw, 80px);
+  }
+  html.enhanced #about:not([data-unpinned]) [data-about-text] {
+    gap: clamp(10px, 2svh, 18px);
+  }
+  html.enhanced #about:not([data-unpinned]) [data-about-heading] {
+    font-size: clamp(34px, min(5vw, 8.5svh), 76px);
   }
 }
 /* phones: one centred column of ring, heading and cards */
@@ -123,7 +131,6 @@ html.enhanced #about:not([data-unpinned]) [data-about-text] {
     gap: 10px;
   }
   [data-about] [data-fact-scene] {
-    max-height: 12svh;
     margin-bottom: 5px;
   }
   [data-about] [data-fact-label] {
@@ -135,5 +142,10 @@ html.enhanced #about:not([data-unpinned]) [data-about-text] {
   [data-about] [data-fact-body] {
     font-size: 12.5px;
     line-height: 1.4;
+  }
+}
+@media (max-width: 860px) {
+  html.enhanced #about:not([data-unpinned]) [data-fact-scene] {
+    max-height: 12svh;
   }
 }

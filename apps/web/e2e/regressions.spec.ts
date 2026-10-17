@@ -222,18 +222,19 @@ for (const path of ['/en', '/ar']) {
   test(`loop station icons are centred on ${path}`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'about', 0.5);
-    const worst = await page.evaluate(() =>
-      Math.max(
-        ...[...document.querySelectorAll('#about [data-station] [data-node]')].map((node) => {
-          const a = node.getBoundingClientRect();
-          const b = (node.querySelector('svg') as SVGElement).getBoundingClientRect();
-          return Math.max(
-            Math.abs(a.left + a.width / 2 - b.left - b.width / 2),
-            Math.abs(a.top + a.height / 2 - b.top - b.height / 2),
-          );
-        }),
-      ),
-    );
+    const { worst, count } = await page.evaluate(() => {
+      const nodes = [...document.querySelectorAll('#about [data-station] [data-node]')];
+      const offsets = nodes.map((node) => {
+        const a = node.getBoundingClientRect();
+        const b = (node.querySelector('svg') as SVGElement).getBoundingClientRect();
+        return Math.max(
+          Math.abs(a.left + a.width / 2 - b.left - b.width / 2),
+          Math.abs(a.top + a.height / 2 - b.top - b.height / 2),
+        );
+      });
+      return { worst: Math.max(...offsets), count: nodes.length };
+    });
+    expect(count).toBe(7);
     expect(worst).toBeLessThanOrEqual(0.5);
   });
 }
@@ -283,5 +284,40 @@ for (const path of ['/en', '/ar']) {
     expect(m.face).toBeLessThanOrEqual(0.5);
     expect(m.slot).toBeLessThanOrEqual(1);
     expect(m.circle).toBe(true);
+  });
+}
+
+// Review fix: the svh fit caps belong to the pinned scene only. A phone in landscape (844x390) cannot pin About, so it
+// flows (and with reduced motion it is stacked): the ring keeps its full size and the centre never runs into the
+// stations.
+for (const path of ['/en', '/ar']) {
+  test(`a flowing or stacked About keeps a full-size ring on a landscape phone on ${path}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    const measure = async (mode: string) => {
+      await page.locator('#about [data-loop]').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(300);
+      const m = await page.evaluate(() => {
+        const ring = (document.querySelector('#about [data-loop]') as HTMLElement).getBoundingClientRect();
+        const tools = (
+          document.querySelector('#about [data-stage-tools]') as HTMLElement
+        ).getBoundingClientRect();
+        const overlaps = [...document.querySelectorAll('#about [data-node]')].filter((node) => {
+          const r = node.getBoundingClientRect();
+          return r.left < tools.right && tools.left < r.right && r.top < tools.bottom && tools.top < r.bottom;
+        }).length;
+        return { width: ring.width, overlaps };
+      });
+      expect(m.width, mode).toBeGreaterThanOrEqual(200);
+      expect(m.overlaps, mode).toBe(0);
+    };
+    await page.goto(path);
+    await expect(page.locator('html')).toHaveClass(/enhanced/);
+    await expect(page.locator('#about')).toHaveAttribute('data-unpinned', 'true');
+    await measure('flowing');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(page.locator('html')).not.toHaveClass(/enhanced/);
+    await measure('stacked');
   });
 }

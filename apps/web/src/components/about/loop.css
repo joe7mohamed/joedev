@@ -215,6 +215,11 @@ html[lang="ar"] [data-loop] [data-stage-name] {
    technology. */
 @media (max-width: 860px) {
   [data-loop] {
+    width: 44vw;
+    margin: 9vw auto 6vw;
+  }
+  /* the pinned phone scene also follows the viewport's height (about.css); a stacked or flowing one does not */
+  html.enhanced #about:not([data-unpinned]) [data-loop] {
     width: min(44vw, 24svh);
     margin: min(9vw, 5svh) auto min(6vw, 3svh);
   }
