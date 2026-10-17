@@ -9,10 +9,18 @@ const MAX_CLS = 0.05;
 /** Lighthouse's mobile CPU slowdown: without it hydration can beat the first paint and hide a shift. */
 const CPU_SLOWDOWN = 4;
 const SETTLE_MS = 2000;
-/** Lighthouse's mobile viewport, and the desktop one the other specs use. */
+/**
+ * Lighthouse's mobile viewport, the desktop one the other specs use, and the real short sizes: iPhone Safari's small
+ * viewport with its toolbars (360 x 640, 390 x 664) and laptop Chrome (1280 x 632, 1366 x 657, 1536 x 730).
+ */
 const VIEWPORTS = [
   { width: 412, height: 823, mobile: true },
   { width: 1440, height: 900, mobile: false },
+  { width: 360, height: 640, mobile: true },
+  { width: 390, height: 664, mobile: true },
+  { width: 1280, height: 632, mobile: false },
+  { width: 1366, height: 657, mobile: false },
+  { width: 1536, height: 730, mobile: false },
 ];
 
 const measure = async (

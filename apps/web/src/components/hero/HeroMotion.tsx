@@ -125,10 +125,12 @@ const createZoom = (parts: Parts, onLive: (live: boolean) => void): Zoom => {
   const section = parts.root.closest('[data-scene]');
   return {
     apply(f) {
-      // a hero that flows (large text, short screens) does not zoom
-      const unpinned = section?.hasAttribute('data-unpinned') ?? false;
-      onLive(f.progress < POINTER_UNTIL && !unpinned);
-      const progress = unpinned ? 0 : f.progress;
+      // a hero that flows (large text, short screens) does not zoom; nor does one before a scene that flows, which
+      // has no frame to zoom into: it stays whole, its underline on, and scrolls away as that scene comes in
+      const still =
+        (section?.hasAttribute('data-unpinned') || section?.hasAttribute('data-next-unpinned')) ?? false;
+      onLive(f.progress < POINTER_UNTIL && !still);
+      const progress = still ? 0 : f.progress;
       if (progress === last) return;
       last = progress;
       paint(parts, geometry, progress);

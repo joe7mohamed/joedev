@@ -10,6 +10,10 @@ export type SceneFrame = {
   top: number;
   end: number;
   viewport: number;
+  /** False while the scene flows at natural height because its content does not fit one viewport. */
+  pinned: boolean;
+  /** Changes whenever the scenes are measured again (resize, fonts, content size), so cached layout can refresh. */
+  layout: number;
   sticky: HTMLElement;
 };
 export type ScrollInfo = { y: number; velocity: number };
@@ -48,6 +52,7 @@ let running = false;
 let dirty = true;
 let lastY = 0;
 let velocity = 0;
+let layout = 0;
 let observer: ResizeObserver | null = null;
 let stopWaiting: () => void = () => undefined;
 
@@ -97,6 +102,7 @@ const needed = (sticky: HTMLElement): number => {
  * Then every scene's geometry is measured once, so the frame loop never reads layout.
  */
 const fitScenes = (): void => {
+  layout += 1;
   const viewports = new Map<SceneId, number>();
   for (const [id, { section, sticky }] of scenes) {
     section.removeAttribute('data-unpinned');
@@ -176,6 +182,8 @@ const tick = (): void => {
       top: g.top,
       end: g.top + g.height - g.viewport,
       viewport: g.viewport,
+      pinned: !g.unpinned,
+      layout,
       sticky: entry.sticky,
     });
   }

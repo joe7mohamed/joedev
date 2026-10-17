@@ -1,6 +1,6 @@
 /* The A-to-Z loop (spec 5.6; prototype style.css v19 `.stn`, `.sn`, `.runner`, `.loopc`, `.o2`). The ring itself is
-   the gold element, sitting on [data-slot]; when the gold element is not on screen (no script, reduced motion, or a
-   scene that flows) the slot draws the ring. Inside the drawing positions are physical: it is never mirrored. */
+   the gold element, sitting on [data-slot]; when the gold element is not on it (no script, reduced motion, or the
+   scene flows) the slot draws the ring. Inside the drawing positions are physical: it is never mirrored. */
 
 [data-loop] {
   position: relative;
@@ -16,8 +16,8 @@
   border: 2px solid var(--gold);
   border-radius: 50%;
 }
-/* while the gold element plays, it is the ring */
-html.enhanced:not(:has([data-scene][data-unpinned])) [data-loop] [data-slot] {
+/* while the gold element is on the About scene, it is the ring (GoldElement sets data-gold-on) */
+html.enhanced[data-gold-on="about"] [data-loop] [data-slot] {
   border-color: transparent;
 }
 
@@ -251,5 +251,12 @@ html[lang="ar"] [data-loop] [data-stage-name] {
   }
   [data-loop] [data-stage-tools] {
     font-size: 9.5px;
+  }
+}
+/* short phones: a smaller ring still (about.css) */
+@media (max-width: 860px) and (max-height: 830px) {
+  html.enhanced #about:not([data-unpinned]) [data-loop] {
+    width: min(44vw, 18svh);
+    margin: min(9vw, 3svh) auto min(6vw, 1.5svh);
   }
 }

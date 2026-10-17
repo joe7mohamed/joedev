@@ -1,0 +1,92 @@
+/* The gold element (spec 5.0, GoldElement.tsx): layer 1, above the background and below the scene content
+   (home.css lists the layers). */
+
+/* The gold element: one fixed shape that travels between scene slots. */
+[data-gold-layer] {
+  display: none;
+}
+html.enhanced [data-gold-layer] {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: clip;
+}
+/* The box sits exactly on the slot; the face inside it draws the shape and is the only part that floats and tilts. */
+html.enhanced [data-gold] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* shown by GoldElement once it sits on its first slot, so it never appears in the corner and jumps (layout shift) */
+  visibility: hidden;
+  will-change: transform, width, height;
+}
+html.enhanced [data-gold-face] {
+  --turn-y: calc(var(--px, 0) * 9deg);
+  --turn-x: calc(var(--py, 0) * -7deg);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 2px solid var(--gold);
+  border-radius: inherit;
+  background: rgb(212 175 55 / var(--fill, 0));
+  /* the lift shadow belongs to the floating project frame only: under the ring it greyed the smoke in a box */
+  box-shadow: 0 40px 90px -40px rgb(0 0 0 / calc(0.75 * var(--tilt, 0)));
+  /* --tilt (0..1) comes from the slot: only the project frame floats, tilts with the pointer and sways */
+  transform: translateY(calc(var(--bob, 0) * 6px * var(--tilt, 0))) perspective(1100px)
+    rotateY(calc(var(--turn-y) * var(--tilt, 0))) rotateX(calc(var(--turn-x) * var(--tilt, 0)));
+}
+/* thin shapes (underline, rail line) are solid gold and need no border, which would make the face taller than
+   its 3 px box and move the line's centre off the stations */
+html.enhanced [data-gold][data-thin="true"] > [data-gold-face] {
+  border-width: 0;
+  background: var(--gold);
+}
+@media (max-width: 860px) {
+  /* phones have no pointer to follow: the frame sways instead */
+  html.enhanced [data-gold-face] {
+    --turn-y: calc(var(--sway, 0) * 2.5deg);
+    --turn-x: 0deg;
+  }
+}
+/* animated on the face itself and read there with var(), so they need not inherit */
+@property --bob {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --sway {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-gold][data-tilt] > [data-gold-face] {
+    animation: gold-bob 3.5s ease-in-out infinite alternate;
+  }
+}
+/* only phones sway; desktop follows the pointer */
+@media (prefers-reduced-motion: no-preference) and (max-width: 860px) {
+  html.enhanced [data-gold][data-tilt] > [data-gold-face] {
+    animation:
+      gold-bob 3.5s ease-in-out infinite alternate,
+      gold-sway 4.5s ease-in-out infinite alternate;
+  }
+}
+@keyframes gold-bob {
+  from {
+    --bob: -1;
+  }
+  to {
+    --bob: 1;
+  }
+}
+@keyframes gold-sway {
+  from {
+    --sway: -1;
+  }
+  to {
+    --sway: 1;
+  }
+}

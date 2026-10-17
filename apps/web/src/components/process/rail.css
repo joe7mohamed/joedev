@@ -1,6 +1,6 @@
 /* The step rail (spec 5.5; prototype style.css `.ticks`, `.nd`): five 30 px stations spread across the scene. The
    gold line is the gold element, sitting on [data-rail-line], a zero-height line through the stations' centres
-   from the first to the last. Shown only while the scene is pinned (process.css). */
+   from the first to the last. Shown only while the scene is pinned (process.css). --steps comes from StepRail. */
 
 [data-rail] {
   position: relative;
@@ -12,6 +12,19 @@
   inset-inline: 15px;
   top: 15px;
   height: 0;
+}
+/* Whenever the gold element is not on the rail (GoldElement sets data-gold-on), the rail draws the same line itself:
+   from the first station, as long as the progress through the steps (--p, from the engine), under the stations. */
+html.enhanced:not([data-gold-on="process"]) #process [data-rail-line]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: -1.5px;
+  z-index: -1;
+  width: calc(clamp(0, var(--p, 0) * var(--steps) / (var(--steps) - 1), 1) * 100%);
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gold);
 }
 [data-rail] [data-stations] {
   display: flex;

@@ -148,3 +148,23 @@ html.enhanced #about:not([data-unpinned]) [data-fact-scene] {
     max-height: 12svh;
   }
 }
+
+/* Short screens (under 830 px tall: phones in Safari, 1366 x 768 and 1280 x 720 laptops): flatter card scenes and
+   tighter gaps, so the scene still fits one screen and pins (spec 6.4). Taller screens keep the layout above. */
+@media (min-width: 861px) and (max-height: 830px) {
+  html.enhanced #about:not([data-unpinned]) [data-fact-scene] {
+    max-height: 11svh;
+  }
+}
+@media (max-width: 860px) and (max-height: 830px) {
+  html.enhanced #about:not([data-unpinned]) [data-about-text] {
+    gap: 6px;
+  }
+  html.enhanced #about:not([data-unpinned]) [data-facts] {
+    gap: 8px;
+  }
+  html.enhanced #about:not([data-unpinned]) [data-fact-scene] {
+    max-height: 8svh;
+    margin-bottom: 4px;
+  }
+}

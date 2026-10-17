@@ -59,7 +59,9 @@ html[lang="ar"] [data-tags] li {
   position: relative;
   margin: 0;
   font-family: var(--stack-display);
-  font-size: clamp(44px, 11.4vw, 168px);
+  /* about 11.4 vw (spec 5.3), but never taller than the screen leaves room for: three lines and the rows around them
+     (about 280 px with the scene's padding) must fit a short laptop screen, so the scene still pins */
+  font-size: clamp(44px, min(11.4vw, calc((100svh - 280px) / 3)), 168px);
   font-weight: 560;
   font-variation-settings:
     "wght" 560,
@@ -69,7 +71,8 @@ html[lang="ar"] [data-tags] li {
   text-shadow: var(--glow);
 }
 html[lang="ar"] [data-headline] {
-  font-size: clamp(44px, 10.5vw, 150px);
+  /* the same rule for the taller Arabic lines (line-height 1.32) */
+  font-size: clamp(44px, min(10.5vw, calc((100svh - 290px) / 4)), 150px);
   font-weight: 700;
   font-variation-settings: normal;
   line-height: 1.32;

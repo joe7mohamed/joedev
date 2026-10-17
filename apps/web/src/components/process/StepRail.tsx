@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from 'react';
+import type { CSSProperties, ReactNode, Ref } from 'react';
 import { engine } from '@/motion/engine';
 import './rail.css';
 
@@ -22,7 +22,7 @@ const stateOf = (i: number, current: number): string | undefined =>
  */
 export function StepRail({ names, current, tick, slot }: StepRailProps) {
   return (
-    <div data-rail>
+    <div data-rail style={{ '--steps': names.length } as CSSProperties}>
       <div ref={slot} data-slot data-rail-line aria-hidden="true" />
       <ol data-stations>
         {names.map((name, i) => (

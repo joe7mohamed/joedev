@@ -253,8 +253,8 @@ html.enhanced #contact:not([data-unpinned]) [data-sticky] {
   }
 }
 
-/* The gold layer hides while any scene flows: the scene fades its own gold in with its content.
-   Last in the file: it is the most specific rule on the scene box. */
-html.enhanced:has([data-scene][data-unpinned]) #contact > [data-sticky] {
+/* Whenever the gold element is not on this scene (it flows, so it has no slot), the scene fades its own gold in with
+   its content. Last in the file: it is the most specific rule on the scene box. */
+html.enhanced:not([data-gold-on="contact"]) #contact > [data-sticky] {
   background: color-mix(in srgb, var(--gold) calc(var(--enter) * 100%), transparent);
 }
