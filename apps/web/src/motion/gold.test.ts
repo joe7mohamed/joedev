@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SceneFrame, SceneId } from './engine';
-import { type GoldShape, readSlot, registerSlot, resolveGold } from './gold';
+import { fixedRect, type GoldShape, readSlot, registerSlot, resolveGold } from './gold';
 
 const frame = (id: SceneId, top: number, out: number, pinned = true): SceneFrame => ({
   id,
@@ -112,5 +112,31 @@ describe('readSlot', () => {
     expect(reader).not.toHaveBeenCalled();
     expect(readSlot(layer)('about', frame('about', 0, 0))).toEqual(A);
     unregister();
+  });
+});
+
+// Spec 6.4: only the documented live slots read layout in the frame loop.
+describe('fixedRect', () => {
+  const box = (top: number, calls: { n: number }) =>
+    ({
+      getBoundingClientRect: () => {
+        calls.n += 1;
+        return { left: 10, top, width: 300, height: 200 } as DOMRect;
+      },
+    }) as HTMLElement;
+  it('measures a slot that does not move once per layout, not every frame', () => {
+    const calls = { n: 0 };
+    const slot = box(150, calls);
+    const sticky = box(0, calls);
+    const layer = box(0, calls);
+    const at = (layout: number): SceneFrame => ({ ...frame('work', 0, 0), sticky, layout });
+    const rect = fixedRect(slot);
+    expect(rect(at(1), layer)).toEqual({ x: 0, y: 150, w: 300, h: 200 });
+    const first = calls.n;
+    rect(at(1), layer);
+    rect(at(1), layer);
+    expect(calls.n).toBe(first);
+    rect(at(2), layer);
+    expect(calls.n).toBe(first * 2);
   });
 });

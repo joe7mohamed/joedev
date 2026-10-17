@@ -2,7 +2,7 @@
 
 import type { HomeContent } from '@zakydev/shared';
 import { type ReactNode, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { pinnedRect, registerSlot } from '@/motion/gold';
+import { fixedRect, registerSlot } from '@/motion/gold';
 import { currentFirst, stepAt } from '@/motion/math';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
 import { useSceneFrame } from '@/motion/useSceneFrame';
@@ -59,19 +59,22 @@ function useWorkStep(count: number, root: RefObject<HTMLDivElement | null>): Ste
   return step;
 }
 
-/** The gold element becomes the project frame on this slot. No ancestor of the slot is transformed, so it is true. */
+/**
+ * The gold element becomes the project frame on this slot. No ancestor of the slot is transformed, so it is true. The
+ * frame does not move inside the pinned scene, so it is measured once per layout (fixedRect), not every frame.
+ */
 function useWorkSlot(slot: RefObject<HTMLDivElement | null>): void {
-  useEffect(
-    () =>
-      registerSlot('work', (f, layer) => ({
-        ...pinnedRect(slot.current as HTMLElement, f.sticky, layer),
-        radius: 14,
-        fill: 0,
-        round: 0,
-        tilt: 1,
-      })),
-    [slot],
-  );
+  useEffect(() => {
+    if (!slot.current) return;
+    const rect = fixedRect(slot.current);
+    return registerSlot('work', (f, layer) => ({
+      ...rect(f, layer),
+      radius: 14,
+      fill: 0,
+      round: 0,
+      tilt: 1,
+    }));
+  }, [slot]);
 }
 
 /**

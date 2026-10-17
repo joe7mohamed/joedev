@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
 import { frozen } from '@/lib/e2e';
-import { pinnedRect, registerSlot } from '@/motion/gold';
+import { fixedRect, registerSlot } from '@/motion/gold';
 import { loopAt } from '@/motion/math';
 import { Swap } from '@/motion/Swap';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
@@ -89,18 +89,16 @@ function useLoop(
   return current;
 }
 
-/** The gold element becomes the ring itself: a circle exactly on the ring's box (spec 5.0). */
+/**
+ * The gold element becomes the ring itself: a circle exactly on the ring's box (spec 5.0). The ring does not move
+ * inside the pinned scene, so it is measured once per layout (fixedRect), not every frame.
+ */
 function useRingSlot(slot: RefObject<HTMLDivElement | null>): void {
-  useEffect(
-    () =>
-      registerSlot('about', (f, layer) => ({
-        ...pinnedRect(slot.current as HTMLElement, f.sticky, layer),
-        radius: 0,
-        fill: 0,
-        round: 1,
-      })),
-    [slot],
-  );
+  useEffect(() => {
+    if (!slot.current) return;
+    const rect = fixedRect(slot.current);
+    return registerSlot('about', (f, layer) => ({ ...rect(f, layer), radius: 0, fill: 0, round: 1 }));
+  }, [slot]);
 }
 
 /**

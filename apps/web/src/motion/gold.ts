@@ -43,6 +43,20 @@ export const pinnedRect = (slot: HTMLElement, sticky: HTMLElement, layer: HTMLEl
   return { x: a.left - l.left, y: a.top - s.top, w: a.width, h: a.height };
 };
 
+/**
+ * pinnedRect for a slot that never moves inside its pinned scene (the work frame, the about ring). It is measured once
+ * per layout (SceneFrame.layout changes on resize, font load and every refit), so the frame loop reads no layout for
+ * it: only the documented live slots, the hero underline and the process rail, are measured every frame (spec 6.4).
+ */
+export const fixedRect = (slot: HTMLElement): ((frame: SceneFrame, layer: HTMLElement) => Rect) => {
+  let cache: { layout: number; rect: Rect } | null = null;
+  return (frame, layer) => {
+    if (cache?.layout !== frame.layout)
+      cache = { layout: frame.layout, rect: pinnedRect(slot, frame.sticky, layer) };
+    return cache.rect;
+  };
+};
+
 /** The shape on screen, and the scene it belongs to (the one it sits on, or is leaving during a handoff). */
 export type GoldPlacement = GoldShape & { on: SceneId };
 
