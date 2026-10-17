@@ -1,19 +1,29 @@
-/* Layers, lowest first: background 0, gold 1, scene content 2, header 5, loader 9. */
+/* Layers, lowest first: still fallback glow -1, background 0, gold 1, scene content 2, header 5, loader 9. */
 
-/* The background (spec 5.8). The page's own background is a still gold glow, fixed to the screen; it is what shows
-   without script, with reduced motion and wherever WebGL is missing. The shader canvas covers it otherwise. */
-html {
-  background-image: radial-gradient(
+/* The background (spec 5.8). Behind the page sits a still gold glow on a fixed layer (a fixed layer, not a fixed
+   background, which iOS ignores); it is what shows without script, with reduced motion and wherever WebGL is
+   missing. The shader canvas covers it otherwise. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
     120% 80% at 80% 30%,
     color-mix(in srgb, var(--gold) 14%, var(--bg)),
     var(--bg) 60%
   );
-  background-attachment: fixed;
+  pointer-events: none;
+}
+/* the canvas's host adds no box of its own */
+[data-bg-host] {
+  display: contents;
 }
 [data-bg] {
   position: fixed;
   inset: 0;
   z-index: 0;
+  /* a canvas is a replaced element: inset alone keeps its intrinsic 300 x 150, so it needs the full size too */
   width: 100%;
   height: 100%;
   pointer-events: none;

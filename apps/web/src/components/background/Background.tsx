@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { currentScene } from '@/motion/current';
 import { engine, type SceneFrame, type SceneId } from '@/motion/engine';
 import { advance, easeSide, guardRoom, hexOf, pressOf, scrollOf, strengthOf, textSideOf } from './drift';
@@ -43,13 +43,42 @@ const lengthOf = (frames: Map<SceneId, SceneFrame>): number => {
   return end;
 };
 
-/** Sizes the drawing buffer to the canvas's CSS size at the reduced pixel ratio, and the viewport with it. */
-const sizeBuffer = (canvas: HTMLCanvasElement, renderer: Renderer): void => {
+const sized = new WeakSet<HTMLCanvasElement>();
+
+/**
+ * Sizes the drawing buffer to the canvas's CSS size at the reduced pixel ratio, and the viewport with it. Only when
+ * the size changed: reassigning clears and reallocates the buffer, and the phone's toolbar fires resizes all the time.
+ * Returns whether it changed.
+ */
+const sizeBuffer = (canvas: HTMLCanvasElement, renderer: Renderer): boolean => {
   const box = canvas.getBoundingClientRect();
   const ratio = Math.min(window.devicePixelRatio || 1, MAX_RATIO) * SCALE;
-  canvas.width = Math.max(1, Math.round(box.width * ratio));
-  canvas.height = Math.max(1, Math.round(box.height * ratio));
-  renderer.resize(canvas.width, canvas.height);
+  const width = Math.max(1, Math.round(box.width * ratio));
+  const height = Math.max(1, Math.round(box.height * ratio));
+  if (sized.has(canvas) && width === canvas.width && height === canvas.height) return false;
+  sized.add(canvas);
+  canvas.width = width;
+  canvas.height = height;
+  renderer.resize(width, height);
+  return true;
+};
+
+/**
+ * Calls `onChange` whenever the device pixel ratio changes without a window resize (a window moved to another
+ * screen), re-arming its query for the new ratio each time. Returns a function that stops watching.
+ */
+const watchPixelRatio = (onChange: () => void): (() => void) => {
+  let query = window.matchMedia('all');
+  const fire = (): void => {
+    onChange();
+    arm();
+  };
+  const arm = (): void => {
+    query = window.matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`);
+    query.addEventListener('change', fire, { once: true });
+  };
+  arm();
+  return () => query.removeEventListener('change', fire);
 };
 
 /** Paints the current theme's palette, with its text guard. */
@@ -100,8 +129,7 @@ const painter = (canvas: HTMLCanvasElement, renderer: Renderer): Painter => {
       if (performance.now() - drawn >= DRIFT_MS * 0.75) draw();
     },
     resize() {
-      sizeBuffer(canvas, renderer);
-      draw();
+      if (sizeBuffer(canvas, renderer)) draw();
     },
     paint() {
       paintTheme(renderer);
@@ -135,9 +163,11 @@ const run = (canvas: HTMLCanvasElement, renderer: Renderer, onLost: () => void):
     view.draw();
   };
   const unsubscribe = engine.subscribe((frames, scroll) => view.follow(frames, scroll.y, scroll.velocity));
+  const unwatch = watchPixelRatio(view.resize);
   const stop = (): void => {
     window.clearInterval(timer);
     unsubscribe();
+    unwatch();
     window.removeEventListener('resize', view.resize);
     window.visualViewport?.removeEventListener('resize', view.resize);
     document.removeEventListener('visibilitychange', visibility);
@@ -154,7 +184,8 @@ const run = (canvas: HTMLCanvasElement, renderer: Renderer, onLost: () => void):
   document.addEventListener('visibilitychange', visibility);
   document.addEventListener('themechange', view.paint);
   canvas.addEventListener('webglcontextlost', lost);
-  view.paint();
+  // palette first, then the size: the first draw already has both
+  paintTheme(renderer);
   view.resize();
   visibility();
   return stop;
@@ -164,24 +195,29 @@ const run = (canvas: HTMLCanvasElement, renderer: Renderer, onLost: () => void):
  * The liquid gold background (spec 5.8): one fixed, decorative canvas behind everything. Where WebGL is missing,
  * the shader fails, or the context is lost, the canvas hides and the page's CSS gradient shows (home.css).
  * Mounted only when motion is allowed (BackgroundLoader); unmounting releases the GL context.
+ * Every run of the effect makes its own canvas: a released context cannot be had again from the same element, and
+ * React may run the effect twice on one element (StrictMode, Fast Refresh).
  */
 export default function Background() {
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const [failed, setFailed] = useState(false);
+  const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = canvas.current;
-    if (!el) return;
-    const renderer = createRenderer(el);
-    if (!renderer) {
-      setFailed(true);
-      return;
-    }
-    const stop = run(el, renderer, () => setFailed(true));
+    const parent = host.current;
+    if (!parent) return;
+    const canvas = document.createElement('canvas');
+    canvas.dataset.bg = '';
+    canvas.setAttribute('aria-hidden', 'true');
+    parent.append(canvas);
+    const hide = (): void => {
+      canvas.hidden = true;
+    };
+    const renderer = createRenderer(canvas);
+    if (!renderer) hide();
+    const stop = renderer ? run(canvas, renderer, hide) : undefined;
     return () => {
-      stop();
-      renderer.release();
+      stop?.();
+      renderer?.release();
+      canvas.remove();
     };
   }, []);
-  // biome-ignore lint/a11y/noAriaHiddenOnFocusable: a canvas without tabindex is not focusable; it is decoration (spec 7)
-  return <canvas ref={canvas} data-bg aria-hidden="true" hidden={failed} />;
+  return <div ref={host} data-bg-host />;
 }

@@ -53,12 +53,16 @@ void main() {
   col = mix(col, uLine, clamp(g, 0., 1.));
   col = mix(col, uShade, .6 * dot(uv - .5, uv - .5));
   col += (hash(gl_FragCoord.xy + fract(t) * 91.) - .5) * .028;
-  // the words' half (up to the middle) keeps the colour's luminance within uGuard of the page; phones have no side
-  float guard = smoothstep(-.3, 0., across) * abs(uSide);
-  vec3 page = toLinear(uA), lit = toLinear(col);
-  float away = abs(dot(lit - page, vec3(.2126, .7152, .0722)));
-  float room = mix(1., uGuard, guard);
-  gl_FragColor = vec4(toSrgb(mix(page, lit, min(1., room / max(away, 1e-5)))), 1.);
+  // the words' half (up to the middle) keeps the colour's luminance within uGuard of the page; phones have no side.
+  // uGuard is 1 (no cap) in the dark theme: the same for every pixel, so this branch costs nothing there
+  if (uGuard < 1.) {
+    float guard = smoothstep(-.3, 0., across) * abs(uSide);
+    vec3 page = toLinear(uA), lit = toLinear(col);
+    float away = abs(dot(lit - page, vec3(.2126, .7152, .0722)));
+    float room = mix(1., uGuard, guard);
+    col = toSrgb(mix(page, lit, min(1., room / max(away, 1e-5))));
+  }
+  gl_FragColor = vec4(col, 1.);
 }`;
 
 /** One triangle that covers the whole viewport. */
@@ -113,19 +117,8 @@ const compile = (gl: WebGLRenderingContext, type: number, source: string): WebGL
   return null;
 };
 
-/** Compiles, links and binds the program with its full-screen triangle; null if any step fails. */
-const link = (gl: WebGLRenderingContext): WebGLProgram | null => {
-  const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
-  const fragment = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
-  const program = gl.createProgram();
-  if (!vertex || !fragment || !program) return null;
-  gl.attachShader(program, vertex);
-  gl.attachShader(program, fragment);
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    if (process.env.NODE_ENV !== 'production') console.warn(gl.getProgramInfoLog(program));
-    return null;
-  }
+/** Binds the linked program with its full-screen triangle. */
+const bind = (gl: WebGLRenderingContext, program: WebGLProgram): WebGLProgram => {
   // biome-ignore lint/correctness/useHookAtTopLevel: WebGL's useProgram, not a React hook
   gl.useProgram(program);
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
@@ -136,6 +129,24 @@ const link = (gl: WebGLRenderingContext): WebGLProgram | null => {
   return program;
 };
 
+/** Compiles, links and binds the program; null, with nothing half-built left behind, if any step fails. */
+const link = (gl: WebGLRenderingContext): WebGLProgram | null => {
+  const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX);
+  const fragment = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
+  const program = gl.createProgram();
+  if (vertex && fragment && program) {
+    gl.attachShader(program, vertex);
+    gl.attachShader(program, fragment);
+    gl.linkProgram(program);
+    if (gl.getProgramParameter(program, gl.LINK_STATUS)) return bind(gl, program);
+    if (process.env.NODE_ENV !== 'production') console.warn(gl.getProgramInfoLog(program));
+  }
+  gl.deleteShader(vertex);
+  gl.deleteShader(fragment);
+  gl.deleteProgram(program);
+  return null;
+};
+
 /** Sets up WebGL on the canvas. Returns null, and never throws, when WebGL or the shader is unavailable. */
 export const createRenderer = (canvas: HTMLCanvasElement): Renderer | null => {
   let gl: WebGLRenderingContext | null = null;
@@ -144,8 +155,13 @@ export const createRenderer = (canvas: HTMLCanvasElement): Renderer | null => {
   } catch {
     return null;
   }
-  const program = gl ? link(gl) : null;
-  if (!gl || !program) return null;
+  if (!gl) return null;
+  const program = link(gl);
+  if (!program) {
+    // the canvas is hidden for good: give its context back now
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return null;
+  }
   const context = gl;
   const u = Object.fromEntries(
     UNIFORMS.map((name) => [name, context.getUniformLocation(program, name)]),

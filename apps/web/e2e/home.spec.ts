@@ -1156,8 +1156,9 @@ test('text keeps AA contrast over the background in both themes', async ({ page 
   }
 });
 
+// the still fallback gradient sits on a fixed layer behind the page (fix round 1: iOS ignores fixed backgrounds)
 const htmlBackground = (page: Page) =>
-  page.evaluate(() => getComputedStyle(document.documentElement).backgroundImage);
+  page.evaluate(() => getComputedStyle(document.body, '::before').backgroundImage);
 
 test('the background sits fixed behind the gold element and the scenes', async ({ page }) => {
   await page.goto('/en');
@@ -1168,6 +1169,26 @@ test('the background sits fixed behind the gold element and the scenes', async (
     return { position: s.position, z: s.zIndex };
   });
   expect(style).toEqual({ position: 'fixed', z: '0' });
+  // the real paint order at the headline: scene content above the gold element above the background
+  await page.waitForFunction(() => document.documentElement.classList.contains('enhanced'));
+  const order = await page.evaluate(() => {
+    const probe = document.createElement('style');
+    // decorative layers ignore the pointer; let elementsFromPoint see them for this check only
+    probe.textContent = '[data-bg],[data-gold-layer]{pointer-events:auto!important}';
+    document.head.append(probe);
+    const box = (document.querySelector('h1') as HTMLElement).getBoundingClientRect();
+    const stack = document.elementsFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    probe.remove();
+    const at = (selector: string) => stack.findIndex((el) => el.matches(selector));
+    return {
+      content: at('#hero [data-sticky]'),
+      gold: at('[data-gold-layer]'),
+      background: at('canvas[data-bg]'),
+    };
+  });
+  expect(order.content).toBeGreaterThanOrEqual(0);
+  expect(order.content).toBeLessThan(order.gold);
+  expect(order.gold).toBeLessThan(order.background);
 });
 
 test('with reduced motion the background is the CSS gradient, also when switched on later', async ({
@@ -1208,5 +1229,82 @@ test('without WebGL the canvas is hidden and the CSS gradient shows, with no err
   expect(await htmlBackground(page)).toContain('radial-gradient');
   await gotoScene(page, 'work', 0.3);
   await expect(page.locator('canvas[data-bg]')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+// Fix round 1 (review minor 7): the pause, the pixel ratio and a lost context.
+const countDraws = () => {
+  const draw = WebGLRenderingContext.prototype.drawArrays;
+  (window as unknown as { draws: number }).draws = 0;
+  WebGLRenderingContext.prototype.drawArrays = function (this: WebGLRenderingContext, ...args) {
+    (window as unknown as { draws: number }).draws += 1;
+    return draw.apply(this, args);
+  } as typeof draw;
+};
+const drawsOf = (page: Page) => page.evaluate(() => (window as unknown as { draws: number }).draws);
+const setHidden = (page: Page, hidden: boolean) =>
+  page.evaluate((value) => {
+    if (value) {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    } else {
+      Reflect.deleteProperty(document, 'hidden');
+      Reflect.deleteProperty(document, 'visibilityState');
+    }
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+
+test('the background draws nothing while the tab is hidden, and resumes when it returns', async ({
+  page,
+}) => {
+  await page.addInitScript(countDraws);
+  await page.goto('/en');
+  await expect(page.locator('canvas[data-bg]')).toBeVisible();
+  await expect.poll(() => drawsOf(page)).toBeGreaterThan(3);
+  await setHidden(page, true);
+  const before = await drawsOf(page);
+  await page.evaluate(() => window.scrollBy({ top: 600, behavior: 'instant' }));
+  await page.waitForTimeout(800);
+  expect(await drawsOf(page)).toBe(before);
+  await setHidden(page, false);
+  await expect.poll(() => drawsOf(page)).toBeGreaterThan(before);
+});
+
+test('the background renders at 0.6 of the pixel ratio, capped at 1.5', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
+  await context.addInitScript(() => sessionStorage.setItem('zk-intro', '1'));
+  const page = await context.newPage();
+  await page.goto('/en');
+  const canvas = page.locator('canvas[data-bg]');
+  await expect(canvas).toBeVisible();
+  const size = await canvas.evaluate((el: HTMLCanvasElement) => ({
+    width: el.width,
+    height: el.height,
+    cssWidth: el.clientWidth,
+    cssHeight: el.clientHeight,
+  }));
+  expect(Math.abs(size.width - size.cssWidth * 1.5 * 0.6)).toBeLessThanOrEqual(1);
+  expect(Math.abs(size.height - size.cssHeight * 1.5 * 0.6)).toBeLessThanOrEqual(1);
+  await context.close();
+});
+
+test('a lost GL context hides the background and leaves the CSS gradient, with no errors', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/en');
+  const canvas = page.locator('canvas[data-bg]');
+  await expect(canvas).toBeVisible();
+  await canvas.evaluate((el: HTMLCanvasElement) =>
+    el.getContext('webgl')?.getExtension('WEBGL_lose_context')?.loseContext(),
+  );
+  await expect(canvas).toBeHidden();
+  expect(await htmlBackground(page)).toContain('radial-gradient');
+  await page.evaluate(() => window.scrollBy({ top: 800, behavior: 'instant' }));
+  await page.waitForTimeout(300);
   expect(errors).toEqual([]);
 });
