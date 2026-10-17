@@ -218,9 +218,12 @@ html[lang="ar"] [data-loop] [data-stage-name] {
     width: 44vw;
     margin: 9vw auto 6vw;
   }
-  /* the pinned phone scene also follows the viewport's height (about.css); a stacked or flowing one does not */
+  /* the pinned phone scene also follows the viewport's height (about.css); a stacked or flowing one does not. The
+     scene's padding, the ring's margins and the text below it need about 656 px at 412 x 839, so the ring takes at
+     most what is left of the height; that leaves the reference phone's ring as it is and shrinks it on phones that are
+     shorter for their width */
   html.enhanced #about:not([data-unpinned]) [data-loop] {
-    width: min(44vw, 24svh);
+    width: min(44vw, 24svh, calc(100svh - 657px));
     margin: min(9vw, 5svh) auto min(6vw, 3svh);
   }
   [data-loop] [data-arc] {

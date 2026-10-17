@@ -13,11 +13,27 @@ const SHORT = [
   { width: 1366, height: 657, mobile: false },
   { width: 1536, height: 730, mobile: false },
 ];
-/** Where every scene must pin: the commonest iPhone and laptop sizes. */
-const MUST_PIN = SHORT.filter((v) => (v.width === 390 && v.height === 664) || v.width === 1366);
-const sizeOf = (v: (typeof SHORT)[number]): string => `${v.width}x${v.height}`;
+/**
+ * Owner decision 2026-10-17: large phones (about 414–430 x 832, a little shorter than the 412 x 839 reference for their
+ * width), a window of about 860 x 700 (the widest phone layout, short), and the 768 x 1024 tablet pin every scene too.
+ */
+const LARGE = [
+  { width: 414, height: 832, mobile: true },
+  { width: 428, height: 836, mobile: true },
+  { width: 430, height: 832, mobile: true },
+  { width: 860, height: 700, mobile: false },
+  { width: 768, height: 1024, mobile: true },
+];
+type Viewport = (typeof SHORT)[number];
+const ALL: Viewport[] = [...SHORT, ...LARGE];
+/** Where every scene must pin: the commonest iPhone and laptop sizes, and the large ones. */
+const MUST_PIN = [
+  ...SHORT.filter((v) => (v.width === 390 && v.height === 664) || v.width === 1366),
+  ...LARGE,
+];
+const sizeOf = (v: Viewport): string => `${v.width}x${v.height}`;
 
-const open = async (browser: Browser, viewport: (typeof SHORT)[number], path: string): Promise<Page> => {
+const open = async (browser: Browser, viewport: Viewport, path: string): Promise<Page> => {
   const context = await browser.newContext({
     viewport: { width: viewport.width, height: viewport.height },
     isMobile: viewport.mobile,
@@ -83,7 +99,7 @@ for (const path of ['/en', '/ar']) {
   }
 
   // The ring is smallest on short phones: every stage's name and tools stay clear of the stations and the mark.
-  for (const viewport of SHORT.filter((v) => v.mobile)) {
+  for (const viewport of ALL.filter((v) => v.mobile)) {
     test(`the about ring's centre never covers a station at ${sizeOf(viewport)} on ${path}`, async ({
       browser,
     }) => {
@@ -117,7 +133,7 @@ for (const path of ['/en', '/ar']) {
     });
   }
 
-  for (const viewport of SHORT) {
+  for (const viewport of ALL) {
     // the existing "no blank screen" checks (home.spec.ts), at real short sizes: exactly one active scene, and
     // something readable or the gold element on screen at every scroll position
     test(`there is no blank screen between scenes at ${sizeOf(viewport)} on ${path}`, async ({ browser }) => {

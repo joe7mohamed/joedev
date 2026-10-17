@@ -220,6 +220,13 @@ html.enhanced #work:not([data-unpinned]) [data-shot] {
     order: -2;
     margin-bottom: 4px;
   }
+  /* The frame keeps 16:10 and takes the full width unless the height runs out: the scene's padding and the text below
+     it need at most 604 px at any phone width (412 x 839 needs 600), so on phones shorter than that for their width
+     (about 414–430 x 832, the 768 x 1024 tablet) the frame narrows instead of the scene flowing (spec 6.4). The bars
+     keep the frame's width. The 390 x 844 and 412 x 839 references keep the full width. */
+  html.enhanced #work:not([data-unpinned]) :is([data-frame], [data-bars]) {
+    width: min(100%, calc((100svh - 604px) * 1.6));
+  }
   html.enhanced #work:not([data-unpinned]) [data-project-text] {
     justify-items: center;
     gap: 9px;
@@ -255,8 +262,8 @@ html.enhanced #work:not([data-unpinned]) [data-shot] {
     gap: 5px;
   }
   /* the frame keeps its 16:10 shape and takes the height the rest leaves: the scene's padding and the text below it
-     need at most --work-rest; if even 60 % of the width does not fit, the scene flows instead (spec 6.4). The bars
-     keep the frame's width. */
+     need at most --work-rest; if even 60 % of the width (240 px at most, which only wide windows reach, such as
+     860 x 700) does not fit, the scene flows instead (spec 6.4). The bars keep the frame's width. */
   html.enhanced #work:not([data-unpinned]) [data-work] {
     --work-rest: 492px;
   }
@@ -265,7 +272,7 @@ html.enhanced #work:not([data-unpinned]) [data-shot] {
     --work-rest: 504px;
   }
   html.enhanced #work:not([data-unpinned]) :is([data-frame], [data-bars]) {
-    width: clamp(60%, calc((100svh - var(--work-rest)) * 1.6), 100%);
+    width: clamp(min(60%, 240px), calc((100svh - var(--work-rest)) * 1.6), 100%);
   }
   html.enhanced #work:not([data-unpinned]) [data-bars] {
     margin-bottom: 0;

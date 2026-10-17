@@ -11,7 +11,8 @@ const CPU_SLOWDOWN = 4;
 const SETTLE_MS = 2000;
 /**
  * Lighthouse's mobile viewport, the desktop one the other specs use, and the real short sizes: iPhone Safari's small
- * viewport with its toolbars (360 x 640, 390 x 664) and laptop Chrome (1280 x 632, 1366 x 657, 1536 x 730).
+ * viewport with its toolbars (360 x 640, 390 x 664) and laptop Chrome (1280 x 632, 1366 x 657, 1536 x 730), then large
+ * phones, an 860 x 700 window and the 768 x 1024 tablet.
  */
 const VIEWPORTS = [
   { width: 412, height: 823, mobile: true },
@@ -21,6 +22,12 @@ const VIEWPORTS = [
   { width: 1280, height: 632, mobile: false },
   { width: 1366, height: 657, mobile: false },
   { width: 1536, height: 730, mobile: false },
+  // the large phones, the short wide window and the tablet (owner decision 2026-10-17)
+  { width: 414, height: 832, mobile: true },
+  { width: 428, height: 836, mobile: true },
+  { width: 430, height: 832, mobile: true },
+  { width: 860, height: 700, mobile: false },
+  { width: 768, height: 1024, mobile: true },
 ];
 
 const measure = async (

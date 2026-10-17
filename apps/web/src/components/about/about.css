@@ -144,8 +144,10 @@ html.enhanced #about:not([data-unpinned]) [data-fact-scene] {
   }
 }
 @media (max-width: 860px) {
+  /* Phones a little shorter than the 412 x 839 reference for their width (about 414–430 x 832) flatten the card scenes
+     first (100svh − 757px is 82 px there, more than its 81 px cards), and the ring takes what is left (loop.css). */
   html.enhanced #about:not([data-unpinned]) [data-fact-scene] {
-    max-height: 12svh;
+    max-height: min(12svh, calc(100svh - 757px));
   }
 }
 

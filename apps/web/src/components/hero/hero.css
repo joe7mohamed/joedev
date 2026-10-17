@@ -227,11 +227,14 @@ html[dir="rtl"] [data-step] + [data-step]::before {
   [data-bracket] {
     font-size: 11.5px;
   }
+  /* sized by both axes, as on desktop: the rows around the headline in the phone column take about 380 px (390 px
+     with the taller Arabic lines), so the widest phone layout on a short window (860 x 700) still pins; on phones the
+     width term is the smaller one */
   [data-headline] {
-    font-size: clamp(36px, 12vw, 84px);
+    font-size: clamp(36px, min(12vw, calc((100svh - 380px) / 3)), 84px);
   }
   html[lang="ar"] [data-headline] {
-    font-size: clamp(40px, 12.4vw, 84px);
+    font-size: clamp(40px, min(12.4vw, calc((100svh - 390px) / 4)), 84px);
   }
   [data-foot] {
     flex-direction: column;
