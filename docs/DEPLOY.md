@@ -1,8 +1,23 @@
 # Deploying
 
-Notes a deployment has to respect. The site is fully static: `/en`, `/ar`, their sharing images, the sitemap,
-robots.txt, the manifest, the icon and the PNG app icons are all prerendered by `next build`. Only the `/` language
-redirect (`src/proxy.ts`) runs per request.
+Notes a deployment has to respect. The site is fully static: the two home pages, their sharing images, the sitemap,
+robots.txt, the manifest, the icon and the PNG app icons are all prerendered by `next build`.
+
+Routes (owner decision 2026-10-17), the same for every visitor:
+
+| Path | Answer |
+| --- | --- |
+| `/` | 200, the English page (the prerendered `en` route, served through a rewrite) |
+| `/ar` | 200, the Arabic page |
+| `/en` | 308 → `/`, query string kept |
+| `/en/opengraph-image`, `/ar/opengraph-image` | 200, the sharing images (internal paths, no redirect) |
+| `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest`, `/icon.svg`, `/apple-icon`, `/app-icons/*` | 200 |
+| any other path, e.g. `/fr` | 404 |
+| `https://www.zakydev.com/*` | 308 → `https://zakydev.com/*` (`next.config.ts`) |
+
+Only `src/proxy.ts` runs per request, and only for `/` (the rewrite) and `/en` (the redirect). The answer no longer
+depends on the visitor's language, so `/` carries the normal static caching headers, with no `Vary: Accept-Language`
+and no `no-store`. Velocity runs `next start`, where the proxy runs at request time; the CDN does not cache the HTML.
 
 ## Build machine: network
 
@@ -59,20 +74,21 @@ the build check if zod shows up in a page script. zod is still told not to probe
 (`z.config({ jitless: true })` in `packages/shared/src/content/schema.ts`), in case the content module ever runs in a
 browser again: its probe, `Function("")`, raises a CSP violation report.
 
-`e2e/a11y.spec.ts` checks that the header is sent exactly as above and that `/en`, `/ar` and `/en?bg=soft` (the
+`e2e/a11y.spec.ts` checks that the header is sent exactly as above and that `/`, `/ar` and `/?bg=soft` (the
 WebGL background) hydrate and scroll through every scene without one violation report.
 
 Revisit when Next can hash its own inline scripts for static output. Then `'unsafe-inline'` can give way to hashes.
 
 ## Route-JS budget
 
-The scripts `/en` and `/ar` load (`<script src>` in the prerendered HTML, gzipped, without the `noModule` polyfills
+The scripts `/` and `/ar` load (`<script src>` in the prerendered HTML (`en.html` and `ar.html`), gzipped, without the `noModule` polyfills
 and without the background shader's chunk, which loads later) stay at or below 170 kB (spec line 32; the owner raised it
 from 150 kB on 2026-10-17).
 `node apps/web/scripts/check-bundle.mjs` checks it after `npm run build`; CI runs it on the production build. To see
 what is in the scripts: `npx next analyze` in `apps/web`.
 
-Headroom: about 20 kB. Both routes load 149,898 bytes of the 170,000, so 20,102 bytes are left. The limit was
+Headroom: about 16 kB. Both routes load 153,514 bytes of the 170,000, so 16,486 bytes are left (the URL round added
+3,616 bytes: the language switch became a `next/link` client-side navigation). The limit was
 150 kB until 2026-10-17, when the final fix wave of Phase 1 had left only 0.1 kB; the owner raised it rather than split
 the route. A feature that adds client JavaScript should still say how much it adds; the limit itself does not move
 again without an owner decision.
@@ -117,7 +133,7 @@ Environment variables (before the first deploy):
   - npm older than 11.19 → build command `npm install -g npm@11 && npm run build` (or Claude relaxes devEngines).
   - `turbo: not found` → build command `npm ci --include=dev && npm run build`.
 - Watch Monitoring during the build; tell Claude the peak memory (Starter: 2 GB shared).
-- Send Claude the temporary `*.cloudwaysnodeapps.com` URL; Claude checks `/en`, `/ar`, `/`, `/fr` (404).
+- Send Claude the temporary `*.cloudwaysnodeapps.com` URL; Claude checks `/` (200), `/en` (308 → `/`), `/ar` (200), `/fr` (404).
 
 ### 4. Connect the domain (you)
 1. Velocity → Domain Management → add `zakydev.com` and `www.zakydev.com`.
@@ -130,10 +146,24 @@ Environment variables (before the first deploy):
 - After every deploy: **Purge**.
 
 ### 6. Verify (Claude, from outside)
-curl checks for 200 / lang+dir / Accept-Language redirect / 404 / www→apex 308 / HSTS (no includeSubDomains, no preload) / cf-cache-status not HIT for HTML / `dig MX` still Google. Then you send a test email to youssef@zakydev.com from another account.
+curl checks (owner decision 2026-10-17 on the routes):
+
+```
+curl -sI https://zakydev.com/ | head -n 1                                  # HTTP/2 200 (English, lang="en" dir="ltr")
+curl -sI https://zakydev.com/en | grep -iE '^(HTTP|location)'              # 308, location: /
+curl -sI 'https://zakydev.com/en?utm=1' | grep -i '^location'              # /?utm=1
+curl -sI https://zakydev.com/ar | head -n 1                                # HTTP/2 200 (Arabic, lang="ar" dir="rtl")
+curl -sI https://zakydev.com/fr | head -n 1                                # HTTP/2 404
+curl -sI https://www.zakydev.com/ar | grep -iE '^(HTTP|location)'          # 308, location: https://zakydev.com/ar
+curl -sI https://zakydev.com/ | grep -i 'strict-transport-security'        # max-age=31536000, no includeSubDomains, no preload
+curl -sI https://zakydev.com/ | grep -iE '^vary'                           # no Accept-Language
+curl -sI https://zakydev.com/en/opengraph-image | head -n 1                # HTTP/2 200, no redirect
+```
+
+Also: cf-cache-status not HIT for the HTML, and `dig MX` still Google. Then you send a test email to youssef@zakydev.com from another account.
 
 ### 7. Lighthouse on the live site (Claude)
-Mobile, /en and /ar; gates 90 / 100 / 100 / 100; record scores, TTFB and server location.
+Mobile, `/` and `/ar`; gates 90 / 100 / 100 / 100; record scores, TTFB and server location.
 
 ### 8. Sign-off and merge (you decide)
 - Confirm or change every `u()` string (Claude gives the list).
@@ -142,7 +172,7 @@ Mobile, /en and /ar; gates 90 / 100 / 100 / 100; record scores, TTFB and server 
 
 ## Display fonts after a copy change
 
-The display faces (Fraunces on `/en`, Amiri on `/ar`) carry only the characters in `apps/web/src/fonts/subsets.json`.
+The display faces (Fraunces on `/`, Amiri on `/ar`) carry only the characters in `apps/web/src/fonts/subsets.json`.
 `npm test` fails (`src/fonts/display-text.test.ts`) when any display string of the content (headline, project names,
 step names, headings, the email) uses a character outside them. Then add the code points to `subsets.json` and the same
 `unicode-range` to `apps/web/src/fonts/display.css`, and regenerate the files with one command from the repository root
@@ -160,7 +190,7 @@ field data in Search Console, Core Web Vitals) is the real LCP test.
 ## Lighthouse
 
 CI runs Lighthouse CI (`apps/web/lighthouserc.json`, `@lhci/cli` 0.15.1, which bundles Lighthouse 12.6.1) on the
-production build of `/en` and `/ar`, mobile, three runs each, asserting the median. The GitHub runner has no GPU:
+production build of `/` and `/ar`, mobile, three runs each, asserting the median. The GitHub runner has no GPU:
 Chrome's WebGL there is software-rendered, so the page shows the CSS gradient instead of the shader
 (`failIfMajorPerformanceCaveat`), and Lighthouse measures that fallback, not the shader.
 

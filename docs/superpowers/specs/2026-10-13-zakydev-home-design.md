@@ -181,7 +181,8 @@ widened to show its label.
   Contact, the envelope flap opens and closes.
 - Section ranges for "current": Work 0.9–2.85, Process 2.85–4.6, About 4.6–5.8, Contact 5.8+.
 - On the gold contact screen the menu switches to dark ink and the mark's lower half to ivory.
-- Language switch changes the route (`/en` ⇄ `/ar`) and keeps the scroll position. Theme
+- Language switch changes the route (`/` ⇄ `/ar`, owner decision 2026-10-17) in place, as a
+  client-side navigation without a page reload, and keeps the scroll position. Theme
   switch uses a circular view transition from the button when supported.
 
 ### 5.3 Hero (S 0 → 1)
@@ -341,7 +342,9 @@ Node version pinned in `.nvmrc`.
 
 ### 6.2 Web application
 
-- Routes: `/[locale]` with `en` and `ar`; `/` redirects by `Accept-Language`, default `en`.
+- Routes (owner decision 2026-10-17): English at `/`, Arabic at `/ar`, the same for every
+  visitor (no `Accept-Language` redirect). Internally both stay `/[locale]` with `en` and `ar`;
+  the proxy serves `/` from the `en` route and redirects `/en` permanently (308) to `/`.
   `<html lang dir>` set on the server. Both routes statically generated.
 - Every section is a **Server Component that renders the complete, readable content**.
   Motion is added by small Client Components ("islands") that receive serialised content.
@@ -359,7 +362,7 @@ Node version pinned in `.nvmrc`.
   declared with plain `@font-face` (`apps/web/src/fonts/`, built from the upstream releases,
   docs/VERSIONS.md), so each locale can preload its own headline face; `next/font` preloads
   on every route or none. They are declared on every route, but a page downloads only the
-  faces its text uses: /en never fetches Amiri. The body and mono faces stay on `next/font`,
+  faces its text uses: the English page never fetches Amiri. The body and mono faces stay on `next/font`,
   not preloaded, over the metric-matched fallbacks in `fonts/fallbacks.css`.
 - Icons: tool logos are Simple Icons SVGs (CC0) plus the devicon Playwright mark, stored in
   the repo and rendered as CSS masks so they take the theme colour. Interface icons are
