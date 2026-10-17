@@ -54,6 +54,10 @@
     sans-serif;
   text-decoration: none;
 }
+/* the brand (site.brand, "ZakyDev") is drawn as the lowercase wordmark */
+[data-brand] span {
+  text-transform: lowercase;
+}
 
 [data-controls] {
   display: flex;

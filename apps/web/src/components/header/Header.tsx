@@ -9,10 +9,11 @@ import { PointerRing } from './PointerRing';
 import { ScrollProgress } from './ScrollProgress';
 import './header.css';
 
-type HeaderProps = { locale: Locale; nav: HomeContent['nav'] };
+/** `brand` is the site's brand (site.brand), drawn as the lowercase wordmark beside the mark. */
+type HeaderProps = { locale: Locale; nav: HomeContent['nav']; brand: string };
 
 /** The fixed header (layer 5, above the scenes and the gold element): mark, section menu, language, theme. */
-export function Header({ locale, nav }: HeaderProps) {
+export function Header({ locale, nav, brand }: HeaderProps) {
   const ids: MenuId[] = ['work', 'process', 'about', 'contact'];
   const items: MenuItem[] = ids.map((id) => ({ id, label: nav[id], icon: <MenuIcon id={id} /> }));
   return (
@@ -20,9 +21,9 @@ export function Header({ locale, nav }: HeaderProps) {
       <a href="#main" className="skip">
         {nav.skip}
       </a>
-      <a href="#hero" data-brand aria-label="ZakyDev">
+      <a href="#hero" data-brand aria-label={brand}>
         <Mark size={32} />
-        <span>zakydev</span>
+        <span lang="en">{brand}</span>
       </a>
       <Menu items={items} label={plain(nav.sections)} />
       <div data-controls>

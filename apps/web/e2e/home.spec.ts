@@ -300,6 +300,18 @@ test('menu marks the section in view and links scroll to it', async ({ page }) =
   await expect(nav.locator('[aria-current="true"]')).toHaveText(/About/);
 });
 
+// All copy comes from packages/shared: the header's mark and wordmark are the site's brand (site.brand).
+test('the header brand is the site brand from the shared content', async ({ page }) => {
+  await page.goto('/ar');
+  const brand = page.locator('header [data-brand]');
+  await expect(brand).toHaveAttribute('aria-label', 'ZakyDev');
+  const word = brand.locator('span');
+  await expect(word).toHaveText('ZakyDev');
+  await expect(word).toHaveAttribute('lang', 'en');
+  // drawn as the lowercase wordmark
+  expect(await word.evaluate((el) => getComputedStyle(el).textTransform)).toBe('lowercase');
+});
+
 test('menu is fully usable from the keyboard', async ({ page }) => {
   await page.goto('/en');
   await page.keyboard.press('Tab');

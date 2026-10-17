@@ -34,7 +34,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   return (
     <EngineProvider>
       <BackgroundLoader />
-      <Header locale={locale} nav={c.nav} />
+      <Header locale={locale} nav={c.nav} brand={c.site.brand} />
       <GoldElement />
       <main id="main">
         <Scene id="hero" length={2} tail={0.5}>
