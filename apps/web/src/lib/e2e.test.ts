@@ -25,4 +25,12 @@ describe('e2e switches', () => {
     expect(e2e.isE2E).toBe(false);
     expect(e2e.param('bg')).toBeNull();
   });
+
+  it('freezes the time-based loops only for ?freeze=1 in an E2E build', async () => {
+    expect((await load('1', '?freeze=1')).frozen()).toBe(true);
+    expect((await load('1', '?bg=soft&freeze=1')).frozen()).toBe(true);
+    expect((await load('1', '?freeze=0')).frozen()).toBe(false);
+    expect((await load('1', '')).frozen()).toBe(false);
+    expect((await load(undefined, '?freeze=1')).frozen()).toBe(false);
+  });
 });

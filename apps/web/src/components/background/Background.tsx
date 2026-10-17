@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { param } from '@/lib/e2e';
+import { frozen, param } from '@/lib/e2e';
 import { currentScene } from '@/motion/current';
 import { engine, type SceneFrame, type SceneId } from '@/motion/engine';
 import { advance, easeSide, guardRoom, hexOf, pressOf, scrollOf, strengthOf, textSideOf } from './drift';
@@ -99,8 +99,12 @@ type Painter = {
   resume(): void;
 };
 
-/** Holds the uniforms between draws and turns what the engine reports into them. */
-const painter = (canvas: HTMLCanvasElement, renderer: Renderer): Painter => {
+/**
+ * Holds the uniforms between draws and turns what the engine reports into them. `still` (E2E `?freeze=1`): the
+ * clock stays at its start, the calm side at its target and scrolling never presses, so every draw at one scroll
+ * position is the same.
+ */
+const painter = (canvas: HTMLCanvasElement, renderer: Renderer, still: boolean): Painter => {
   const rtl = document.documentElement.dir === 'rtl';
   const phone = window.matchMedia(PHONE);
   let scene: SceneId | undefined;
@@ -118,11 +122,11 @@ const painter = (canvas: HTMLCanvasElement, renderer: Renderer): Painter => {
     const dt = Math.min(MAX_STEP, (now - last) / 1000);
     last = now;
     drawn = now;
-    time = advance(time, dt, velocity);
+    if (!still) time = advance(time, dt, velocity);
     const target = textSideOf(scene, rtl, phone.matches);
-    side = side === null ? target : easeSide(side, target, dt);
+    side = side === null || still ? target : easeSide(side, target, dt);
     const calm = strengthOf(phone.matches);
-    renderer.draw({ time, scroll: scrollOf(y, length), press: pressOf(velocity), side, calm });
+    renderer.draw({ time, scroll: scrollOf(y, length), press: still ? 0 : pressOf(velocity), side, calm });
   };
   return {
     draw,
@@ -154,7 +158,7 @@ const painter = (canvas: HTMLCanvasElement, renderer: Renderer): Painter => {
  * function that removes every listener; `onLost` runs once if the GL context goes away.
  */
 const run = (canvas: HTMLCanvasElement, renderer: Renderer, onLost: () => void): (() => void) => {
-  const view = painter(canvas, renderer);
+  const view = painter(canvas, renderer, frozen());
   let timer = 0;
   const visibility = (): void => {
     window.clearInterval(timer);

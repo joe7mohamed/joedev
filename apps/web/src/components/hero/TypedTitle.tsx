@@ -1,6 +1,7 @@
 'use client';
 
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { frozen } from '@/lib/e2e';
 import { whenLoaded } from '@/motion/loaded';
 import { HOLD_MS, stepTyper, type TyperState, textOf } from '@/motion/typer';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
@@ -43,7 +44,7 @@ export function TypedTitle({ titles, dir }: { titles: string[]; dir: 'ltr' | 'rt
   useEffect(() => {
     const first = holdingFirst(titles);
     setTyper(first);
-    if (!moving || titles.length < 2) return;
+    if (!moving || titles.length < 2 || frozen()) return;
     const scene = node.current?.closest<HTMLElement>('[data-scene]');
     // before the engine runs a scene has no state; it counts as active
     const paused = (): boolean => document.hidden || (scene?.dataset.state ?? 'active') !== 'active';

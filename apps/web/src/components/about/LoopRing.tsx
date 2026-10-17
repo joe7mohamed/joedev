@@ -1,6 +1,7 @@
 'use client';
 
 import { type CSSProperties, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
+import { frozen } from '@/lib/e2e';
 import { pinnedRect, registerSlot } from '@/motion/gold';
 import { loopAt } from '@/motion/math';
 import { Swap } from '@/motion/Swap';
@@ -51,7 +52,8 @@ function useLoop(
   const clock = useRef({ elapsed: 0, last: 0, raf: 0 });
   const scene = useRef<HTMLElement | null>(null);
 
-  const playing = (): boolean => scene.current?.dataset.state === 'active' && !document.hidden;
+  // E2E `?freeze=1`: it never starts, so it rests on the first stage
+  const playing = (): boolean => scene.current?.dataset.state === 'active' && !document.hidden && !frozen();
   const tick = (now: number): void => {
     const c = clock.current;
     if (!playing()) {

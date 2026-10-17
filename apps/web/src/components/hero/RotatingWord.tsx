@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { frozen } from '@/lib/e2e';
 import { whenLoaded } from '@/motion/loaded';
 import { Swap } from '@/motion/Swap';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
@@ -18,7 +19,7 @@ export function RotatingWord({ sentence, words }: { sentence: string; words: str
   const [index, setIndex] = useState(0);
   useEffect(() => {
     setIndex(0);
-    if (!moving || words.length < 2) return;
+    if (!moving || words.length < 2 || frozen()) return;
     let timer = 0;
     // it starts flipping once the loading screen has released the hero
     const stopWaiting = whenLoaded(() => {
