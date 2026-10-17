@@ -109,7 +109,10 @@ export function Menu({ items, label }: MenuProps) {
       }
       const onGold =
         (frames.get('about')?.out ?? 0) > ON_GOLD_OUT || stateOf(frames.get('contact')) === 'active';
-      if (header.hasAttribute('data-on-gold') !== onGold) header.toggleAttribute('data-on-gold', onGold);
+      if (header.hasAttribute('data-on-gold') !== onGold) {
+        if (onGold) header.setAttribute('data-on-gold', 'true');
+        else header.removeAttribute('data-on-gold');
+      }
     });
     // in the stacked layout no scene is current; the engine is stopped and reports nothing
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');

@@ -1,0 +1,222 @@
+/* Contact (spec 5.7; prototype style.css v12 `.contact`, `.cend`, `.wm`, `.mail`, `.crow`, `.soc`, `.meta`). The
+   scene sits on solid gold: the gold element floods the screen behind it. Wherever the gold element is not on
+   screen (no script, reduced motion, or a scene that flows) the section paints the same gold itself. */
+
+#contact {
+  --ink: var(--on-gold);
+  --muted: #4a4026;
+  --hair: rgb(20 18 14 / 0.3);
+  --accent: var(--on-gold);
+  background: var(--gold);
+  color: var(--ink);
+}
+/* while the gold element plays it is the gold screen */
+html.enhanced #contact {
+  background: none;
+}
+
+[data-contact] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+  width: 100%;
+  text-align: center;
+}
+[data-contact-main] {
+  display: grid;
+  justify-items: center;
+  gap: clamp(12px, 2.2svh, 22px);
+  max-width: 1100px;
+}
+[data-contact-main] > * {
+  margin: 0;
+}
+
+[data-contact] [data-contact-heading] {
+  font: 600 clamp(46px, 9.4vw, 156px) / 0.98 var(--stack-display);
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+html[lang="ar"] [data-contact] [data-contact-heading] {
+  font-size: clamp(44px, 8.4vw, 132px);
+  font-weight: 700;
+  line-height: 1.3;
+}
+[data-contact] [data-contact-sentence] {
+  max-width: 44ch;
+  color: var(--muted);
+  font-size: clamp(16px, 1.45vw, 20px);
+}
+
+/* the address, with its 3 px ink underline */
+[data-contact] [data-email] {
+  display: inline-block;
+  padding-bottom: 6px;
+  border-bottom: 3px solid var(--ink);
+  color: var(--ink);
+  font: 600 clamp(24px, 4.4vw, 64px) / 1.2 var(--stack-display);
+  text-decoration: none;
+}
+
+[data-contact] [data-contact-actions] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 22px;
+  margin-top: 6px;
+}
+[data-contact] [data-profile] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--ink);
+  font:
+    500 14.5px var(--face-mono),
+    ui-monospace,
+    monospace;
+  text-decoration: none;
+}
+[data-contact] [data-profile-icon] {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+}
+[data-contact] [data-profile-name] {
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--hair);
+  transition: border-color var(--quick);
+}
+@media (hover: hover) {
+  [data-contact] [data-profile]:hover [data-profile-name] {
+    border-color: var(--ink);
+  }
+}
+
+[data-contact] [data-contact-meta] {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 22px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 14px;
+  list-style: none;
+}
+[data-contact] [data-contact-meta] li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+[data-contact] [data-contact-meta] svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+[data-contact] [data-contact-footer] {
+  align-self: stretch;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: start;
+}
+
+/* Pinned, the column is centred on the screen and the footer rests at its foot, in a band the scene keeps free for
+   it, so the content can never run under it (the engine's fit check measures the column). */
+html.enhanced #contact:not([data-unpinned]) [data-sticky] {
+  --foot: 26px;
+  padding-bottom: calc(var(--foot) + 32px);
+}
+html.enhanced #contact:not([data-unpinned]) [data-contact-footer] {
+  position: absolute;
+  inset-inline: clamp(1.25rem, 6vw, 6rem);
+  bottom: var(--foot);
+}
+
+@media (max-width: 860px) {
+  /* above the bottom menu bar */
+  html.enhanced #contact:not([data-unpinned]) [data-sticky] {
+    --foot: 84px;
+    padding-bottom: calc(var(--foot) + 30px);
+  }
+  [data-contact-main] {
+    gap: 12px;
+  }
+  [data-contact] [data-contact-heading],
+  html[lang="ar"] [data-contact] [data-contact-heading] {
+    font-size: clamp(40px, 12.5vw, 64px);
+  }
+  [data-contact] [data-email] {
+    font-size: clamp(20px, 6.2vw, 30px);
+  }
+  [data-contact] [data-contact-meta] {
+    gap: 6px 14px;
+    font-size: 13px;
+  }
+  [data-contact] [data-contact-footer] {
+    font-size: 11px;
+    text-align: center;
+  }
+  html.enhanced #contact:not([data-unpinned]) [data-contact-footer] {
+    inset-inline: 20px;
+  }
+}
+
+/* The entrance (prototype app.js 447), played once when the scene first becomes active (Contact.tsx): the words rise
+   from a mask, the rest settles in, the address types itself in. Backwards fill only: each ends on the resting,
+   visible style. Arabic rises by word like every language here; no letter is ever animated. */
+@media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-contact] [data-word] {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-bottom: 0.14em;
+    margin-bottom: -0.14em;
+  }
+  html.enhanced[lang="ar"] [data-contact] [data-word] {
+    padding-block: 0.18em 0.34em;
+    margin-block: -0.18em -0.34em;
+  }
+  html.enhanced [data-contact] [data-word] > span {
+    display: inline-block;
+  }
+  html.enhanced [data-contact][data-play] [data-word] > span {
+    animation: contact-rise 0.95s cubic-bezier(0.215, 0.61, 0.355, 1) calc(var(--i, 0) * 80ms) backwards;
+  }
+  html.enhanced [data-contact][data-play] [data-contact-main] > :not([data-contact-heading]) {
+    animation: contact-in 0.7s cubic-bezier(0.215, 0.61, 0.355, 1) calc(250ms + var(--i, 0) * 70ms) backwards;
+  }
+  /* one letter step at a time, left to right: the address is always Latin and never mirrored */
+  html.enhanced [data-contact][data-play] [data-email] {
+    animation: contact-type calc(var(--n, 1) * 68ms) steps(var(--n, 1), end) 0.45s backwards;
+  }
+}
+@keyframes contact-rise {
+  from {
+    transform: translateY(118%);
+  }
+}
+@keyframes contact-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+@keyframes contact-type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+/* The gold layer hides while any scene flows: the scene fades its own gold in with its content.
+   Last in the file: it is the most specific rule on the scene box. */
+html.enhanced:has([data-scene][data-unpinned]) #contact > [data-sticky] {
+  background: color-mix(in srgb, var(--gold) calc(var(--enter) * 100%), transparent);
+}

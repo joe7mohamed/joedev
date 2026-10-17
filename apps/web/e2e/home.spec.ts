@@ -1,5 +1,6 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
-import { gotoScene, progressOf, test } from './helpers';
+import { gotoScene, progressOf, settle, test } from './helpers';
 
 const sections = ['hero', 'work', 'process', 'about', 'contact'];
 
@@ -846,3 +847,154 @@ test('Latin text in the about scene is marked as English on the Arabic page', as
     expect(await svg.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
   }
 });
+
+test('contact always exposes the real email and both profiles', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'contact', 1);
+  const contact = page.locator('#contact');
+  await expect(contact.getByRole('heading', { level: 2 })).toHaveText('What needs building?');
+  await expect(contact.getByRole('link', { name: 'youssef@zakydev.com' })).toHaveAttribute(
+    'href',
+    'mailto:youssef@zakydev.com',
+  );
+  await expect(contact.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
+    'href',
+    'https://github.com/joe7mohamed',
+  );
+  await expect(contact.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute(
+    'href',
+    'https://linkedin.com/in/youssef7mohamed',
+  );
+});
+
+test('copy email confirms on success', async ({ page, context }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/en');
+  await gotoScene(page, 'contact', 1);
+  await page.getByRole('button', { name: 'Copy email' }).click();
+  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('youssef@zakydev.com');
+});
+
+test('copy email selects the address when the clipboard is refused', async ({ page }) => {
+  await page.goto('/en');
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: () => Promise.reject(new Error('denied')) },
+      configurable: true,
+    });
+  });
+  await gotoScene(page, 'contact', 1);
+  await page.getByRole('button', { name: 'Copy email' }).click();
+  await expect(page.getByRole('button', { name: 'Copy email' })).toBeVisible();
+  expect(await page.evaluate(() => String(getSelection()))).toBe('youssef@zakydev.com');
+});
+
+test('menu switches to dark ink on the gold screen', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'contact', 1);
+  await expect(page.locator('header')).toHaveAttribute('data-on-gold', 'true');
+  await gotoScene(page, 'about', 0.5);
+  await expect(page.locator('header')).not.toHaveAttribute('data-on-gold', 'true');
+});
+
+// Ruling 3: success is announced politely; the fallback (selection) announces nothing and never claims "Copied".
+test('copy email tells assistive technology only when it really copied', async ({ page, context }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/en');
+  await gotoScene(page, 'contact', 1);
+  const live = page.locator('#contact [aria-live="polite"]');
+  await expect(live).toHaveCount(1);
+  await expect(live).toHaveText('');
+  await page.getByRole('button', { name: 'Copy email' }).click();
+  await expect(live).toHaveText('Copied');
+  // the label returns after 1.6 s
+  await expect(page.getByRole('button', { name: 'Copy email' })).toBeVisible({ timeout: 4000 });
+});
+
+for (const refusal of ['rejected', 'missing']) {
+  test(`copy email announces nothing when the clipboard is ${refusal}`, async ({ page }) => {
+    await page.goto('/en');
+    await page.evaluate((how) => {
+      const value = how === 'missing' ? undefined : { writeText: () => Promise.reject(new Error('denied')) };
+      Object.defineProperty(navigator, 'clipboard', { value, configurable: true });
+    }, refusal);
+    await gotoScene(page, 'contact', 1);
+    await page.getByRole('button', { name: 'Copy email' }).click();
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => String(getSelection()))).toBe('youssef@zakydev.com');
+    await expect(page.locator('#contact [aria-live="polite"]')).toHaveText('');
+    await expect(page.getByRole('button', { name: 'Copied' })).toHaveCount(0);
+  });
+}
+
+test('profile links open in a new tab as rel="me" and their icons are decorative', async ({ page }) => {
+  await page.goto('/ar');
+  await gotoScene(page, 'contact', 1);
+  for (const name of ['GitHub', 'LinkedIn']) {
+    const link = page.locator('#contact').getByRole('link', { name });
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener me');
+    await expect(link).toHaveAttribute('lang', 'en');
+    await expect(link.locator('[aria-hidden="true"]')).toHaveCount(1);
+  }
+  await expect(page.locator('#contact a[href^="mailto:"]')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('#contact footer')).toHaveText('ZakyDev · Youssef Zaky · Bahrain');
+  await expect(page.locator('#contact [data-contact-meta] li')).toHaveCount(3);
+  await expect(page.locator('#contact [data-contact-meta] svg[aria-hidden="true"]')).toHaveCount(3);
+});
+
+// Spec 3.3: Arabic rises by word, never by letter; the heading still reads as one sentence.
+test('the Arabic contact heading rises by word and is never split into letters', async ({ page }) => {
+  await page.goto('/ar');
+  await gotoScene(page, 'contact', 1);
+  const heading = page.locator('#contact h2');
+  await expect(heading).toHaveText('ما الذي تريد بناءه؟');
+  const words = await heading.locator('[data-word]').allTextContents();
+  expect(words).toEqual(['ما', 'الذي', 'تريد', 'بناءه؟']);
+});
+
+// The email is real text inside the link at every moment of the typing reveal; only a clip hides part of it.
+test('the email types itself in over the real address, then rests fully shown', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'contact', 0.02);
+  const email = page.locator('#contact a[href^="mailto:"]');
+  await expect(email).toHaveText('youssef@zakydev.com');
+  await expect(page.locator('#contact [data-contact]')).toHaveAttribute('data-play', 'true');
+  const timing = await email.evaluate((el) => getComputedStyle(el).animationTimingFunction);
+  expect(timing).toMatch(/^steps\(/);
+  await expect
+    .poll(() => email.evaluate((el) => getComputedStyle(el).clipPath), { timeout: 5000 })
+    .toMatch(/^(none|inset\(0(px)?\))$/);
+  await expect(email).toHaveText('youssef@zakydev.com');
+});
+
+// Ruling 5 / spec 5.10: stacked, the section is its own solid gold screen with every part shown.
+test('with reduced motion the contact section is solid gold and fully shown', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/en');
+  const contact = page.locator('#contact');
+  expect(await contact.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(212, 175, 55)');
+  expect(await contact.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(20, 18, 14)');
+  await contact.scrollIntoViewIfNeeded();
+  for (const part of ['h2', 'a[href^="mailto:"]', 'button', 'footer', '[data-contact-meta]']) {
+    await expect(contact.locator(part).first(), part).toBeVisible();
+  }
+  const running = await contact.evaluate((el) => el.getAnimations({ subtree: true }).length);
+  expect(running).toBe(0);
+});
+
+// Ruling 6: every text on the gold screen meets AA in both themes.
+for (const scheme of ['dark', 'light'] as const) {
+  test(`no accessibility violations on the gold contact screen (${scheme})`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto('/en');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
+    await gotoScene(page, 'contact', 1);
+    await settle(page);
+    const results = await new AxeBuilder({ page }).include('#contact').analyze();
+    expect(results.violations).toEqual([]);
+  });
+}

@@ -27,3 +27,16 @@
     color: var(--bg);
   }
 }
+/* Solid ink with gold text: the "Copy email" pill on the gold screen. It empties to an ink outline on hover. */
+[data-button="solid"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--gold);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  [data-button="solid"]:hover {
+    background: transparent;
+    color: var(--ink);
+  }
+}

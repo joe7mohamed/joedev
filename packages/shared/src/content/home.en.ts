@@ -153,6 +153,8 @@ export const homeEn: HomeContent = {
     meta: ['Bahrain · UTC+3', 'Arabic · English', u('Reply within two working days')],
     github: 'https://github.com/joe7mohamed',
     linkedin: 'https://linkedin.com/in/youssef7mohamed',
+    githubLabel: 'GitHub',
+    linkedinLabel: 'LinkedIn',
     footer: 'ZakyDev · Youssef Zaky · Bahrain',
   },
   seo: {

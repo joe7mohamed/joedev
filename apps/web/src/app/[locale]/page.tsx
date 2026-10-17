@@ -1,6 +1,7 @@
 import { getHome, isLocale } from '@zakydev/shared';
 import { notFound } from 'next/navigation';
 import { About } from '@/components/about/About';
+import { Contact } from '@/components/contact/Contact';
 import { Header } from '@/components/header/Header';
 import { Hero } from '@/components/hero/Hero';
 import { Process } from '@/components/process/Process';
@@ -31,14 +32,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <About content={c.about} />
         </Scene>
         <Scene id="contact" length={1.5} tail={0}>
-          <div data-fade>
-            <h2 className="text-4xl">{c.contact.heading}</h2>
-            <p className="mt-8">
-              <a href={`mailto:${c.contact.email}`} className="underline decoration-gold underline-offset-4">
-                {c.contact.email}
-              </a>
-            </p>
-          </div>
+          <Contact content={c.contact} />
         </Scene>
       </main>
     </EngineProvider>

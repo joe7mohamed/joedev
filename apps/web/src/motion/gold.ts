@@ -1,11 +1,19 @@
 import type { SceneFrame, SceneId } from './engine';
-import { lerpRect, mix, type Rect, smooth } from './math';
+import { clamp, lerpRect, mix, type Rect, smooth } from './math';
 
 /**
  * `tilt` (0..1, default 0) is how much the shape behaves as the floating project frame: it scales the pointer tilt,
  * the phone sway and the float, which move only the element's face, never the box that sits on the slot.
+ * `fillBy` (0..1) lets a shape bring its fill in early: on the way into it, the fill has fully arrived by that
+ * fraction of the handoff, eased, while position and size keep the shared pace. Without it the fill moves with them.
  */
-export type GoldShape = Rect & { radius: number; fill: number; round: number; tilt?: number };
+export type GoldShape = Rect & {
+  radius: number;
+  fill: number;
+  round: number;
+  tilt?: number;
+  fillBy?: number;
+};
 type Reader = (frame: SceneFrame, layer: HTMLElement) => GoldShape;
 
 const slots = new Map<SceneId, Reader>();
@@ -61,7 +69,7 @@ export const resolveGold = (
   return {
     ...lerpRect(current, next, t),
     radius: mix(current.radius, next.radius, t),
-    fill: mix(current.fill, next.fill, t),
+    fill: mix(current.fill, next.fill, next.fillBy ? smooth(clamp(t / next.fillBy)) : t),
     round: mix(current.round, next.round, t),
     tilt: mix(current.tilt ?? 0, next.tilt ?? 0, t),
   };

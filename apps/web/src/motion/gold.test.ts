@@ -42,6 +42,19 @@ describe('resolveGold', () => {
     const mid = resolveGold(order, at(0.5), 750, (id) => tilted[id] ?? null);
     expect(mid?.tilt).toBe(0.5);
   });
+  it('lets the next shape bring its fill in early, ahead of its size, when it asks to', () => {
+    const flood: GoldShape = { ...B, fill: 1, fillBy: 0.35 };
+    const ring: GoldShape = { ...A, fill: 0 };
+    const early: Partial<Record<SceneId, GoldShape>> = { hero: ring, work: flood };
+    const blend = (out: number) => resolveGold(order, at(out), 750, (id) => early[id] ?? null);
+    expect(blend(0.5)?.x).toBe(250);
+    expect(blend(0.5)?.fill).toBe(1);
+    // a quarter into the tail the fill is well ahead of the size, which moves with the shared ease
+    const quarter = blend(0.25) as GoldShape;
+    expect(quarter.fill).toBeGreaterThan((quarter.x / 500) * 2);
+    expect(quarter.fill).toBeLessThan(1);
+    expect(blend(0)?.fill).toBe(0);
+  });
   it('returns null when nothing is registered', () => {
     expect(resolveGold(order, at(0), 0, () => null)).toBeNull();
   });

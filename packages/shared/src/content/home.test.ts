@@ -59,6 +59,12 @@ describe('home content', () => {
     expect(unconfirmedPaths(home.en)).toContain('about.sceneLabels.games[0]');
     expect(unconfirmedPaths(home.ar)).toContain('about.sceneLabels.healthcare');
   });
+  it('names the profile links with their brand names in both locales', () => {
+    for (const l of ['en', 'ar'] as const) {
+      expect(home[l].contact.githubLabel).toBe('GitHub');
+      expect(home[l].contact.linkedinLabel).toBe('LinkedIn');
+    }
+  });
   it('rejects diagram labels that do not fit their drawing', () => {
     const broken = structuredClone(home.en) as unknown as { projects: { diagramLabels: string[] }[] };
     (broken.projects[2] as { diagramLabels: string[] }).diagramLabels = ['SERVER', 'EXTRA'];

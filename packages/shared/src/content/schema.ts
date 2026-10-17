@@ -119,6 +119,8 @@ export const homeContentSchema = z.object({
     meta: z.tuple([z.string().min(1), z.string().min(1), text]),
     github: z.url(),
     linkedin: z.url(),
+    githubLabel: z.string().min(1),
+    linkedinLabel: z.string().min(1),
     footer: z.string().min(1),
   }),
   seo: z.object({ title: z.string().min(1), description: z.string().min(1) }),

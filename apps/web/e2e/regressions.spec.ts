@@ -321,3 +321,48 @@ for (const path of ['/en', '/ar']) {
     await measure('stacked');
   });
 }
+
+// The flood (spec 5.0, 5.7): at the end of the page the gold element is the whole screen, solid, square and still.
+// Neither the ring growing into it nor the flood itself floats or tilts like the project frame.
+for (const path of ['/en', '/ar']) {
+  test(`the gold element floods the whole screen and stays still at the end of contact on ${path}`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    await gotoScene(page, 'about', 1);
+    await page.evaluate(() => {
+      const about = document.getElementById('about') as HTMLElement;
+      const viewport = (about.querySelector('[data-sticky]') as HTMLElement).clientHeight;
+      window.scrollBy({ top: Number(about.dataset.tail) * viewport * 0.5, behavior: 'instant' });
+    });
+    await page.waitForTimeout(400);
+    expect(await page.locator('[data-gold]').evaluate((el) => el.hasAttribute('data-tilt'))).toBe(false);
+    await gotoScene(page, 'contact', 1);
+    const m = await page.evaluate(() => {
+      const layer = document.querySelector('[data-gold-layer]') as HTMLElement;
+      const gold = layer.querySelector('[data-gold]') as HTMLElement;
+      const face = gold.querySelector('[data-gold-face]') as HTMLElement;
+      const box = gold.getBoundingClientRect();
+      const f = face.getBoundingClientRect();
+      return {
+        visible: getComputedStyle(gold).visibility === 'visible',
+        box: [box.left, box.top, box.width, box.height].map(Math.round),
+        face: [f.left, f.top, f.width, f.height].map(Math.round),
+        screen: [0, 0, layer.clientWidth, layer.clientHeight],
+        fill: Number(gold.style.getPropertyValue('--fill')),
+        background: getComputedStyle(face).backgroundColor,
+        radius: Number.parseFloat(getComputedStyle(gold).borderRadius),
+        tilt: gold.hasAttribute('data-tilt'),
+        moving: face.getAnimations().length,
+      };
+    });
+    expect(m.visible).toBe(true);
+    expect(m.box).toEqual(m.screen);
+    expect(m.face).toEqual(m.screen);
+    expect(m.fill).toBe(1);
+    expect(m.background).toBe('rgb(212, 175, 55)');
+    expect(m.radius).toBe(0);
+    expect(m.tilt).toBe(false);
+    expect(m.moving).toBe(0);
+  });
+}
