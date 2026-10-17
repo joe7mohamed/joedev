@@ -71,9 +71,10 @@ and without the background shader's chunk, which loads later) stay at or below 1
 `node apps/web/scripts/check-bundle.mjs` checks it after `npm run build`; CI runs it on the production build. To see
 what is in the scripts: `npx next analyze` in `apps/web`.
 
-Headroom: almost none. At the end of Phase 1 (final fix wave) both routes load 149.9 kB of the 150 kB, so 0.1 kB is
-left (149.0 kB before that wave, whose fixes took 0.9 kB). The next feature that adds client JavaScript must first make room elsewhere (move markup to the
-server, split a rarely used part into a chunk that loads later); the limit itself does not move.
+Headroom: almost none. At the end of Phase 1 (final fix wave) both routes load 149,898 bytes of the 150,000, so about
+0.1 kB is left (149.0 kB before that wave, whose fixes took 0.9 kB). The next feature that adds client JavaScript
+must first make room elsewhere (move markup to the server, split a rarely used part into a chunk that loads later);
+the limit itself does not move.
 
 ## Deploy steps (owner + Claude)
 
