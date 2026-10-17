@@ -54,7 +54,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <Contact content={c.contact} locale={locale} />
         </Scene>
       </main>
-      <SiteFooter text={c.contact.footer} />
+      <SiteFooter text={c.contact.footer} locale={locale} />
       <Loader images={shotUrls(c.projects.map((p) => p.image))}>
         <LoaderArt />
       </Loader>

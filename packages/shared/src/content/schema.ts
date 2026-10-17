@@ -126,7 +126,15 @@ export const homeContentSchema = z.object({
     footer: z.string().min(1),
   }),
   seo: z.object({ title: z.string().min(1), description: z.string().min(1) }),
-  /** The confirmed name, brand and domain (structured data, sharing image, manifest); the same in every locale. */
-  site: z.object({ name: z.string().min(1), brand: z.string().min(1), domain: z.string().min(1) }),
+  /**
+   * The person and the site (structured data, sharing image, manifest). `name` is in the page's language;
+   * `latinName`, `brand` and `domain` are the same in every locale, for whatever must stay Latin.
+   */
+  site: z.object({
+    name: z.string().min(1),
+    latinName: z.string().min(1),
+    brand: z.string().min(1),
+    domain: z.string().min(1),
+  }),
 });
 export type HomeContent = z.infer<typeof homeContentSchema>;

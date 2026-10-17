@@ -817,10 +817,10 @@ test('process walks through five steps with what the client gets', async ({ page
   const names = ['Understand', 'Design', 'Build', 'Test', 'Launch'];
   const gives = [
     'A clear plan',
-    'Screens you can click through',
+    'A clickable prototype',
     'A working version, early',
-    'Fewer surprises',
-    'A live product, looked after',
+    'Fewer surprises after launch',
+    'A live product with ongoing support',
   ];
   for (let i = 0; i < 5; i++) {
     await gotoScene(page, 'process', (i + 0.5) / 5);
@@ -853,7 +853,7 @@ test('about shows the loop, four facts and the Riot disclaimer', async ({ page }
   await expect(about.getByRole('heading', { level: 2 })).toHaveText('One engineer, from A to Z.');
   await expect(about.locator('[data-station]')).toHaveCount(7);
   await expect(about.locator('[data-fact]')).toHaveCount(4);
-  await expect(about.getByText("ZakyDev isn't endorsed by Riot Games.")).toBeVisible();
+  await expect(about.getByText("ZakyDev isn't affiliated with or endorsed by Riot Games.")).toBeVisible();
   await expect(about.locator('[data-stage-name]')).not.toHaveText('');
 });
 
@@ -885,7 +885,7 @@ test('Latin text in the about scene is marked as English on the Arabic page', as
   }
 });
 
-// Latin runs inside Arabic sentences ("F1 و WEC", "League of Legends", "Riot Games") are marked as English too.
+// Latin runs inside Arabic sentences ("WEC", "League of Legends", "Riot Games", "ZakyDev") are marked as English too.
 test('Latin runs in the Arabic fact cards and the disclaimer are marked as English', async ({ page }) => {
   await page.goto('/ar');
   await gotoScene(page, 'about', 0.5);
@@ -900,6 +900,29 @@ test('Latin runs in the Arabic fact cards and the disclaimer are marked as Engli
   );
   expect(unmarked).toEqual([]);
   await expect(page.locator('#about [data-disclaimer] span[lang="en"]').first()).toBeAttached();
+  const english = (selector: string) => page.locator(`${selector} span[lang="en"]`).allTextContents();
+  // a run keeps the punctuation that follows it ("WEC:", as "TFT.")
+  expect(await english('#about [data-fact-body]')).toContain('WEC:');
+  expect(await english('#about [data-disclaimer]')).toEqual(['ZakyDev', 'Riot Games']);
+});
+
+// The footer is in the page's language (copy round 2026-10-17); on the Arabic page its brand is marked as English.
+test('the Arabic footer marks its Latin brand as English and leaves the Arabic unmarked', async ({
+  page,
+}) => {
+  await page.goto('/ar');
+  const footer = page.getByRole('contentinfo');
+  await expect(footer.locator('span[lang="en"]')).toHaveText(['ZakyDev']);
+  const unmarked = await footer.evaluate((el) =>
+    [...el.querySelectorAll('*'), el].flatMap((node) =>
+      [...node.childNodes]
+        .filter((child) => child.nodeType === Node.TEXT_NODE && /[A-Za-z]/.test(child.textContent ?? ''))
+        .filter(() => node.closest('[lang="en"]') === null)
+        .map((child) => child.textContent),
+    ),
+  );
+  expect(unmarked).toEqual([]);
+  expect(await footer.evaluate((el) => getComputedStyle(el).direction)).toBe('rtl');
 });
 
 test('contact always exposes the real email and both profiles', async ({ page }) => {
@@ -995,7 +1018,7 @@ test('profile links open in a new tab as rel="me" and their icons are decorative
     await expect(link.locator('[aria-hidden="true"]')).toHaveCount(1);
   }
   await expect(page.locator('#contact a[href^="mailto:"]')).toHaveAttribute('lang', 'en');
-  await expect(page.getByRole('contentinfo')).toHaveText('ZakyDev · Youssef Zaky · Bahrain');
+  await expect(page.getByRole('contentinfo')).toHaveText('ZakyDev · يوسف زكي · البحرين');
   await expect(page.locator('#contact [data-contact-meta] li')).toHaveCount(3);
   await expect(page.locator('#contact [data-contact-meta] svg[aria-hidden="true"]')).toHaveCount(3);
 });
@@ -1005,9 +1028,9 @@ test('the Arabic contact heading rises by word and is never split into letters',
   await page.goto('/ar');
   await gotoScene(page, 'contact', 1);
   const heading = page.locator('#contact h2');
-  await expect(heading).toHaveText('ما الذي تريد بناءه؟');
+  await expect(heading).toHaveText('ماذا تريد أن نبني معًا؟');
   const words = await heading.locator('[data-word]').allTextContents();
-  expect(words).toEqual(['ما', 'الذي', 'تريد', 'بناءه؟']);
+  expect(words).toEqual(['ماذا', 'تريد', 'أن', 'نبني', 'معًا؟']);
 });
 
 // The email is real text inside the link at every moment of the typing reveal; only a clip hides part of it.
@@ -1056,7 +1079,10 @@ for (const scheme of ['dark', 'light'] as const) {
 }
 
 // Fix round 1, spec 7: the footer is the page-level contentinfo landmark, after <main>, in every mode.
-const footerText = 'ZakyDev · Youssef Zaky · Bahrain';
+const footerText: Record<string, string> = {
+  '/': 'ZakyDev · Youssef Zaky · Bahrain',
+  '/ar': 'ZakyDev · يوسف زكي · البحرين',
+};
 const toBottom = (page: Page) =>
   page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
 for (const path of ['/', '/ar']) {
@@ -1065,7 +1091,7 @@ for (const path of ['/', '/ar']) {
     await gotoScene(page, 'contact', 1);
     const footer = page.getByRole('contentinfo');
     await expect(footer).toBeVisible();
-    await expect(footer).toHaveText(footerText);
+    await expect(footer).toHaveText(footerText[path] as string);
     await expect(footer).toHaveCSS('opacity', '1');
     await expect(page.locator('main footer')).toHaveCount(0);
     await expect(page.locator('main + footer')).toHaveCount(1);
@@ -1073,7 +1099,7 @@ for (const path of ['/', '/ar']) {
     await expect(page.locator('html')).not.toHaveClass(/enhanced/);
     await toBottom(page);
     await expect(footer).toBeVisible();
-    await expect(footer).toHaveText(footerText);
+    await expect(footer).toHaveText(footerText[path] as string);
     // in normal flow (relative only lifts it above the background layers)
     expect(await footer.evaluate((el) => getComputedStyle(el).position)).toMatch(/^(static|relative)$/);
     expect(await footer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(212, 175, 55)');
@@ -1086,7 +1112,7 @@ for (const path of ['/', '/ar']) {
     await toBottom(page);
     const footer = page.getByRole('contentinfo');
     await expect(footer).toBeVisible();
-    await expect(footer).toHaveText(footerText);
+    await expect(footer).toHaveText(footerText[path] as string);
     // the gold screen's muted ink on its gold surface
     expect(await footer.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(74, 64, 38)');
     expect(await footer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(212, 175, 55)');

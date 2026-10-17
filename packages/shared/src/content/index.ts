@@ -27,11 +27,12 @@ export const unconfirmedPaths = (content: HomeContent): string[] => {
   return found;
 };
 
-export const getHome = (locale: Locale, opts: { requireConfirmed?: boolean } = {}): HomeContent => {
-  const content = home[locale];
-  if (opts.requireConfirmed) {
-    const paths = unconfirmedPaths(content);
-    if (paths.length > 0) throw new Error(`Unconfirmed content in "${locale}": ${paths.join(', ')}`);
-  }
+/** Refuses content that still holds a text waiting for the owner's confirmation. */
+export const requireConfirmed = (locale: Locale, content: HomeContent): HomeContent => {
+  const paths = unconfirmedPaths(content);
+  if (paths.length > 0) throw new Error(`Unconfirmed content in "${locale}": ${paths.join(', ')}`);
   return content;
 };
+
+export const getHome = (locale: Locale, opts: { requireConfirmed?: boolean } = {}): HomeContent =>
+  opts.requireConfirmed ? requireConfirmed(locale, home[locale]) : home[locale];

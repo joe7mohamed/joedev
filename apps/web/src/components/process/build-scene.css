@@ -109,6 +109,11 @@
     monospace;
   letter-spacing: 0.12em;
 }
+/* the Arabic badge ("مباشر") in the Arabic body face, a step larger as every Arabic label (never tracked: globals.css) */
+html[lang="ar"] [data-build] .lt {
+  font-family: var(--stack-body);
+  font-size: 14px;
+}
 [data-build] .ld {
   fill: var(--on-gold);
   transform-box: fill-box;

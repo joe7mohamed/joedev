@@ -1,4 +1,3 @@
-import { u } from '../text';
 import type { HomeContent } from './schema';
 
 export const homeEn: HomeContent = {
@@ -10,12 +9,12 @@ export const homeEn: HomeContent = {
     switchLanguage: 'Switch to Arabic',
     switchTheme: 'Switch theme',
     skip: 'Skip to content',
-    sections: u('Sections'),
+    sections: 'Sections',
   },
   hero: {
-    titles: ['Software engineer', u('Full-stack developer')],
+    titles: ['Software engineer', 'Full-stack developer'],
     place: 'Bahrain',
-    availability: u('Available for new projects'),
+    availability: 'Available for new projects',
     headline: [
       [{ t: 'I' }, { t: 'build' }, { t: 'software', key: true }],
       [{ t: 'that' }, { t: 'holds', gold: true }, { t: 'up', gold: true }],
@@ -51,8 +50,8 @@ export const homeEn: HomeContent = {
       image: '/projects/wazifi.jpg',
       imageAlt: 'Wazifi home page',
       category: 'AI career assistant',
-      description: 'Builds your résumé and matches you with jobs.',
-      meta: ['Apr – Aug 2026', u('My own product'), 'Designed, built, launched'],
+      description: 'Builds your CV and matches you with jobs.',
+      meta: ['Apr – Aug 2026', 'My own product', 'Designed, built, launched'],
       diagram: 'provider-fallback',
       diagramLabels: ['ASK', 'PROVIDER A', 'PROVIDER B'],
       caption: 'If one AI service fails, another answers.',
@@ -66,7 +65,7 @@ export const homeEn: HomeContent = {
       imageAlt: 'Talmeeha home page',
       category: 'Multiplayer Arabic word game',
       description: 'Play live with friends. Everyone sees the same round.',
-      meta: ['May – Aug 2026', u('My own product'), 'Designed, built, launched'],
+      meta: ['May – Aug 2026', 'My own product', 'Designed, built, launched'],
       diagram: 'server-sync',
       diagramLabels: ['SERVER'],
       caption: 'The server keeps every player in sync.',
@@ -76,36 +75,36 @@ export const homeEn: HomeContent = {
   process: {
     label: 'How I work',
     youGet: 'You get',
-    live: u('LIVE'),
+    live: 'LIVE',
     steps: [
       {
         name: 'Understand',
         sentence: 'We talk first. I learn the problem and who it is for.',
-        gives: u('A clear plan'),
+        gives: 'A clear plan',
         tools: [],
       },
       {
         name: 'Design',
         sentence: 'I draw every screen before I write code.',
-        gives: u('Screens you can click through'),
+        gives: 'A clickable prototype',
         tools: [],
       },
       {
         name: 'Build',
         sentence: 'Interface, logic and data, built together.',
-        gives: u('A working version, early'),
+        gives: 'A working version, early',
         tools: ['Next.js', 'NestJS', 'PostgreSQL'],
       },
       {
         name: 'Test',
         sentence: 'I try to break it before your users can.',
-        gives: u('Fewer surprises'),
+        gives: 'Fewer surprises after launch',
         tools: ['Vitest', 'Playwright'],
       },
       {
         name: 'Launch',
         sentence: 'It goes live, and I stay to keep it healthy.',
-        gives: u('A live product, looked after'),
+        gives: 'A live product with ongoing support',
         tools: ['Docker', 'GitHub Actions', 'Vercel'],
       },
     ],
@@ -120,11 +119,11 @@ export const homeEn: HomeContent = {
       { name: 'Data', tools: 'PostgreSQL · Prisma' },
       { name: 'Test', tools: 'Vitest · Playwright' },
       { name: 'Deploy', tools: 'Docker · GitHub Actions' },
-      { name: 'Monitor', tools: u('Logs · health checks') },
+      { name: 'Monitor', tools: 'Logs · health checks' },
     ],
     facts: [
       { id: 'place', label: 'Based in', body: 'Bahrain. I work in Arabic and English.' },
-      { id: 'job', label: 'Day job', body: u('I build software for a hospital.') },
+      { id: 'job', label: 'Day job', body: 'I build software for a hospital.' },
       {
         id: 'marshal',
         label: 'Track marshal',
@@ -133,16 +132,16 @@ export const homeEn: HomeContent = {
       {
         id: 'games',
         label: 'After work',
-        body: u('League of Legends, Valorant and TFT. Read the map, make the call, adapt.'),
+        body: 'League of Legends, Valorant and TFT. Read the map, make the call, adapt.',
       },
     ],
     sceneLabels: {
       coordinates: '26.07°N 50.56°E',
-      healthcare: u('HEALTHCARE → CODE'),
+      healthcare: 'HEALTHCARE → CODE',
       circuit: 'BIC · SINCE 2019',
-      games: [u('LOL'), u('VALORANT'), u('TFT')],
+      games: ['LOL', 'VALORANT', 'TFT'],
     },
-    disclaimer: "ZakyDev isn't endorsed by Riot Games.",
+    disclaimer: "ZakyDev isn't affiliated with or endorsed by Riot Games.",
   },
   contact: {
     label: 'Contact',
@@ -151,7 +150,7 @@ export const homeEn: HomeContent = {
     email: 'youssef@zakydev.com',
     copy: 'Copy email',
     copied: 'Copied',
-    meta: ['Bahrain · UTC+3', 'Arabic · English', u('Reply within two working days')],
+    meta: ['Bahrain · UTC+3', 'Arabic · English', 'Reply within two working days'],
     github: 'https://github.com/joe7mohamed',
     linkedin: 'https://linkedin.com/in/youssef7mohamed',
     githubLabel: 'GitHub',
@@ -162,5 +161,5 @@ export const homeEn: HomeContent = {
     title: 'Youssef Zaky — Software engineer | ZakyDev',
     description: 'Software engineer in Bahrain. I design, build and launch web apps, start to finish.',
   },
-  site: { name: 'Youssef Zaky', brand: 'ZakyDev', domain: 'zakydev.com' },
+  site: { name: 'Youssef Zaky', latinName: 'Youssef Zaky', brand: 'ZakyDev', domain: 'zakydev.com' },
 };

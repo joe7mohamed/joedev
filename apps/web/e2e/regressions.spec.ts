@@ -142,6 +142,40 @@ test('LIVE badge reads left to right in Arabic', async ({ page }) => {
   expect(direction).toBe('ltr');
 });
 
+// Copy round 2026-10-17: the badge is in the page's language ("مباشر" on /ar); its word stays inside its pill, clear
+// of the dot, and Arabic is set in the Arabic body face, never the Latin mono one.
+for (const path of ['/', '/ar']) {
+  test(`the live badge's word fits inside its pill on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await gotoScene(page, 'process', 1);
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    const m = await page.locator('#process [data-build]').evaluate((svg) => {
+      const word = svg.querySelector('text') as SVGTextElement;
+      const pill = word.parentElement?.querySelector('rect') as SVGRectElement;
+      const dot = word.parentElement?.querySelector('circle') as SVGCircleElement;
+      const [w, p, d] = [word.getBBox(), pill.getBBox(), dot.getBBox()];
+      return {
+        text: word.textContent,
+        lang: word.closest('[lang]')?.getAttribute('lang'),
+        family: getComputedStyle(word).fontFamily,
+        body: getComputedStyle(document.body).fontFamily,
+        left: w.x - (d.x + d.width),
+        right: p.x + p.width - (w.x + w.width),
+        top: w.y - p.y,
+        bottom: p.y + p.height - (w.y + w.height),
+      };
+    });
+    expect(m.text).toBe(path === '/' ? 'LIVE' : 'مباشر');
+    expect(m.lang).toBe(path === '/' ? 'en' : 'ar');
+    // the page's Arabic body stack (globals.css --stack-body)
+    if (path === '/ar') expect(m.family).toBe(m.body);
+    // clear of the dot and of the pill's round end
+    expect(m.left).toBeGreaterThanOrEqual(4);
+    expect(m.right).toBeGreaterThanOrEqual(8);
+    expect(Math.min(m.top, m.bottom)).toBeGreaterThanOrEqual(0);
+  });
+}
+
 // Spec 5.0 / 5.5: the rail line starts on the first station (the right one in Arabic) and its length is the
 // progress through the steps; also makes sure the station-centre test above has five stations to measure.
 for (const path of ['/', '/ar']) {

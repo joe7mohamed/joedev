@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { plain } from '../text';
-import { getHome, home, homeContentSchema, unconfirmedPaths } from './index';
+import { plain, u } from '../text';
+import { getHome, home, homeContentSchema, requireConfirmed, unconfirmedPaths } from './index';
 
 describe('home content', () => {
   it('is valid in both locales', () => {
@@ -41,7 +41,7 @@ describe('home content', () => {
   });
   it('names the live badge of the build drawing in both locales', () => {
     expect(plain(home.en.process.live)).toBe('LIVE');
-    expect(plain(home.ar.process.live)).toBe('LIVE');
+    expect(plain(home.ar.process.live)).toBe('مباشر');
   });
   it('labels each project diagram in both locales', () => {
     const counts = { 'request-path': 3, 'provider-fallback': 3, 'server-sync': 1 } as const;
@@ -58,8 +58,8 @@ describe('home content', () => {
       expect(labels.circuit).toBe('BIC · SINCE 2019');
       expect(labels.games.map(plain)).toEqual(['LOL', 'VALORANT', 'TFT']);
     }
-    expect(unconfirmedPaths(home.en)).toContain('about.sceneLabels.games[0]');
-    expect(unconfirmedPaths(home.ar)).toContain('about.sceneLabels.healthcare');
+    expect(unconfirmedPaths(home.en)).not.toContain('about.sceneLabels.games[0]');
+    expect(unconfirmedPaths(home.ar)).not.toContain('about.sceneLabels.healthcare');
   });
   it('names the profile links with their brand names in both locales', () => {
     for (const l of ['en', 'ar'] as const) {
@@ -70,10 +70,19 @@ describe('home content', () => {
   it('never compiles its parsers with eval (the site sends a CSP without unsafe-eval)', () => {
     expect(z.config().jitless).toBe(true);
   });
-  it('names the person, the brand and the domain the same way in both locales', () => {
-    for (const l of ['en', 'ar'] as const) {
-      expect(home[l].site).toEqual({ name: 'Youssef Zaky', brand: 'ZakyDev', domain: 'zakydev.com' });
-    }
+  it('names the person in each language, and the Latin name, the brand and the domain the same way in both', () => {
+    expect(home.en.site).toEqual({
+      name: 'Youssef Zaky',
+      latinName: 'Youssef Zaky',
+      brand: 'ZakyDev',
+      domain: 'zakydev.com',
+    });
+    expect(home.ar.site).toEqual({
+      name: 'يوسف زكي',
+      latinName: 'Youssef Zaky',
+      brand: 'ZakyDev',
+      domain: 'zakydev.com',
+    });
   });
   it('rejects diagram labels that do not fit their drawing', () => {
     const broken = structuredClone(home.en) as unknown as { projects: { diagramLabels: string[] }[] };
@@ -91,8 +100,17 @@ describe('home content', () => {
     expect(() => homeContentSchema.parse(brokenStep)).toThrow();
   });
   it('lists unconfirmed text and can refuse it', () => {
-    expect(unconfirmedPaths(home.en).length).toBeGreaterThan(0);
-    expect(() => getHome('en', { requireConfirmed: true })).toThrow(/unconfirmed/i);
+    // the owner confirmed every text (2026-10-17), so a sample with one unconfirmed text stands in for the content
+    const sample = { ...home.en, nav: { ...home.en.nav, sections: u('Sections') } };
+    expect(unconfirmedPaths(sample)).toEqual(['nav.sections']);
+    expect(unconfirmedPaths(sample).length).toBeGreaterThan(0);
+    expect(() => requireConfirmed('en', sample)).toThrow(/unconfirmed/i);
     expect(getHome('en').hero.place).toBeDefined();
+  });
+  it('has no unconfirmed text left in either locale (owner sign-off 2026-10-17)', () => {
+    for (const l of ['en', 'ar'] as const) {
+      expect(unconfirmedPaths(home[l])).toEqual([]);
+      expect(() => getHome(l, { requireConfirmed: true })).not.toThrow();
+    }
   });
 });

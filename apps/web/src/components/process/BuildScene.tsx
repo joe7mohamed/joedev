@@ -5,7 +5,7 @@ import './build-scene.css';
 const LTR: CSSProperties = { direction: 'ltr' };
 
 type BuildSceneProps = {
-  /** The badge text once the app is live (content, `process.live`). */
+  /** The badge text once the app is live (content, `process.live`), in the page's language. */
   live: string;
 };
 
@@ -70,7 +70,7 @@ export function BuildScene({ live }: BuildSceneProps) {
         <g className="o4">
           <rect className="fg" x="350" y="33" width="80" height="30" rx="15" />
           <circle className="ld" cx="367" cy="48" r="4" />
-          <text className="lt" x="378" y="53" lang="en">
+          <text className="lt" x="378" y="53">
             {live}
           </text>
         </g>
