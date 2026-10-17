@@ -11,8 +11,8 @@ describe('homePath', () => {
 });
 
 describe('homeUrl', () => {
-  it('is the absolute address of each home page', () => {
-    expect(homeUrl('en')).toBe(`${siteUrl}/`);
+  it('is the absolute address of each home page, the root written as Next writes the canonical (no slash)', () => {
+    expect(homeUrl('en')).toBe(siteUrl);
     expect(homeUrl('ar')).toBe(`${siteUrl}/ar`);
   });
 });

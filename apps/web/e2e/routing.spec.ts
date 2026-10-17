@@ -6,14 +6,12 @@ import { test } from './helpers';
  * `/`. Every address a search engine or a sharing card reads follows the same two URLs.
  */
 const SITE = 'https://zakydev.com';
-const HOME = { en: { path: '/', url: `${SITE}/` }, ar: { path: '/ar', url: `${SITE}/ar` } } as const;
+// the root without its slash, as Next writes the canonical; the sitemap and the structured data write it the same way
+const HOME = { en: { path: '/', url: SITE }, ar: { path: '/ar', url: `${SITE}/ar` } } as const;
 
-/**
- * An address read from the page, in its normal form. Next writes the root without its slash (`https://zakydev.com`,
- * resolve-url.js in next/dist/lib/metadata), which is the same URL as `https://zakydev.com/` (RFC 3986, 6.2.3).
- */
+/** An address read from the page, byte for byte. */
 const attribute = async (page: Page, selector: string, name: string): Promise<string> =>
-  new URL((await page.locator(selector).getAttribute(name)) ?? 'invalid:').href;
+  (await page.locator(selector).getAttribute(name)) ?? '';
 
 for (const [locale, { path, url }] of Object.entries(HOME)) {
   test(`${path} is served directly, with status 200 and the ${locale} page`, async ({ request, page }) => {
