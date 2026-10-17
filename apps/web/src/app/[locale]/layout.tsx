@@ -2,7 +2,9 @@ import { dirOf, getHome, isLocale, LOCALES } from '@zakydev/shared';
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { body, bodyAr, display, displayAr, mono } from '@/lib/fonts';
+import { preload } from 'react-dom';
+import { headlineFace } from '@/fonts/display';
+import { body, bodyAr, mono } from '@/lib/fonts';
 import { siteUrl } from '@/lib/site';
 import { headScript } from '@/lib/theme-script';
 import '../globals.css';
@@ -42,12 +44,9 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  const fonts = [
-    display.variable,
-    body.variable,
-    mono.variable,
-    ...(locale === 'ar' ? [displayAr.variable, bodyAr.variable] : []),
-  ].join(' ');
+  // the headline's display face, this locale's only (fonts/display.ts)
+  preload(headlineFace[locale], { as: 'font', type: 'font/woff2', crossOrigin: '' });
+  const fonts = [body.variable, mono.variable, ...(locale === 'ar' ? [bodyAr.variable] : [])].join(' ');
   return (
     <html lang={locale} dir={dirOf(locale)} className={fonts} suppressHydrationWarning>
       <head>

@@ -1,0 +1,41 @@
+/* The two display faces, self-hosted (docs/VERSIONS.md, "Self-hosted display faces"). They are declared here, not
+   with next/font, so each page can preload its own one (display.ts, the locale layout): next/font preloads a face on
+   every route or on none. A face downloads only where some text uses it, so /en never fetches Amiri.
+   The fallbacks carry each face's metrics (the values next/font computed for them), so the swap moves little even
+   without the preload. */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fraunces-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces Fallback";
+  src: local("Times New Roman");
+  ascent-override: 84.71%;
+  descent-override: 22.09%;
+  line-gap-override: 0%;
+  size-adjust: 115.45%;
+}
+/* Arabic, Latin and Latin Extended in one file: the Arabic headline needs the Arabic and the Latin full stop, and the
+   page uses Amiri only at 600 and 700 */
+@font-face {
+  font-family: "Amiri";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./amiri-bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Amiri Fallback";
+  src: local("Times New Roman");
+  ascent-override: 112.47%;
+  descent-override: 63.44%;
+  line-gap-override: 0%;
+  size-adjust: 99.94%;
+}
+:root {
+  --face-display: "Fraunces", "Fraunces Fallback";
+  --face-display-ar: "Amiri", "Amiri Fallback";
+}

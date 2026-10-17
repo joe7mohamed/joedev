@@ -91,6 +91,24 @@ Committed TTFs, each with its SIL Open Font License 1.1 file. Read from disk at 
 Fraunces is the 72 pt optical-size static instance with SOFT 0 (as the hero sets it), semibold, the nearest static
 weight to the hero's 560.
 
+## Owner round 2026-10-17: self-hosted display faces (`apps/web/src/fonts/`)
+
+The two display faces moved from `next/font/google` to files in the repository, declared in `fonts/display.css`. Each
+page preloads only its own headline's face (Fraunces on `/en`, Amiri on `/ar`, `fonts/display.ts`); `next/font`
+preloads a face on every route or on none, and its file names are not known to the code, so it cannot do that. The
+body and mono faces (Geist, Geist Mono, IBM Plex Sans Arabic) stay on `next/font/google`, not preloaded, with its
+metric-matched fallbacks.
+
+| File | Version | Source | sha256 |
+| --- | --- | --- | --- |
+| fraunces-latin.woff2 | 1.000 | `Fonts - Web/Fraunces[SOFT,WONK,opsz,wght].woff2` in `UnderCaseType_Fraunces_1.000.zip` (the release above, archive sha256 `8d8b81dfaeb89433f5c908e1d8d0a4b202bd627bd80d4cd5ff56f311fdcad19f`), WONK fixed at 0 and subset to Google Fonts' latin range: the axes and glyphs Google Fonts served | `0c0c0e27e894cf4f59b3bf64b3e05f0bc6932d5d5e4a7d82ff6ac05173333a8c` |
+| Fraunces-OFL.txt | 1.000 | the same file as `assets/og/Fraunces-OFL.txt` | `bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b` |
+| amiri-bold.woff2 | 1.003 | `Amiri-1.003/Amiri-Bold.ttf` in `Amiri-1.003.zip` (the release above, archive sha256 `81af0aff7d2086d8af24cea7202f7546130997982534691373485cd96744d05e`), subset to Google Fonts' arabic, latin and latin-ext ranges in one file. Google Fonts served 1.002; only the bold is used (the page sets Amiri at 600 and 700) | `581a2c2fcc4eafe71bcd4d63bbb0932feaab0e2494b33f71468fece977b4b860` |
+| Amiri-OFL.txt | 1.003 | the same file as `assets/og/Amiri-OFL.txt` | `72de68e5954f4fdd24702292ef5a32f003ca960ec9330dc86e5eefb5dffb9b22` |
+
+Rebuild with `apps/web/scripts/display-fonts.py` (fontTools 4.60.1 and brotli 1.1.0, installed outside the repository;
+the script's header has the command). The build is byte-reproducible.
+
 ## Phase 1 Task 13b: visual snapshots, bundle budget
 
 No package was installed. A tool runs at a fixed version outside the lockfile:
