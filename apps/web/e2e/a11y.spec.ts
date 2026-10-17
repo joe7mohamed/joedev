@@ -80,6 +80,10 @@ for (const path of ['/en', '/ar']) {
   });
 }
 
+test('there is no sharing image for an unknown locale', async ({ request }) => {
+  expect((await request.get('/fr/opengraph-image')).status()).toBe(404);
+});
+
 const CSP =
   "default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 

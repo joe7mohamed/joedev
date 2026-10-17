@@ -1,23 +1,7 @@
 import type { NextConfig } from 'next';
+import { contentSecurityPolicy } from './src/lib/csp';
 
-/*
- * Static pages, no user-supplied content, no third-party scripts. Scripts need 'unsafe-inline': nonces force dynamic
- * rendering, and the inline RSC payload scripts of static App Router pages (self.__next_f.push) change per build and
- * cannot be hashed. Adding any hash would make browsers ignore 'unsafe-inline' and break those scripts.
- * Reasoning and the revisit condition: docs/DEPLOY.md, "Content-Security-Policy".
- */
-const csp = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "style-src 'self' 'unsafe-inline'",
-  "font-src 'self'",
-  "connect-src 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join('; ');
+const csp = contentSecurityPolicy(process.env.NODE_ENV);
 
 const security = [
   { key: 'Content-Security-Policy', value: csp },

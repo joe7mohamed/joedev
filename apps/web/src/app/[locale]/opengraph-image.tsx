@@ -36,6 +36,8 @@ const FONTS = [
 
 // Route handlers get no params from the layout, so without this the card would render on request, not at build time.
 export const generateStaticParams = () => LOCALES.map((locale) => ({ locale }));
+// and a locale it does not list is a 404, not an English card rendered on request
+export const dynamicParams = false;
 export const size = OG_SIZE;
 export const contentType = OG_TYPE;
 // Alt text is per locale, which a module-level `alt` cannot be, so the page lists this image itself
