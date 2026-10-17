@@ -144,3 +144,15 @@ Mobile, /en and /ar; gates 90 / 100 / 100 / 100; record scores, TTFB and server 
 
 Lighthouse's LCP, locally and in CI, is a lab simulation on a throttled connection. After launch, real-visitor LCP (the
 field data in Search Console, Core Web Vitals) is the real LCP test.
+
+## Lighthouse
+
+CI runs Lighthouse CI (`apps/web/lighthouserc.json`, `@lhci/cli` 0.15.1, which bundles Lighthouse 12.6.1) on the
+production build of `/en` and `/ar`, mobile, three runs each, asserting the median. The GitHub runner has no GPU:
+Chrome's WebGL there is software-rendered, so the page shows the CSS gradient instead of the shader
+(`failIfMajorPerformanceCaveat`), and Lighthouse measures that fallback, not the shader.
+
+Locally, under WSL, point `CHROME_PATH` at a Linux Chrome (chrome-launcher otherwise picks the Windows one) and run
+inside the port-3000 namespace, for example
+`CHROME_PATH=/usr/bin/google-chrome unshare -rn bash -c 'ip link set lo up && npx --yes @lhci/cli@0.15.1 autorun --config=apps/web/lighthouserc.json --collect.settings.chromeFlags=--no-sandbox'`
+(`--no-sandbox` only because the namespace maps the user to root).

@@ -43,6 +43,11 @@ jobs:
           NEXT_PUBLIC_E2E: ""
       # route JS of /en and /ar at most 170 kB gzip, and no zod in it (spec line 32)
       - run: node apps/web/scripts/check-bundle.mjs
+      # Lighthouse on /en and /ar (apps/web/lighthouserc.json). The runner has no GPU, so the background is the CSS
+      # fallback there (docs/DEPLOY.md, "Lighthouse")
+      - run: npx --yes @lhci/cli@0.15.1 autorun --config=apps/web/lighthouserc.json
+        env:
+          NEXT_PUBLIC_E2E: ""
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
@@ -50,6 +55,7 @@ jobs:
           path: |
             apps/web/playwright-report
             apps/web/test-results
+            .lighthouseci
   # Visual snapshots compare only inside the Playwright image of the installed @playwright/test version: font
   # rendering differs between systems. Baselines are made locally with `npm run e2e:visual -w web -- --update-snapshots`
   # in the same image and committed; this job never updates them.

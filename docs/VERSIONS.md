@@ -114,13 +114,14 @@ fontTools 4.60.1, with brotli 1.1.0, installed outside the repository (the scrip
 is byte-reproducible. A text the page adds later that falls outside these ranges is set in the next face of its stack:
 extend the range in the script and in `display.css` together.
 
-## Phase 1 Task 13b: visual snapshots, bundle budget
+## Phase 1 Task 13b: visual snapshots, Lighthouse, bundle budget
 
-No package was installed. A tool runs at a fixed version outside the lockfile:
+No package was installed. Two tools run at fixed versions outside the lockfile:
 
 | Tool | Version | Where |
 | --- | --- | --- |
 | Playwright Docker image | `mcr.microsoft.com/playwright:v1.64.0-noble` | `npm run e2e:visual -w web` and the CI `visual` job. Its tag must equal the installed `@playwright/test` (1.64.0); it ships Node 24.21 |
+| @lhci/cli | 0.15.1 | CI step `npx --yes @lhci/cli@0.15.1 autorun`. Lighthouse CI has had no release since June 2025; 0.15.1 bundles Lighthouse 12.6.1 and still runs the assertions. `npx` resolves it under the repository's `.npmrc` without an install-script prompt |
 
 When `@playwright/test` is upgraded, change the image tag in `apps/web/package.json` (`e2e:visual`) and in
 `.github/workflows/ci.yml` (`visual`) to the same version, and remake the baselines in the new image.
