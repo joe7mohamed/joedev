@@ -9,6 +9,8 @@
   font-weight: 100 900;
   font-display: swap;
   src: url("./fraunces-latin.woff2") format("woff2");
+  /* the characters the file carries (scripts/display-fonts.py) */
+  unicode-range: U+0020-007E, U+00A0, U+00B7, U+2013-2014, U+2018-201D, U+2026;
 }
 @font-face {
   font-family: "Fraunces Fallback";
@@ -18,14 +20,16 @@
   line-gap-override: 0%;
   size-adjust: 115.45%;
 }
-/* Arabic, Latin and Latin Extended in one file: the Arabic headline needs the Arabic and the Latin full stop, and the
-   page uses Amiri only at 600 and 700 */
+/* The Arabic block and Basic Latin in one file: the Arabic headings also carry Latin names, the full stop and the
+   email address; the page uses Amiri only at 600 and 700 */
 @font-face {
   font-family: "Amiri";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
   src: url("./amiri-bold.woff2") format("woff2");
+  /* the characters the file carries (scripts/display-fonts.py) */
+  unicode-range: U+0020-007E, U+0600-06FF, U+200C-200F;
 }
 @font-face {
   font-family: "Amiri Fallback";

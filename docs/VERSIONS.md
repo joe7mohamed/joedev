@@ -96,18 +96,23 @@ weight to the hero's 560.
 The two display faces moved from `next/font/google` to files in the repository, declared in `fonts/display.css`. Each
 page preloads only its own headline's face (Fraunces on `/en`, Amiri on `/ar`, `fonts/display.ts`); `next/font`
 preloads a face on every route or on none, and its file names are not known to the code, so it cannot do that. The
-body and mono faces (Geist, Geist Mono, IBM Plex Sans Arabic) stay on `next/font/google`, not preloaded, with its
-metric-matched fallbacks.
+body and mono faces (Geist, Geist Mono, IBM Plex Sans Arabic) stay on `next/font/google`, not preloaded, over the
+metric-matched fallbacks in `fonts/fallbacks.css` (`adjustFontFallback` is off for them). All three Plex Arabic
+weights stay: 400 and 500 set Arabic text, 600 sets the language switch.
+
+Owner decision 2026-10-17 (dialog 4): each face keeps only what its page sets in it, and nothing may look different.
 
 | File | Version | Source | sha256 |
 | --- | --- | --- | --- |
-| fraunces-latin.woff2 | 1.000 | `Fonts - Web/Fraunces[SOFT,WONK,opsz,wght].woff2` in `UnderCaseType_Fraunces_1.000.zip` (the release above, archive sha256 `8d8b81dfaeb89433f5c908e1d8d0a4b202bd627bd80d4cd5ff56f311fdcad19f`), WONK fixed at 0 and subset to Google Fonts' latin range: the axes and glyphs Google Fonts served | `0c0c0e27e894cf4f59b3bf64b3e05f0bc6932d5d5e4a7d82ff6ac05173333a8c` |
+| fraunces-latin.woff2 | 1.000 | `Fonts - Web/Fraunces[SOFT,WONK,opsz,wght].woff2` in `UnderCaseType_Fraunces_1.000.zip` (the release above, archive sha256 `8d8b81dfaeb89433f5c908e1d8d0a4b202bd627bd80d4cd5ff56f311fdcad19f`), WONK fixed at 0 as Google Fonts serves it, the axes opsz, wght and SOFT kept (all used); Basic Latin and the typographic punctuation (`U+0020-007E, U+00A0, U+00B7, U+2013-2014, U+2018-201D, U+2026`, also its `unicode-range`), with the default features (rvrn, liga, kern). 80 kB. Visually equivalent to the face Google Fonts served, with a set width about 1–2 % narrower (a different upstream build) | `7b7900aa1454d44da63af9c7cc2c63aaad39d65eb6fc55715e101454344ad9de` |
 | Fraunces-OFL.txt | 1.000 | the same file as `assets/og/Fraunces-OFL.txt` | `bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b` |
-| amiri-bold.woff2 | 1.003 | `Amiri-1.003/Amiri-Bold.ttf` in `Amiri-1.003.zip` (the release above, archive sha256 `81af0aff7d2086d8af24cea7202f7546130997982534691373485cd96744d05e`), subset to Google Fonts' arabic, latin and latin-ext ranges in one file. Google Fonts served 1.002; only the bold is used (the page sets Amiri at 600 and 700) | `581a2c2fcc4eafe71bcd4d63bbb0932feaab0e2494b33f71468fece977b4b860` |
+| amiri-bold.woff2 | 1.003 | `Amiri-1.003/Amiri-Bold.ttf` in `Amiri-1.003.zip` (the release above, archive sha256 `81af0aff7d2086d8af24cea7202f7546130997982534691373485cd96744d05e`): the Arabic block and Basic Latin plus the joiners and direction marks (`U+0020-007E, U+0600-06FF, U+200C-200F`, also its `unicode-range`), with every feature the browser applies by default (ccmp, locl, init, medi, fina, rlig, liga, rtlm, curs, kern, mark, mkmk); the stylistic sets, fractions and proportional digits, all off by default, are dropped. Only the bold is used (the page sets Amiri at 600 and 700). 87 kB | `246039b527b6baae988f726ccd054e50906599fa4a675b0f8a71c8eeea996923` |
 | Amiri-OFL.txt | 1.003 | the same file as `assets/og/Amiri-OFL.txt` | `72de68e5954f4fdd24702292ef5a32f003ca960ec9330dc86e5eefb5dffb9b22` |
 
-Rebuild with `apps/web/scripts/display-fonts.py` (fontTools 4.60.1 and brotli 1.1.0, installed outside the repository;
-the script's header has the command). The build is byte-reproducible.
+Rebuild with `apps/web/scripts/display-fonts.py`, which uses fontTools' subsetter (pyftsubset) and instancer at
+fontTools 4.60.1, with brotli 1.1.0, installed outside the repository (the script's header has the command). The build
+is byte-reproducible. A text the page adds later that falls outside these ranges is set in the next face of its stack:
+extend the range in the script and in `display.css` together.
 
 ## Phase 1 Task 13b: visual snapshots, bundle budget
 
