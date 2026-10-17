@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { advance, easeSide, pressOf, rgbOf, scrollOf, strengthOf, textSideOf } from './drift';
+import {
+  advance,
+  easeSide,
+  guardRoom,
+  hexOf,
+  luminance,
+  pressOf,
+  rgbOf,
+  scrollOf,
+  strengthOf,
+  textSideOf,
+} from './drift';
 
 describe('background drift', () => {
   it('advances time by one second per second at rest and up to six times faster when scrolling fast', () => {
@@ -45,5 +56,41 @@ describe('background drift', () => {
   it('turns a hex colour into GL floats', () => {
     expect(rgbOf(0xd4af37)).toEqual([212 / 255, 175 / 255, 55 / 255]);
     expect(rgbOf(0x000000)).toEqual([0, 0, 0]);
+  });
+
+  it('reads a hex colour token', () => {
+    expect(hexOf(' #6a6457')).toBe(0x6a6457);
+    expect(hexOf('#FAF9F6')).toBe(0xfaf9f6);
+    expect(hexOf('rgb(1 2 3)')).toBeNull();
+    expect(hexOf('')).toBeNull();
+  });
+
+  it('measures relative luminance as WCAG does', () => {
+    expect(luminance(0xffffff)).toBeCloseTo(1);
+    expect(luminance(0x000000)).toBe(0);
+    expect(luminance(0x808080)).toBeCloseTo(0.2159, 4);
+  });
+
+  const ratio = (a: number, b: number): number => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+
+  it('lets the background under text move only as far as keeps every text colour at the ratio', () => {
+    const page = luminance(0xfaf9f6);
+    const texts = [0x6a6457, 0x8a6d1f];
+    const room = guardRoom(0xfaf9f6, texts, 4.5);
+    expect(room).toBeGreaterThan(0);
+    expect(room).toBeLessThan(0.03);
+    for (const text of texts) expect(ratio(luminance(text), page - room)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('works the other way round on a dark page', () => {
+    const page = luminance(0x0f0e0c);
+    const texts = [0xa8a192, 0xd4af37];
+    const room = guardRoom(0x0f0e0c, texts, 4.5);
+    expect(room).toBeGreaterThan(0);
+    for (const text of texts) expect(ratio(luminance(text), page + room)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('allows no movement when a text colour already misses the ratio on the plain page', () => {
+    expect(guardRoom(0xfaf9f6, [0xd4af37], 4.5)).toBe(0);
   });
 });

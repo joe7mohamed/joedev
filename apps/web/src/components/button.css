@@ -10,6 +10,8 @@
   color: var(--ink);
   font: 500 16px var(--stack-body);
   text-decoration: none;
+  /* a button is its own surface: the background's halo (home.css) would only blur its text */
+  text-shadow: none;
   transition:
     background-color var(--std),
     color var(--std),

@@ -1,7 +1,6 @@
 /* Hero (spec 5.3). The layout works without script; everything that moves is under html.enhanced, so reduced
    motion and no script show every part in its finished state. */
 [data-hero] {
-  --hero-shadow: 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
   display: flex;
   flex-direction: column;
   gap: clamp(14px, 2.4vh, 26px);
@@ -67,7 +66,7 @@ html[lang="ar"] [data-tags] li {
     "SOFT" 0;
   line-height: 0.98;
   letter-spacing: -0.035em;
-  text-shadow: var(--hero-shadow);
+  text-shadow: var(--glow);
 }
 html[lang="ar"] [data-headline] {
   font-size: clamp(44px, 10.5vw, 150px);
@@ -115,7 +114,7 @@ html[lang="ar"] [data-headline] [data-slot] {
   margin: 0;
   color: var(--ink);
   font-size: clamp(18px, 1.75vw, 25px);
-  text-shadow: var(--hero-shadow);
+  text-shadow: var(--glow);
 }
 /* every word sits in one grid cell, so the widest reserves the width */
 [data-rot] {

@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { currentScene } from '@/motion/current';
 import { engine, type SceneFrame, type SceneId } from '@/motion/engine';
-import { advance, easeSide, pressOf, scrollOf, strengthOf, textSideOf } from './drift';
-import { createRenderer, type Renderer, type Theme } from './shader';
+import { advance, easeSide, guardRoom, hexOf, pressOf, scrollOf, strengthOf, textSideOf } from './drift';
+import { createRenderer, NO_GUARD, type Renderer, type Theme } from './shader';
 
 /** Without scrolling, the slow drift is redrawn every 80 ms. */
 const DRIFT_MS = 80;
@@ -17,6 +17,25 @@ const PHONE = '(max-width: 860px)';
 
 const themeOf = (): Theme => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
 
+/** Text colours that sit on the background, read from the theme's tokens so they never drift from the CSS. */
+const TEXT_TOKENS = ['--ink', '--muted', '--accent'];
+const AA = 4.5;
+
+/**
+ * How far the light background under the words may move from the page colour (spec 5.8: never below AA). The dark
+ * theme keeps its ridges; a page-colour halo protects its text instead (home.css), the smaller change.
+ */
+const guardOf = (theme: Theme): number => {
+  if (theme === 'dark') return NO_GUARD;
+  const style = getComputedStyle(document.documentElement);
+  const page = hexOf(style.getPropertyValue('--bg'));
+  const texts = TEXT_TOKENS.map((name) => hexOf(style.getPropertyValue(name)));
+  const known = texts.filter((text): text is number => text !== null);
+  // unreadable tokens: keep the words' half plain rather than risk the contrast
+  if (page === null || known.length < texts.length) return 0;
+  return guardRoom(page, known, AA);
+};
+
 /** The page's scroll length from the engine's geometry: the end of the scene that ends last. */
 const lengthOf = (frames: Map<SceneId, SceneFrame>): number => {
   let end = 0;
@@ -24,12 +43,19 @@ const lengthOf = (frames: Map<SceneId, SceneFrame>): number => {
   return end;
 };
 
-/** Sizes the drawing buffer to the canvas's CSS size at the reduced pixel ratio. */
-const sizeBuffer = (canvas: HTMLCanvasElement): void => {
+/** Sizes the drawing buffer to the canvas's CSS size at the reduced pixel ratio, and the viewport with it. */
+const sizeBuffer = (canvas: HTMLCanvasElement, renderer: Renderer): void => {
   const box = canvas.getBoundingClientRect();
   const ratio = Math.min(window.devicePixelRatio || 1, MAX_RATIO) * SCALE;
   canvas.width = Math.max(1, Math.round(box.width * ratio));
   canvas.height = Math.max(1, Math.round(box.height * ratio));
+  renderer.resize(canvas.width, canvas.height);
+};
+
+/** Paints the current theme's palette, with its text guard. */
+const paintTheme = (renderer: Renderer): void => {
+  const theme = themeOf();
+  renderer.paint(theme, guardOf(theme));
 };
 
 type Painter = {
@@ -74,12 +100,11 @@ const painter = (canvas: HTMLCanvasElement, renderer: Renderer): Painter => {
       if (performance.now() - drawn >= DRIFT_MS * 0.75) draw();
     },
     resize() {
-      sizeBuffer(canvas);
-      renderer.resize(canvas.width, canvas.height);
+      sizeBuffer(canvas, renderer);
       draw();
     },
     paint() {
-      renderer.paint(themeOf());
+      paintTheme(renderer);
       draw();
     },
     follow(frames, scrollY, scrollVelocity) {

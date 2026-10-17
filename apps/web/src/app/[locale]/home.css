@@ -31,6 +31,22 @@ html {
 
 /* Stacked by default: readable with no script and with reduced motion. */
 [data-scene] {
+  /* Text over the background keeps AA (spec 5.8): the page colour sits right behind every glyph. All text carries a
+     tight halo of it: a solid 1 px ring, drawn twice so anti-aliased edges are covered too, softening outward.
+     Headings and lead lines add the prototype's soft glow to it. Text on a surface of its own (buttons, gold) turns
+     it off. */
+  --halo-ring:
+    1px 0 var(--bg),
+    -1px 0 var(--bg),
+    0 1px var(--bg),
+    0 -1px var(--bg),
+    1px 1px var(--bg),
+    -1px -1px var(--bg),
+    1px -1px var(--bg),
+    -1px 1px var(--bg);
+  --halo: var(--halo-ring), var(--halo-ring), 0 0 1px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);
+  --glow: var(--halo), 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
+  text-shadow: var(--halo);
   position: relative;
   z-index: 2;
   padding-block: clamp(4rem, 10vw, 9rem);
@@ -38,6 +54,10 @@ html {
 }
 [data-sticky] {
   position: relative;
+}
+/* browsers reset text-shadow on buttons; the scene's own buttons (stations, bars) sit on the background too */
+:where([data-scene]) button {
+  text-shadow: inherit;
 }
 
 /* Enhanced: each section is a tall block with a pinned full-height scene. Sections overlap by a viewport,

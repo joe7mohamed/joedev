@@ -11,6 +11,8 @@
   --accent: var(--on-gold);
   background: var(--gold);
   color: var(--ink);
+  /* text on gold needs no halo (home.css) */
+  text-shadow: none;
 }
 /* while the gold element plays it is the gold screen */
 html.enhanced #contact {

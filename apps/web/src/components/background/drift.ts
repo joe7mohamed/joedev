@@ -48,3 +48,35 @@ export const rgbOf = (hex: number): Rgb => [
   ((hex >> 8) & 255) / 255,
   (hex & 255) / 255,
 ];
+
+/** Reads a `#rrggbb` colour token; null for anything else. */
+export const hexOf = (token: string): number | null => {
+  const match = /^#([0-9a-f]{6})$/i.exec(token.trim());
+  return match?.[1] ? Number.parseInt(match[1], 16) : null;
+};
+
+const linear = (channel: number): number => {
+  const c = channel / 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+};
+
+/** WCAG relative luminance of a hex colour. */
+export const luminance = (hex: number): number =>
+  0.2126 * linear((hex >> 16) & 255) + 0.7152 * linear((hex >> 8) & 255) + 0.0722 * linear(hex & 255);
+
+/** Part of the exact room that is used, leaving a little for 8-bit rounding. */
+const GUARD_MARGIN = 0.8;
+
+/**
+ * How far (in relative luminance) the background under text may move away from the page colour while every text
+ * colour keeps `ratio` against it (spec 5.8: never below AA). Darker text bounds how dark it may get, lighter text
+ * how light; 0 when a colour already misses the ratio on the plain page.
+ */
+export const guardRoom = (page: number, texts: readonly number[], ratio: number): number => {
+  const base = luminance(page);
+  const rooms = texts.map((text) => {
+    const own = luminance(text);
+    return own < base ? base - (ratio * (own + 0.05) - 0.05) : (own + 0.05) / ratio - 0.05 - base;
+  });
+  return Math.max(0, Math.min(...rooms) * GUARD_MARGIN);
+};

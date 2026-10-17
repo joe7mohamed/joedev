@@ -3,7 +3,6 @@
    only while the scene is pinned in enhanced mode. The drawing is in build-scene.css, the rail in rail.css. */
 
 [data-process] {
-  --process-shadow: 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -52,7 +51,7 @@
   perspective: 900px;
   font: 600 clamp(40px, 6vw, 72px) / 1.12 var(--stack-display);
   letter-spacing: -0.03em;
-  text-shadow: var(--process-shadow);
+  text-shadow: var(--glow);
 }
 html[lang="ar"] [data-process] [data-step-title] {
   line-height: 1.6;
@@ -61,7 +60,7 @@ html[lang="ar"] [data-process] [data-step-title] {
   max-width: 44ch;
   color: var(--muted);
   font-size: clamp(16px, 1.45vw, 20px);
-  text-shadow: var(--process-shadow);
+  text-shadow: var(--glow);
 }
 [data-process] [data-step-get] {
   display: flex;

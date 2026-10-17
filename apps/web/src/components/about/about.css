@@ -3,7 +3,6 @@
    scenes in fact-scenes.css. */
 
 [data-about] {
-  --about-shadow: 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
   display: grid;
   align-items: center;
   gap: 28px;
@@ -21,7 +20,7 @@
   font: 600 clamp(34px, 5vw, 76px) / 1.02 var(--stack-display);
   letter-spacing: -0.03em;
   text-wrap: balance;
-  text-shadow: var(--about-shadow);
+  text-shadow: var(--glow);
 }
 html[lang="ar"] [data-about] [data-about-heading] {
   font-weight: 700;

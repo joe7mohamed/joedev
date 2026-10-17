@@ -3,16 +3,18 @@ import { type Rgb, rgbOf } from './drift';
 /**
  * The "liquid gold" background (spec 5.8; prototype app.js `bg`, its first mode only). Domain-warped noise is
  * mixed from the page colour `uA` toward dark gold `uC`, with fine bright ridges in `uLine`, then calmed on the
- * text side (`uSide`, `uCalm`), vignetted and grained.
+ * text side (`uSide`, `uCalm`), vignetted toward `uShade` and grained.
+ * Under the words, the luminance stays within `uGuard` of the page colour, so text keeps AA (spec 5.8); the cap is
+ * applied in linear light, where luminance is exact.
  */
 export const FRAGMENT = `#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
 precision mediump float;
 #endif
-uniform float uTime, uScroll, uPress, uSide, uCalm;
+uniform float uTime, uScroll, uPress, uSide, uCalm, uGuard;
 uniform vec2 uRes;
-uniform vec3 uA, uC, uLine;
+uniform vec3 uA, uC, uLine, uShade;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -25,13 +27,19 @@ float fbm(vec2 p) {
   for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.03 + 7.1; a *= .5; }
   return v;
 }
+vec3 toLinear(vec3 c) {
+  c = clamp(c, 0., 1.);
+  return mix(c / 12.92, pow((c + .055) / 1.055, vec3(2.4)), step(.04045, c));
+}
+vec3 toSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(c, vec3(1. / 2.4)) - .055, step(.0031308, c)); }
 
 void main() {
   vec2 uv = gl_FragCoord.xy / uRes;
   vec2 p = (gl_FragCoord.xy - .5 * uRes) / min(uRes.x, uRes.y);
   float t = uTime;
   // the side where the words sit stays quiet
-  float calm = uCalm * mix(1., .22, smoothstep(-.35, .55, (uv.x - .5) * 2. * uSide));
+  float across = (uv.x - .5) * 2. * uSide;
+  float calm = uCalm * mix(1., .22, smoothstep(-.35, .55, across));
   vec2 q = p * 1.25 + vec2(0., -uScroll * 2.6);
   float w1 = fbm(q + vec2(t * .05, -t * .03));
   float w2 = fbm(q * 1.7 + w1 * 2.2 - t * .04);
@@ -43,9 +51,14 @@ void main() {
   g *= calm;
   col = mix(uA, col, .14 + .86 * calm);
   col = mix(col, uLine, clamp(g, 0., 1.));
-  col *= 1. - .3 * dot(uv - .5, uv - .5) * 2.;
+  col = mix(col, uShade, .6 * dot(uv - .5, uv - .5));
   col += (hash(gl_FragCoord.xy + fract(t) * 91.) - .5) * .028;
-  gl_FragColor = vec4(col, 1.);
+  // the words' half (up to the middle) keeps the colour's luminance within uGuard of the page; phones have no side
+  float guard = smoothstep(-.3, 0., across) * abs(uSide);
+  vec3 page = toLinear(uA), lit = toLinear(col);
+  float away = abs(dot(lit - page, vec3(.2126, .7152, .0722)));
+  float room = mix(1., uGuard, guard);
+  gl_FragColor = vec4(toSrgb(mix(page, lit, min(1., room / max(away, 1e-5)))), 1.);
 }`;
 
 /** One triangle that covers the whole viewport. */
@@ -61,16 +74,32 @@ export const PALETTE = {
   light: [0xfaf9f6, 0xf3eee1, 0xe9d9a6, 0x8a6d1f],
 } as const;
 export type Theme = keyof typeof PALETTE;
+/** No cap on how far the background may move from the page colour. */
+export const NO_GUARD = 1;
 
 export type Frame = { time: number; scroll: number; press: number; side: number; calm: number };
 export type Renderer = {
-  paint(theme: Theme): void;
+  /** `guard`: how far the luminance under the words may move from the page colour (see `guardRoom`). */
+  paint(theme: Theme, guard: number): void;
   resize(width: number, height: number): void;
   draw(frame: Frame): void;
   release(): void;
 };
 
-const UNIFORMS = ['uTime', 'uScroll', 'uPress', 'uSide', 'uCalm', 'uRes', 'uA', 'uC', 'uLine'] as const;
+const UNIFORMS = [
+  'uTime',
+  'uScroll',
+  'uPress',
+  'uSide',
+  'uCalm',
+  'uGuard',
+  'uRes',
+  'uA',
+  'uC',
+  'uLine',
+  'uShade',
+] as const;
+const BLACK = 0x000000;
 type Uniforms = Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>;
 
 const compile = (gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null => {
@@ -123,11 +152,15 @@ export const createRenderer = (canvas: HTMLCanvasElement): Renderer | null => {
   ) as Uniforms;
   const colour = (location: WebGLUniformLocation | null, rgb: Rgb): void => context.uniform3fv(location, rgb);
   return {
-    paint(theme) {
+    paint(theme, guard) {
       const [page, , gold, line] = PALETTE[theme];
       colour(u.uA, rgbOf(page));
       colour(u.uC, rgbOf(gold));
       colour(u.uLine, rgbOf(line));
+      // the vignette darkens the dark theme (prototype) but fades the light one toward its page colour, so it never
+      // darkens what sits behind light-theme text
+      colour(u.uShade, rgbOf(theme === 'light' ? page : BLACK));
+      context.uniform1f(u.uGuard, guard);
     },
     resize(width, height) {
       context.viewport(0, 0, width, height);

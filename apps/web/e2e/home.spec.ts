@@ -24,6 +24,8 @@ test('enhanced mode pins scenes and reports progress', async ({ page }) => {
 
 test('there is no blank screen between scenes', async ({ page }) => {
   await page.goto('/en');
+  // the stacked page has no scene states: count only once the engine runs, as gotoScene does
+  await page.waitForFunction(() => document.documentElement.classList.contains('enhanced'));
   const total = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
   for (let y = 0; y <= total; y += Math.round(total / 60)) {
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
