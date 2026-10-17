@@ -90,3 +90,14 @@ Committed TTFs, each with its SIL Open Font License 1.1 file. Read from disk at 
 
 Fraunces is the 72 pt optical-size static instance with SOFT 0 (as the hero sets it), semibold, the nearest static
 weight to the hero's 560.
+
+## Phase 1 Task 13b: visual snapshots, bundle budget
+
+No package was installed. A tool runs at a fixed version outside the lockfile:
+
+| Tool | Version | Where |
+| --- | --- | --- |
+| Playwright Docker image | `mcr.microsoft.com/playwright:v1.64.0-noble` | `npm run e2e:visual -w web` and the CI `visual` job. Its tag must equal the installed `@playwright/test` (1.64.0); it ships Node 24.21 |
+
+When `@playwright/test` is upgraded, change the image tag in `apps/web/package.json` (`e2e:visual`) and in
+`.github/workflows/ci.yml` (`visual`) to the same version, and remake the baselines in the new image.
