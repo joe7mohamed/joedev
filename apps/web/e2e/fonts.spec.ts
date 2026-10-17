@@ -3,10 +3,10 @@ import { test } from './helpers';
 
 /**
  * Owner decision 2026-10-17: each page preloads only the face its headline needs, the display face of its own language
- * (Fraunces on /en, Amiri on /ar), so it is there for the first paint and nothing shifts when it arrives. The body and
- * mono faces load after the first paint. /en never downloads Amiri.
+ * (Fraunces on /, Amiri on /ar), so it is there for the first paint and nothing shifts when it arrives. The body and
+ * mono faces load after the first paint. / (English) never downloads Amiri.
  */
-const HEADLINE_FACE = { '/en': 'Fraunces', '/ar': 'Amiri' } as const;
+const HEADLINE_FACE = { '/': 'Fraunces', '/ar': 'Amiri' } as const;
 
 /** Every @font-face of the page's stylesheets, as absolute source URLs with their family. */
 const facesOf = (page: Page): Promise<{ family: string; url: string }[]> =>
@@ -30,7 +30,7 @@ const facesOf = (page: Page): Promise<{ family: string; url: string }[]> =>
     return faces;
   });
 
-for (const path of ['/en', '/ar'] as const) {
+for (const path of ['/', '/ar'] as const) {
   test(`${path} preloads only its headline's display face, and the preload is the file the page uses`, async ({
     page,
   }) => {
@@ -44,12 +44,12 @@ for (const path of ['/en', '/ar'] as const) {
   });
 }
 
-test('/en has no Amiri preload and never downloads Amiri; /ar has the Amiri preload', async ({ page }) => {
+test('/ has no Amiri preload and never downloads Amiri; /ar has the Amiri preload', async ({ page }) => {
   const fonts: string[] = [];
   page.on('request', (request) => {
     if (request.resourceType() === 'font') fonts.push(request.url());
   });
-  await page.goto('/en');
+  await page.goto('/');
   await page.waitForLoadState('networkidle');
   const faces = await facesOf(page);
   const amiri = faces.filter((f) => f.family === 'Amiri').map((f) => f.url);
@@ -70,7 +70,7 @@ test('/en has no Amiri preload and never downloads Amiri; /ar has the Amiri prel
 
 // The preload and the stylesheet must share one download: a preload the font fetch cannot reuse (another URL, or no
 // `crossorigin`) would download the face twice.
-for (const path of ['/en', '/ar'] as const) {
+for (const path of ['/', '/ar'] as const) {
   test(`${path} downloads its headline face exactly once`, async ({ page }) => {
     const requests = new Map<string, number>();
     page.on('request', (request) => requests.set(request.url(), (requests.get(request.url()) ?? 0) + 1));

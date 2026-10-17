@@ -217,7 +217,7 @@ const blankPage = async (context: BrowserContext): Promise<Page> => {
   return helper;
 };
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   for (const theme of ['dark', 'light']) {
     test(`text on the background keeps AA contrast: ${path} ${theme}`, async ({ page, context }) => {
       test.setTimeout(120_000);

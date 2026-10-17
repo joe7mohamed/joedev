@@ -6,7 +6,7 @@ import { expectNoBlankScreen, gotoScene, test, untilBuilt } from './helpers';
  * Its pinned neighbours keep theirs and never leave the screen blank. Here the work scene is made taller than any
  * screen, so it flows between a pinned hero and a pinned process.
  */
-const flowWork = async (page: Page, path = '/en'): Promise<void> => {
+const flowWork = async (page: Page, path = '/'): Promise<void> => {
   await page.goto(path);
   await expect(page.locator('html')).toHaveClass(/enhanced/);
   await page.addStyleTag({ content: '#work [data-sticky] > [data-fade]{min-height:150svh}' });
@@ -32,7 +32,7 @@ const goldAndSlot = (page: Page, slot: string) =>
     };
   }, slot);
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`one scene that flows does not hide the gold element from the pinned scenes on ${path}`, async ({
     page,
   }) => {
@@ -100,7 +100,7 @@ test('the gold element never sits on a scene that flows', async ({ page }) => {
 // Spec 5.5: the stations are joined by the gold line. Whenever the gold element is not on the rail, the rail draws the
 // same line itself.
 test('the process rail draws its own line whenever the gold element is not on it', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'process', 0.5);
   const line = () =>
     page.evaluate(() => {

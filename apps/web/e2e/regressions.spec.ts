@@ -9,7 +9,7 @@ const gap = (page: Page, slot: string) =>
     return { dx: Math.abs(g.left - s.left), dy: Math.abs(g.top - s.top), dw: Math.abs(g.width - s.width) };
   }, slot);
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`gold element sits on the work slot on ${path}`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'work', 0.5);
@@ -45,7 +45,7 @@ test('gold element follows its own layer when a scrollbar shifts the fixed conta
 });
 
 test('gold element re-aligns after a viewport resize', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'work', 0.5);
   await page.setViewportSize({ width: 1100, height: 700 });
   await page.waitForTimeout(400);
@@ -103,7 +103,7 @@ test('the work scene is pinned only if every project fits, else it flows', async
   await page.waitForTimeout(400);
   await workFits(page, 'large text');
   for (const [path, width, height] of [
-    ['/en', 900, 500],
+    ['/', 900, 500],
     ['/ar', 1440, 740],
     // the first project fits a phone this tall, the second (two-line Arabic description) does not
     ['/ar', 412, 800],
@@ -114,7 +114,7 @@ test('the work scene is pinned only if every project fits, else it flows', async
   }
 });
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`rail line passes through every station centre on ${path}`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'process', 0.97);
@@ -144,7 +144,7 @@ test('LIVE badge reads left to right in Arabic', async ({ page }) => {
 
 // Spec 5.0 / 5.5: the rail line starts on the first station (the right one in Arabic) and its length is the
 // progress through the steps; also makes sure the station-centre test above has five stations to measure.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`rail line grows from the first station on ${path}`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'process', 0.3);
@@ -168,7 +168,7 @@ for (const path of ['/en', '/ar']) {
 
 // Spec 6.4, never a blank screen: in the first pixels of the process scene the work frame has shrunk into the rail
 // and the step text has not faded in yet, so the gold line must already show, as a dot on the first station.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the rail line shows from the first pixel of the process scene on ${path}`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'process', 0);
@@ -214,7 +214,7 @@ test('step text is fully opaque and current after rapid scrolling between steps'
 });
 
 // The rail line is the gold element with nothing of the project frame's float or tilt (Task 7's face).
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the rail line neither floats nor tilts on ${path}`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'process', 0.97);
@@ -235,7 +235,7 @@ for (const path of ['/en', '/ar']) {
   });
 }
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`loop station icons are centred on ${path}`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'about', 0.5);
@@ -272,7 +272,7 @@ test('loop arc is empty while the first stage is current', async ({ page }) => {
 
 // The About ring is the gold element as a circle on its slot, with nothing of the project frame's float or tilt
 // (Task 7's face).
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the about ring sits on its slot and neither floats nor tilts on ${path}`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'about', 0.5);
@@ -307,7 +307,7 @@ for (const path of ['/en', '/ar']) {
 // Review fix: the svh fit caps belong to the pinned scene only. A phone in landscape (844x390) cannot pin About, so it
 // flows (and with reduced motion it is stacked): the ring keeps its full size and the centre never runs into the
 // stations.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`a flowing or stacked About keeps a full-size ring on a landscape phone on ${path}`, async ({
     page,
   }) => {
@@ -341,7 +341,7 @@ for (const path of ['/en', '/ar']) {
 
 // The flood (spec 5.0, 5.7): at the end of the page the gold element is the whole screen, solid, square and still.
 // Neither the ring growing into it nor the flood itself floats or tilts like the project frame.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the gold element floods the whole screen and stays still at the end of contact on ${path}`, async ({
     page,
   }) => {

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('loader counts up, clears, and does not return in the same session', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/loading/);
   await expect(page.locator('[data-loader]')).toBeVisible();
   await expect(page.locator('html')).not.toHaveClass(/loading/, { timeout: 8000 });
@@ -22,7 +22,7 @@ test('loader clears even if the application script never runs', async ({ browser
   await context.route(APP_SCRIPTS, (route) => route.abort());
   const page = await context.newPage();
   const start = Date.now();
-  await page.goto('/en');
+  await page.goto('/');
   // the stylesheet arrived, and the loading screen covers the page until the head script's timeout
   await expect(page.locator('[data-loader]')).toBeVisible();
   expect(Date.now() - start).toBeLessThan(SAFETY_MS);
@@ -48,7 +48,7 @@ test('loader clears even if the application script never runs', async ({ browser
 
 test('no loader with reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).not.toHaveClass(/loading/);
 });
 
@@ -61,7 +61,7 @@ test('a loader the safety timeout cleared does not return in the same session', 
   });
   const page = await context.newPage();
   const start = Date.now();
-  await page.goto('/en', { waitUntil: 'domcontentloaded' });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('html')).toHaveClass(/loading/);
   // the head script ran at once (it is not held behind the stylesheet), so its timer, not the app, clears the loader
   expect(Date.now() - start).toBeLessThan(SAFETY_MS);

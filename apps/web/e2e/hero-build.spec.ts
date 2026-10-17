@@ -71,7 +71,7 @@ const heroPaint = (page: Page): Promise<HeroPaint> =>
     };
   });
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the hero is painted at full opacity while it builds on ${path}`, async ({ page }) => {
     await page.goto(path);
     await page.waitForTimeout(BUILD_AT_MS);

@@ -12,7 +12,7 @@ const texts = (page: Page, selector: string): Promise<string[]> =>
   page.locator(selector).evaluateAll((els) => els.map((el) => el.textContent?.trim() ?? ''));
 
 test('every project name is in the accessibility tree while one project shows', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'work', 0.17);
   const names = await texts(page, '#work [data-item] [data-name]');
   expect(names).toHaveLength(3);
@@ -34,7 +34,7 @@ test('every project name is in the accessibility tree while one project shows', 
 });
 
 test('every process step sentence is in the accessibility tree while one step shows', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'process', 0.1);
   const sentences = await texts(page, '#process [data-item] [data-step-sentence]');
   expect(sentences).toHaveLength(5);
@@ -52,7 +52,7 @@ for (const [scene, at, index, count] of [
   ['process', 0.1, 3, 5],
 ] as const) {
   test(`focusing a ${scene} item that is out of sight scrolls to it`, async ({ page }) => {
-    await page.goto('/en');
+    await page.goto('/');
     await gotoScene(page, scene, at);
     const target = (index + 0.5) / count;
     await page.locator(`#${scene} [data-item][data-index="${index}"]`).focus();
@@ -66,7 +66,7 @@ for (const [scene, at, index, count] of [
   });
 
   test(`finding text in a ${scene} item that is out of sight scrolls to it`, async ({ page }) => {
-    await page.goto('/en');
+    await page.goto('/');
     await gotoScene(page, scene, at);
     // what the browser does when find-in-page matches inside hidden="until-found": beforematch, then it reveals
     await page.locator(`#${scene} [data-item][data-index="${index}"] [data-item-body]`).evaluate((body) => {
@@ -82,7 +82,7 @@ for (const [scene, at, index, count] of [
 }
 
 test('projects out of sight add no tab stops to the work scene', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'work', 0.17);
   await page.locator('#work [data-bars] button').first().focus();
   const stops: string[] = [];

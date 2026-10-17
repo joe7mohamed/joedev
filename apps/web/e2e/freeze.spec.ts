@@ -33,7 +33,7 @@ const ringState = (page: Page) =>
   });
 
 test('the hero title and rotating word hold their first state', async ({ page }) => {
-  await page.goto('/en?freeze=1');
+  await page.goto('/?freeze=1');
   await gotoScene(page, 'hero', 0);
   const before = await heroState(page);
   expect(before.title).toBe(before.firstTitle);
@@ -43,7 +43,7 @@ test('the hero title and rotating word hold their first state', async ({ page })
 });
 
 test('the hero underline is drawn in full at once', async ({ page }) => {
-  await page.goto('/en?freeze=1');
+  await page.goto('/?freeze=1');
   await gotoScene(page, 'hero', 0);
   const widths = await page.evaluate(() => ({
     gold: (document.querySelector('[data-gold]') as HTMLElement).getBoundingClientRect().width,
@@ -54,7 +54,7 @@ test('the hero underline is drawn in full at once', async ({ page }) => {
 });
 
 test('the about ring rests on its first stage', async ({ page }) => {
-  await page.goto('/en?freeze=1');
+  await page.goto('/?freeze=1');
   await gotoScene(page, 'about', 0.5);
   const before = await ringState(page);
   expect(before.current).toBe('0');
@@ -63,7 +63,7 @@ test('the about ring rests on its first stage', async ({ page }) => {
 });
 
 test('the background shader holds still', async ({ page }) => {
-  await page.goto('/en?bg=soft&freeze=1');
+  await page.goto('/?bg=soft&freeze=1');
   const canvas = page.locator('canvas[data-bg]');
   await expect(canvas).toHaveCount(1, { timeout: 10_000 });
   test.skip(

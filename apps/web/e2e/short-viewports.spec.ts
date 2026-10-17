@@ -54,7 +54,7 @@ test.beforeEach(({ browser: _ }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'viewports are explicit');
 });
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   for (const viewport of MUST_PIN) {
     test(`every scene is pinned at ${sizeOf(viewport)} on ${path}`, async ({ browser }) => {
       const page = await open(browser, viewport, path);
@@ -153,14 +153,14 @@ const HEADLINE_SIZES = [
   { width: 860, height: 700, mobile: false, en: 84, ar: 77.5 },
   { width: 844, height: 390, mobile: true, en: 36, ar: 40 },
 ];
-for (const path of ['/en', '/ar'] as const) {
+for (const path of ['/', '/ar'] as const) {
   for (const size of HEADLINE_SIZES) {
     test(`the phone headline size at ${size.width}x${size.height} on ${path}`, async ({ browser }) => {
       const page = await open(browser, size, path);
       const px = await page
         .locator('#hero h1')
         .evaluate((h1) => Number.parseFloat(getComputedStyle(h1).fontSize));
-      expect(px).toBeCloseTo(path === '/en' ? size.en : size.ar, 1);
+      expect(px).toBeCloseTo(path === '/' ? size.en : size.ar, 1);
       await page.context().close();
     });
   }

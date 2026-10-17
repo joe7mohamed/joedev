@@ -5,14 +5,14 @@ import { gotoScene, progressOf, settle, test } from './helpers';
 const sections = ['hero', 'work', 'process', 'about', 'contact'];
 
 test('sections exist in reading order with one h1', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   const ids = await page.locator('[data-scene]').evaluateAll((els) => els.map((e) => e.id));
   expect(ids).toEqual(sections);
   await expect(page.locator('h1')).toHaveCount(1);
 });
 
 test('enhanced mode pins scenes and reports progress', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/enhanced/);
   await gotoScene(page, 'work', 0.5);
   expect(await progressOf(page, 'work')).toBeCloseTo(0.5, 1);
@@ -23,7 +23,7 @@ test('enhanced mode pins scenes and reports progress', async ({ page }) => {
 });
 
 test('there is no blank screen between scenes', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   // the stacked page has no scene states: count only once the engine runs, as gotoScene does
   await page.waitForFunction(() => document.documentElement.classList.contains('enhanced'));
   const total = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
@@ -36,7 +36,7 @@ test('there is no blank screen between scenes', async ({ page }) => {
 });
 
 test('a jump lands on readable content', async ({ page }) => {
-  await page.goto('/en#process');
+  await page.goto('/#process');
   await page.waitForTimeout(900);
   const opacity = await page
     .locator('#process [data-fade]')
@@ -47,7 +47,7 @@ test('a jump lands on readable content', async ({ page }) => {
 
 test('reduced motion gives a stacked page, also when switched on later', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).not.toHaveClass(/enhanced/);
   const position = await page.locator('#work [data-sticky]').evaluate((el) => getComputedStyle(el).position);
   expect(position).not.toBe('sticky');
@@ -152,7 +152,7 @@ test('keyboard focus inside a scene that flows does not move the page', async ({
 });
 
 test('finished scenes stay in the accessibility tree', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/enhanced/);
   await gotoScene(page, 'contact', 1);
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
@@ -164,7 +164,7 @@ test('finished scenes stay in the accessibility tree', async ({ page }) => {
 });
 
 test('a scene whose content has faded out cannot be clicked', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/enhanced/);
   await gotoScene(page, 'work', 0.5);
   await expect(page.locator('#work')).not.toHaveAttribute('data-faded');
@@ -189,7 +189,7 @@ test('a scene whose content has faded out cannot be clicked', async ({ page }) =
 });
 
 test('a link to the hash already in the address lands on readable content', async ({ page }) => {
-  await page.goto('/en#process');
+  await page.goto('/#process');
   await page.waitForTimeout(900);
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await page.evaluate(() => {
@@ -211,7 +211,7 @@ test('a link to the hash already in the address lands on readable content', asyn
 });
 
 test('the visible scene receives clicks, not the section that follows it', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/enhanced/);
   for (const [id, fraction] of [
     ['work', 0.97],
@@ -284,7 +284,7 @@ for (const scheme of ['light', 'dark'] as const) {
   test(`without JavaScript the page follows a ${scheme} system theme`, async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false, colorScheme: scheme });
     const page = await context.newPage();
-    await page.goto('/en');
+    await page.goto('/');
     const background = await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor);
     expect(background).toBe(scheme === 'light' ? 'rgb(250, 249, 246)' : 'rgb(15, 14, 12)');
     await context.close();
@@ -294,7 +294,7 @@ for (const scheme of ['light', 'dark'] as const) {
 test('without JavaScript every project and every process step is shown', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
-  await page.goto('/en');
+  await page.goto('/');
   for (const name of ['Nuammer', 'Wazifi', 'Talmeeha'])
     await expect(page.locator('#work').getByRole('heading', { name })).toBeVisible();
   for (const name of ['Understand', 'Design', 'Build', 'Test', 'Launch'])
@@ -302,7 +302,7 @@ test('without JavaScript every project and every process step is shown', async (
 });
 
 test('menu marks the section in view and links scroll to it', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   const nav = page.getByRole('navigation', { name: 'Sections' });
   await expect(nav.locator('[aria-current="true"]')).toHaveCount(0);
   await gotoScene(page, 'process', 0.5);
@@ -325,7 +325,7 @@ test('the header brand is the site brand from the shared content', async ({ page
 });
 
 test('menu is fully usable from the keyboard', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
   for (const name of ['ZakyDev', 'Work', 'Process', 'About', 'Contact']) {
@@ -347,7 +347,7 @@ test('phone menu sits at the bottom with large targets', async ({ page }, info) 
 
 test('desktop menu targets are at least 44 px tall', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop');
-  await page.goto('/en');
+  await page.goto('/');
   const links = page.getByRole('navigation').getByRole('link');
   await expect(links).toHaveCount(4);
   for (const link of await links.all()) expect((await link.boundingBox())?.height).toBeGreaterThanOrEqual(44);
@@ -396,7 +396,7 @@ test('the current menu item is the section under the middle of the screen', asyn
 
 test('on the stacked page the fixed header does not cover the headline', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).not.toHaveClass(/enhanced/);
   const header = await page.locator('header').boundingBox();
   const h1 = await page.locator('h1').boundingBox();
@@ -405,7 +405,7 @@ test('on the stacked page the fixed header does not cover the headline', async (
 
 // Spec 6.4 layers: background, gold element, scene content, header, loader.
 test('the header sits above the gold element', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'work', 0.5);
   await expect(page.locator('header')).toHaveCSS('z-index', '5');
   // the gold frame is stretched over the whole screen and made hit-testable, so only stacking decides the order
@@ -430,7 +430,7 @@ test('the header sits above the gold element', async ({ page }) => {
 });
 
 test('the page never scrolls sideways', async ({ page }) => {
-  for (const path of ['/en', '/ar']) {
+  for (const path of ['/', '/ar']) {
     await page.goto(path);
     for (const id of sections) {
       await gotoScene(page, id, 0.5);
@@ -443,7 +443,7 @@ test('the page never scrolls sideways', async ({ page }) => {
 });
 
 test('hero shows title, place, availability, headline, sentence and both actions', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   const hero = page.locator('#hero');
   await expect(hero.getByRole('heading', { level: 1 })).toHaveAccessibleName(
     'I build software that holds up under pressure.',
@@ -455,7 +455,7 @@ test('hero shows title, place, availability, headline, sentence and both actions
 });
 
 test('typed title alternates between the two titles', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   const title = page.locator('[data-typed]');
   await expect(title).toHaveText('Software engineer', { timeout: 6000 });
   await expect(title).toHaveText('Full-stack developer', { timeout: 12000 });
@@ -468,7 +468,7 @@ test('Arabic headline is never split into letters', async ({ page }) => {
 });
 
 test('headline zooms into the key word and is gone by the end of the scene', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   const scaleAt = async (f: number) => {
     await gotoScene(page, 'hero', f);
     return page.locator('#hero h1').evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
@@ -478,7 +478,7 @@ test('headline zooms into the key word and is gone by the end of the scene', asy
 });
 
 // Spec 5.0: from S 0 to 0.5 the gold element is the underline of the zoom word, never the work frame.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`at the top of the hero the gold element is the underline of the zoom word on ${path}`, async ({
     page,
   }) => {
@@ -517,7 +517,7 @@ for (const path of ['/en', '/ar']) {
 
 test('with reduced motion the hero is fully visible and still', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  for (const path of ['/en', '/ar']) {
+  for (const path of ['/', '/ar']) {
     await page.goto(path);
     await expect(page.locator('html')).not.toHaveClass(/enhanced/);
     await page.waitForTimeout(1500);
@@ -526,7 +526,7 @@ test('with reduced motion the hero is fully visible and still', async ({ page })
       .evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)));
     expect(opacities.length).toBeGreaterThan(0);
     expect(opacities).toEqual(opacities.map(() => 1));
-    const first = path === '/en' ? 'Software engineer' : 'مهندس برمجيات';
+    const first = path === '/' ? 'Software engineer' : 'مهندس برمجيات';
     await expect(page.locator('[data-typed]')).toHaveText(first);
     const transform = await page.locator('#hero h1').evaluate((el) => getComputedStyle(el).transform);
     expect(transform).toBe('none');
@@ -539,7 +539,7 @@ const ONE_SHOT = ['hero-letter', 'hero-word', 'hero-weight', 'hero-in', 'hero-br
 
 // The server paints the hero; the build must already be running then, so the app taking over (html.enhanced)
 // never sends a visible letter back to transparent, and never restarts any one-shot hero animation.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the headline builds from first paint and never restarts on ${path}`, async ({ page }) => {
     await page.addInitScript((names: string[]) => {
       const samples: Samples = [];
@@ -606,7 +606,7 @@ for (const path of ['/en', '/ar']) {
 }
 
 // Spec 5.3: the first title types in. It is server-rendered whole and revealed by a stepped clip from first paint.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the first title types in from first paint on ${path}`, async ({ page }) => {
     await page.addInitScript(() => {
       const w = window as unknown as { typedClip: string | null };
@@ -631,7 +631,7 @@ for (const path of ['/en', '/ar']) {
 }
 
 // Spec 8: nothing is clipped at any test width; the step strip is decoration, not a target, so it may shrink.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the step strip fits a 360 px phone on ${path}`, async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 780 });
     await page.goto(path);
@@ -660,7 +660,7 @@ for (const path of ['/en', '/ar']) {
 
 // In Chromium the 17 px sentence fits one line at 360 px with every word; one pixel more (wider fallback or
 // platform metrics) makes some words wrap and others not, so that variant proves the width is reserved.
-for (const path of ['/en', '/ar'])
+for (const path of ['/', '/ar'])
   for (const wider of [false, true]) {
     test(`the rotating word never moves the hero on a narrow phone on ${path}${wider ? ' with wider text' : ''}`, async ({
       page,
@@ -690,7 +690,7 @@ for (const path of ['/en', '/ar'])
 test('at the end of the hero only the zoom word is left, fully scaled, and the headline is gone', async ({
   page,
 }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('html')).toHaveClass(/enhanced/);
   await page.evaluate(() => {
     const el = document.getElementById('hero') as HTMLElement;
@@ -712,7 +712,7 @@ test('at the end of the hero only the zoom word is left, fully scaled, and the h
 });
 
 test('the English build never moves a letter', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   const positions = () =>
     page
       .locator('#hero [data-ch]')
@@ -728,7 +728,7 @@ test('the English build never moves a letter', async ({ page }) => {
 });
 
 test('work shows each project with a real screenshot and a safe external link', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   const expected = [
     ['Nuammer', 'https://nuammer.com'],
     ['Wazifi', 'https://wazifi.vercel.app'],
@@ -746,7 +746,7 @@ test('work shows each project with a real screenshot and a safe external link', 
 });
 
 test('project bars are buttons that jump to a project', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'work', 0.1);
   await page.locator('#work').getByRole('button', { name: 'Talmeeha' }).click();
   await expect(page.locator('#work [data-current] h3')).toHaveText('Talmeeha');
@@ -754,7 +754,7 @@ test('project bars are buttons that jump to a project', async ({ page }) => {
 
 // Navigation, not a toggle: the bar of the project in view is marked current, as the process stations are.
 test('the bar of the project in view is marked current, not pressed', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'work', 0.5);
   const bars = page.locator('#work [data-bars] button');
   await expect(bars).toHaveCount(3);
@@ -769,7 +769,7 @@ test('the first screenshot is downloaded once for the hero zoom and the work fra
   page.on('request', (request) => {
     if (request.url().includes('nuammer')) requests.push(request.url());
   });
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'hero', 0.6);
   await gotoScene(page, 'work', 0.17);
   const shot = page.locator('#gold-content img').first();
@@ -787,7 +787,7 @@ test('the other screenshots wait until the hero hands over to work', async ({ pa
   page.on('request', (request) => {
     if (/wazifi|talmeeha/.test(request.url())) requests.push(request.url());
   });
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'hero', 0.2);
   await page.waitForLoadState('networkidle');
   expect(requests, requests.join('\n')).toHaveLength(0);
@@ -805,7 +805,7 @@ test('Latin project names keep their tracking on the Arabic page, Arabic text ha
       headline: getComputedStyle(document.querySelector('#hero h1') as HTMLElement).letterSpacing,
     }));
   };
-  const en = await spacing('/en');
+  const en = await spacing('/');
   const ar = await spacing('/ar');
   expect(en.name).not.toBe('normal');
   expect(ar.name).toBe(en.name);
@@ -813,7 +813,7 @@ test('Latin project names keep their tracking on the Arabic page, Arabic text ha
 });
 
 test('process walks through five steps with what the client gets', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   const names = ['Understand', 'Design', 'Build', 'Test', 'Launch'];
   const gives = [
     'A clear plan',
@@ -830,7 +830,7 @@ test('process walks through five steps with what the client gets', async ({ page
 });
 
 test('process stations are buttons and the drawing is finished at the end', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'process', 0.05);
   await page
     .locator('#process')
@@ -847,7 +847,7 @@ test('process stations are buttons and the drawing is finished at the end', asyn
 });
 
 test('about shows the loop, four facts and the Riot disclaimer', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'about', 0.5);
   const about = page.locator('#about');
   await expect(about.getByRole('heading', { level: 2 })).toHaveText('One engineer, from A to Z.');
@@ -903,7 +903,7 @@ test('Latin runs in the Arabic fact cards and the disclaimer are marked as Engli
 });
 
 test('contact always exposes the real email and both profiles', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'contact', 1);
   const contact = page.locator('#contact');
   await expect(contact.getByRole('heading', { level: 2 })).toHaveText('What needs building?');
@@ -924,7 +924,7 @@ test('contact always exposes the real email and both profiles', async ({ page })
 test('copy email confirms on success', async ({ page, context }, info) => {
   test.skip(info.project.name !== 'desktop');
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'contact', 1);
   await page.getByRole('button', { name: 'Copy email' }).click();
   await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
@@ -932,7 +932,7 @@ test('copy email confirms on success', async ({ page, context }, info) => {
 });
 
 test('copy email selects the address when the clipboard is refused', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await page.evaluate(() => {
     Object.defineProperty(navigator, 'clipboard', {
       value: { writeText: () => Promise.reject(new Error('denied')) },
@@ -946,7 +946,7 @@ test('copy email selects the address when the clipboard is refused', async ({ pa
 });
 
 test('menu switches to dark ink on the gold screen', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'contact', 1);
   await expect(page.locator('header')).toHaveAttribute('data-on-gold', 'true');
   await gotoScene(page, 'about', 0.5);
@@ -957,7 +957,7 @@ test('menu switches to dark ink on the gold screen', async ({ page }) => {
 test('copy email tells assistive technology only when it really copied', async ({ page, context }, info) => {
   test.skip(info.project.name !== 'desktop');
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'contact', 1);
   const live = page.locator('#contact [aria-live="polite"]');
   await expect(live).toHaveCount(1);
@@ -970,7 +970,7 @@ test('copy email tells assistive technology only when it really copied', async (
 
 for (const refusal of ['rejected', 'missing']) {
   test(`copy email announces nothing when the clipboard is ${refusal}`, async ({ page }) => {
-    await page.goto('/en');
+    await page.goto('/');
     await page.evaluate((how) => {
       const value = how === 'missing' ? undefined : { writeText: () => Promise.reject(new Error('denied')) };
       Object.defineProperty(navigator, 'clipboard', { value, configurable: true });
@@ -1012,7 +1012,7 @@ test('the Arabic contact heading rises by word and is never split into letters',
 
 // The email is real text inside the link at every moment of the typing reveal; only a clip hides part of it.
 test('the email types itself in over the real address, then rests fully shown', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'contact', 0.02);
   const email = page.locator('#contact a[href^="mailto:"]');
   await expect(email).toHaveText('youssef@zakydev.com');
@@ -1028,7 +1028,7 @@ test('the email types itself in over the real address, then rests fully shown', 
 // Ruling 5 / spec 5.10: stacked, the section is its own solid gold screen with every part shown.
 test('with reduced motion the contact section is solid gold and fully shown', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/en');
+  await page.goto('/');
   const contact = page.locator('#contact');
   expect(await contact.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(212, 175, 55)');
   expect(await contact.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(20, 18, 14)');
@@ -1046,7 +1046,7 @@ test('with reduced motion the contact section is solid gold and fully shown', as
 for (const scheme of ['dark', 'light'] as const) {
   test(`no accessibility violations on the gold contact screen (${scheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme });
-    await page.goto('/en');
+    await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('data-theme', scheme);
     await gotoScene(page, 'contact', 1);
     await settle(page);
@@ -1059,7 +1059,7 @@ for (const scheme of ['dark', 'light'] as const) {
 const footerText = 'ZakyDev · Youssef Zaky · Bahrain';
 const toBottom = (page: Page) =>
   page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`the footer is the page's contentinfo landmark on ${path}, enhanced and stacked`, async ({ page }) => {
     await page.goto(path);
     await gotoScene(page, 'contact', 1);
@@ -1097,7 +1097,7 @@ for (const path of ['/en', '/ar']) {
 // The engine's LAST rule: nothing may add scroll height below #contact while it is pinned, or it would stop being
 // active at the very bottom (and the header would leave the gold).
 test('the fixed footer adds no scroll height and shows only on the contact scene', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'about', 0.5);
   const footer = page.getByRole('contentinfo');
   await expect(footer).toHaveCSS('opacity', '0');
@@ -1118,7 +1118,7 @@ test('the fixed footer adds no scroll height and shows only on the contact scene
 // 0, so the test sets the one custom property every bottom offset reads in place of env().
 test('the phone footer clears the bottom bar with a home-indicator inset', async ({ page }, info) => {
   test.skip(info.project.name !== 'phone');
-  await page.goto('/en');
+  await page.goto('/');
   await page.addStyleTag({ content: ':root{--safe-bottom:34px}' });
   await gotoScene(page, 'contact', 1);
   const m = await page.evaluate(() => {
@@ -1137,7 +1137,7 @@ test('the phone footer clears the bottom bar with a home-indicator inset', async
 test('a refused copy clears an earlier "Copied"', async ({ page, context }, info) => {
   test.skip(info.project.name !== 'desktop');
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  await page.goto('/en');
+  await page.goto('/');
   await gotoScene(page, 'contact', 1);
   await page.getByRole('button', { name: 'Copy email' }).click();
   await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
@@ -1186,7 +1186,7 @@ test('Latin runs in the Arabic contact facts are marked as English', async ({ pa
 // Task 11: the background shader (spec 5.8).
 // Headless browsers have only software WebGL, which the page refuses (fix round 2); the shader's own tests ask an
 // E2E build (NEXT_PUBLIC_E2E=1) to allow it. Tests about the fallback load the plain page.
-const SHADER = '/en?bg=soft';
+const SHADER = '/?bg=soft';
 test('background is decorative, behind content, and absent with reduced motion', async ({ page }) => {
   await page.goto(SHADER);
   const canvas = page.locator('canvas[data-bg]');
@@ -1199,7 +1199,7 @@ test('background is decorative, behind content, and absent with reduced motion',
 
 test('text keeps AA contrast over the background in both themes', async ({ page }) => {
   for (const theme of ['dark', 'light']) {
-    await page.goto('/en');
+    await page.goto('/');
     await page.evaluate((t) => {
       document.documentElement.dataset.theme = t;
       document.dispatchEvent(new Event('themechange'));
@@ -1249,7 +1249,7 @@ test('the background sits fixed behind the gold element and the scenes', async (
 test('with reduced motion the background is the CSS gradient, also when switched on later', async ({
   page,
 }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('canvas[data-bg]')).toHaveCount(1);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect(page.locator('canvas[data-bg]')).toHaveCount(0);
@@ -1277,7 +1277,7 @@ test('without WebGL the canvas is hidden and the CSS gradient shows, with no err
       return original.apply(this, args as Parameters<typeof original>);
     } as typeof original;
   });
-  await page.goto('/en');
+  await page.goto('/');
   await page.waitForFunction(() => (window as unknown as { glRefused?: boolean }).glRefused === true);
   await page.waitForTimeout(300);
   await expect(page.locator('canvas[data-bg]')).toBeHidden();
@@ -1412,7 +1412,7 @@ test('without a GPU the page refuses software WebGL and shows the CSS gradient',
       return getContext.apply(this, args as Parameters<typeof getContext>);
     } as typeof getContext;
   });
-  await page.goto('/en');
+  await page.goto('/');
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { asked: unknown[] }).asked.length))
     .toBeGreaterThan(0);

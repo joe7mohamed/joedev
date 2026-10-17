@@ -4,7 +4,7 @@ import { gotoScene, settle, test } from './helpers';
 
 const SCENES = ['hero', 'work', 'process', 'about', 'contact'];
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   for (const theme of ['dark', 'light']) {
     test(`axe: ${path} ${theme}`, async ({ page }) => {
       await page.addInitScript((t) => {
@@ -54,7 +54,7 @@ const pngSize = (png: Buffer): { width: number; height: number } => ({
 });
 
 test('the manifest and the icon are linked and served', async ({ page, request }) => {
-  await page.goto('/en');
+  await page.goto('/');
   await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
   await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveCount(1);
   const manifest = await (await request.get('/manifest.webmanifest')).json();
@@ -81,7 +81,7 @@ test('the manifest lists PNG app icons and the page links an apple-touch-icon', 
     const [width, height] = sizes.split('x').map(Number);
     expect(pngSize(await response.body())).toEqual({ width, height });
   }
-  await page.goto('/en');
+  await page.goto('/');
   const touch = page.locator('link[rel="apple-touch-icon"]');
   await expect(touch).toHaveCount(1);
   const response = await request.get((await touch.getAttribute('href')) ?? '');
@@ -89,7 +89,7 @@ test('the manifest lists PNG app icons and the page links an apple-touch-icon', 
   expect(pngSize(await response.body())).toEqual({ width: 180, height: 180 });
 });
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   test(`sharing image of ${path} is a 1200 x 630 PNG with an alt text and a large card`, async ({
     page,
     request,
@@ -132,7 +132,7 @@ const watchCsp = async (page: Page): Promise<string[]> => {
 };
 
 // `?bg=soft` lets the E2E build run the WebGL background in headless Chromium, so the shader is checked too
-for (const path of ['/en', '/ar', '/en?bg=soft']) {
+for (const path of ['/', '/ar', '/?bg=soft']) {
   test(`the page runs under the shipped Content-Security-Policy: ${path}`, async ({ page }) => {
     const reports = await watchCsp(page);
     const res = await page.goto(path);

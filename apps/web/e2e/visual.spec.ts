@@ -21,7 +21,11 @@ const shots: Array<[string, number]> = [
   ['contact', 1],
 ];
 
-for (const path of ['/en', '/ar']) {
+// the baselines keep their language names (en-…, ar-…) now that English lives at / (owner decision 2026-10-17)
+for (const [path, name] of [
+  ['/', 'en'],
+  ['/ar', 'ar'],
+]) {
   for (const theme of ['dark', 'light']) {
     test(`visual: ${path} ${theme}`, { tag: '@visual' }, async ({ page }) => {
       test.setTimeout(shots.length * SHOT_TIMEOUT_MS);
@@ -33,7 +37,7 @@ for (const path of ['/en', '/ar']) {
       await expect(page.locator('canvas[data-bg]')).toHaveCount(1, { timeout: 10_000 });
       for (const [id, f] of shots) {
         await gotoScene(page, id, f);
-        await expect(page).toHaveScreenshot(`${path.slice(1)}-${theme}-${id}-${f}.png`, {
+        await expect(page).toHaveScreenshot(`${name}-${theme}-${id}-${f}.png`, {
           animations: 'disabled',
           maxDiffPixelRatio: 0.01,
           timeout: SHOT_TIMEOUT_MS,

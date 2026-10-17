@@ -101,7 +101,7 @@ test('without the app the first scene is readable, and the page falls back to st
   // the app's scripts never arrive; the inline head script still runs (loader already seen: it holds the hero itself)
   await page.addInitScript(() => sessionStorage.setItem('zk-intro', '1'));
   await page.route('**/_next/static/chunks/*.js', (route) => route.abort());
-  await page.goto('/en');
+  await page.goto('/');
   const html = page.locator('html');
   await expect(html).toHaveClass(/\bpinned\b/);
   await expect(html).not.toHaveClass(/\benhanced\b/);
@@ -114,7 +114,7 @@ test('without the app the first scene is readable, and the page falls back to st
   await expect(headline).toBeInViewport();
 });
 
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   for (const viewport of VIEWPORTS) {
     for (const seen of [false, true]) {
       const visit = seen ? 'repeat' : 'first';
@@ -131,7 +131,7 @@ for (const path of ['/en', '/ar']) {
 
 // The body and mono faces swap in after the first paint over metric-matched fallbacks, so even when they arrive late
 // nothing moves. Linux and Android have no Arial, so the fallbacks must also name its metric-compatible look-alikes.
-for (const path of ['/en', '/ar']) {
+for (const path of ['/', '/ar']) {
   for (const viewport of VIEWPORTS.slice(0, 2)) {
     test(`no layout shift when the body faces arrive late: ${path} ${viewport.width}x${viewport.height}`, async ({
       browser,
