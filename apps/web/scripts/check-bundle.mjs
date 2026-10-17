@@ -1,0 +1,73 @@
+// Route-JS budget (spec line 32): the scripts each home page loads, gzipped, must stay at or below 150 kB.
+// `next build` in Next 16 no longer reports First Load JS, so this reads the prerendered HTML instead.
+// Usage, after `npm run build`: node apps/web/scripts/check-bundle.mjs (exits 1 when over budget).
+// To find what to cut: `npx next analyze` in apps/web.
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { gzipSync } from 'node:zlib';
+
+/** 150 kB, counted in thousands of bytes (the stricter reading). */
+export const LIMIT_BYTES = 150_000;
+const ROUTES = ['en', 'ar'];
+const STATIC = '/_next/static/';
+/**
+ * Libraries that must never reach a home-page script, each by a string only its runtime contains. zod and the
+ * content stay on the server; client components read text helpers from `@zakydev/shared/text`.
+ */
+const FORBIDDEN = [{ name: 'zod', marker: '$ZodType' }];
+
+/**
+ * The `/_next/static/` paths of the scripts the HTML loads, once each, in order. `noModule` scripts (the legacy
+ * polyfills) are left out: every browser that runs modules skips them without fetching. The dynamically imported
+ * background chunk is not in the HTML, so it is not counted either. Inline scripts have no `src` and are skipped.
+ */
+export const scriptsOf = (html) => {
+  const found = [];
+  for (const [, attributes] of html.matchAll(/<script\b([^>]*)>/gi)) {
+    if (/\bnomodule\b/i.test(attributes)) continue;
+    const src = attributes.match(/\bsrc="([^"]+)"/)?.[1];
+    if (!src?.startsWith(STATIC)) continue;
+    const path = src.slice(STATIC.length);
+    if (!found.includes(path)) found.push(path);
+  }
+  return found;
+};
+
+/** Gzip sizes of a page's scripts, their total, whether it is over `limit`, and any forbidden library found. */
+export const measure = (html, read, limit = LIMIT_BYTES) => {
+  const scripts = scriptsOf(html).map((path) => {
+    const body = read(path);
+    return { path, gzip: gzipSync(body).length, body };
+  });
+  const total = scripts.reduce((sum, s) => sum + s.gzip, 0);
+  const forbidden = scripts.flatMap(({ path, body }) =>
+    FORBIDDEN.filter(({ marker }) => body.includes(marker)).map(({ name }) => ({ path, name })),
+  );
+  return {
+    scripts: scripts.map(({ path, gzip }) => ({ path, gzip })),
+    total,
+    over: total > limit,
+    forbidden,
+  };
+};
+
+const kB = (bytes) => `${(bytes / 1000).toFixed(1)} kB`;
+
+const main = () => {
+  const app = join(dirname(fileURLToPath(import.meta.url)), '..', '.next');
+  const read = (path) => readFileSync(join(app, 'static', path));
+  let failed = false;
+  for (const route of ROUTES) {
+    const result = measure(readFileSync(join(app, 'server', 'app', `${route}.html`), 'utf8'), read);
+    console.log(`/${route}: ${kB(result.total)} gzip of ${kB(LIMIT_BYTES)}`);
+    for (const { path, gzip } of result.scripts) console.log(`  ${kB(gzip).padStart(9)}  ${path}`);
+    for (const { path, name } of result.forbidden) console.error(`  ${name} found in ${path}`);
+    if (result.over)
+      console.error(`/${route} is over the route-JS budget by ${kB(result.total - LIMIT_BYTES)}`);
+    failed ||= result.over || result.forbidden.length > 0;
+  }
+  if (failed) process.exitCode = 1;
+};
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
