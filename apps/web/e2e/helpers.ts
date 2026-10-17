@@ -40,3 +40,26 @@ export const progressOf = (page: Page, id: string): Promise<number> =>
       Number(getComputedStyle(document.getElementById(sceneId) as HTMLElement).getPropertyValue('--p')),
     id,
   );
+
+/**
+ * Brings the page to rest for a check that reads rendered styles (axe colour contrast). Every finite animation
+ * jumps to its end, which is the resting style, and the looping ones pause. Any animation a timer starts during
+ * the check (the rotating word flips every 2.4 s) jumps straight to its end as well. The page's clock is not
+ * paused: axe itself runs on timers and would never finish.
+ */
+export const settle = async (page: Page): Promise<void> => {
+  await page.waitForFunction(() => document.documentElement.classList.contains('enhanced'));
+  await page.evaluate(() => {
+    const rest = (animation: Animation): void => {
+      if (animation.effect?.getComputedTiming().iterations === Infinity) animation.pause();
+      else animation.finish();
+    };
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (this: Element, ...args: Parameters<Element['animate']>) {
+      const animation = animate.apply(this, args);
+      rest(animation);
+      return animation;
+    };
+    for (const animation of document.getAnimations()) rest(animation);
+  });
+};

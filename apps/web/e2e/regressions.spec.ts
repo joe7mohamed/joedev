@@ -181,8 +181,39 @@ test('step text is fully opaque and current after rapid scrolling between steps'
   }
   await page.waitForTimeout(1500);
   await expect(page.locator('#process [data-step-name]')).toHaveText('أبني');
-  const opacities = await page
-    .locator('#process [data-current] :is(h3, h3 span, p, li)')
-    .evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)));
-  expect(Math.min(...opacities)).toBe(1);
+  // each element must be visible (no ancestor hidden or at opacity 0) and its effective opacity, its own times
+  // every ancestor's, must be 1, so a stuck fade anywhere above the text is caught as well
+  const unseen = await page.locator('#process [data-current] :is(h3, h3 span, p, li)').evaluateAll((els) =>
+    els
+      .filter((el) => {
+        let opacity = 1;
+        for (let node: Element | null = el; node; node = node.parentElement)
+          opacity *= Number(getComputedStyle(node).opacity);
+        return !el.checkVisibility({ opacityProperty: true, visibilityProperty: true }) || opacity < 1;
+      })
+      .map((el) => el.outerHTML.slice(0, 80)),
+  );
+  expect(unseen).toEqual([]);
 });
+
+// The rail line is the gold element with nothing of the project frame's float or tilt (Task 7's face).
+for (const path of ['/en', '/ar']) {
+  test(`the rail line neither floats nor tilts on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await gotoScene(page, 'process', 0.97);
+    const m = await page.evaluate(() => {
+      const gold = document.querySelector('[data-gold]') as HTMLElement;
+      const box = gold.getBoundingClientRect();
+      const face = (gold.querySelector('[data-gold-face]') as HTMLElement).getBoundingClientRect();
+      const off = Math.max(
+        Math.abs(face.left - box.left),
+        Math.abs(face.top - box.top),
+        Math.abs(face.width - box.width),
+        Math.abs(face.height - box.height),
+      );
+      return { tilt: gold.hasAttribute('data-tilt'), off };
+    });
+    expect(m.tilt).toBe(false);
+    expect(m.off).toBeLessThanOrEqual(0.5);
+  });
+}

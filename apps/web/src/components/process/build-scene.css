@@ -146,6 +146,10 @@
   html.enhanced [data-build] .ring.r2 {
     animation-delay: 1.4s;
   }
+  /* and only while the scene is on screen; paused loops still sit on their finished drawing */
+  html.enhanced #process:not([data-state="active"]) [data-build] :is(.ptr, .pk, .ld, .ring) {
+    animation-play-state: paused;
+  }
 }
 @keyframes build-pointer {
   50% {

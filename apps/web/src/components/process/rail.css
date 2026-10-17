@@ -139,6 +139,9 @@ html[lang="ar"] [data-rail] [data-station-name] {
   html.enhanced [data-rail] [data-stations] li.current [data-station]::after {
     animation: station-halo 1.9s ease-out infinite;
   }
+  html.enhanced #process:not([data-state="active"]) [data-rail] li.current [data-station]::after {
+    animation-play-state: paused;
+  }
 }
 @keyframes station-halo {
   from {

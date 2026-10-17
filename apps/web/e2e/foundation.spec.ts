@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { settle } from './helpers';
 
 test('English page is left-to-right with the agreed headline', async ({ page }) => {
   await page.goto('/en');
@@ -105,7 +106,9 @@ test('makes no third-party requests', async ({ page }) => {
 
 for (const path of ['/en', '/ar']) {
   test(`no accessibility violations on ${path}`, async ({ page }) => {
+    // checked at rest: mid-intro text is still fading in, which axe reads as low contrast
     await page.goto(path);
+    await settle(page);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
   });

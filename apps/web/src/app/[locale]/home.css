@@ -161,7 +161,10 @@ html.enhanced [data-gold-face] {
   transform: translateY(calc(var(--bob, 0) * 6px * var(--tilt, 0))) perspective(1100px)
     rotateY(calc(var(--turn-y) * var(--tilt, 0))) rotateX(calc(var(--turn-x) * var(--tilt, 0)));
 }
+/* thin shapes (underline, rail line) are solid gold and need no border, which would make the face taller than
+   its 3 px box and move the line's centre off the stations */
 html.enhanced [data-gold][data-thin="true"] > [data-gold-face] {
+  border-width: 0;
   background: var(--gold);
 }
 @media (max-width: 860px) {
