@@ -58,3 +58,35 @@ No dependency reported an unreviewed install script.
 | --- | --- | --- |
 | vitest | 5.0.4 | devDependency of `apps/web` (same version as `packages/shared`) |
 | vite | 8.3.4 | devDependency of `apps/web`, peer of vitest (same version as `packages/shared`) |
+
+## Phase 1 Task 13a: sharing image
+
+| Package | Installed | Where |
+| --- | --- | --- |
+| satori | 0.56.1 | dependency of `apps/web` (0.56.2 to 0.62.0 were too new for min-release-age; 0.56.1 shapes Arabic with HarfBuzz and lays out `direction: rtl`, which the satori 0.29 inside Next 16.4 cannot do) |
+| @resvg/resvg-js | 2.6.2 | dependency of `apps/web` (latest stable; the 2.7.0 line is alpha only). Its platform binaries (`@resvg/resvg-js-<platform>`) are optional dependencies with no install script, so `strict-allow-scripts` stays satisfied and `@resvg/resvg-wasm` is not needed |
+| @axe-core/playwright | 4.13.0 | already installed in Task 4; not changed |
+
+Both satori and resvg are listed in `serverExternalPackages` (next.config.ts): they load their wasm and native binary
+from disk, so Node resolves them unbundled at build time.
+
+`npm install-scripts ls` reports no unreviewed install script. `npm audit` reports one moderate advisory:
+GHSA-px8p-9vwx-vf98, an infinite loop in fflate's `unzipSync` on malformed ZIP64 archives, through satori's pinned
+`fflate` 0.7.3. Satori only receives the committed fonts below, never untrusted input, at build time only; the only
+"fix" npm offers is a downgrade to satori 0.32, which cannot shape Arabic.
+
+### Sharing image fonts (`apps/web/assets/og/`)
+
+Committed TTFs, each with its SIL Open Font License 1.1 file. Read from disk at build time; no runtime requests.
+
+| File | Version | Source | sha256 |
+| --- | --- | --- | --- |
+| Fraunces72pt-SemiBold.ttf | 1.000 | `UnderCaseType_Fraunces_1.000.zip` from the GitHub release `1.000` of undercasetype/Fraunces, path `Fonts - Desktop/static/ttf/` (archive sha256 `8d8b81dfaeb89433f5c908e1d8d0a4b202bd627bd80d4cd5ff56f311fdcad19f`) | `fe3df7600242e191bcf478175fe51332e82c82f67f33395ccd36781e873640a7` |
+| Fraunces-OFL.txt | 1.000 | `OFL.txt` at tag `1.000` of undercasetype/Fraunces (the release archive carries none) | `bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b` |
+| Amiri-Bold.ttf | 1.003 | `Amiri-1.003.zip` from the GitHub release `1.003` of aliftype/amiri (archive sha256 `81af0aff7d2086d8af24cea7202f7546130997982534691373485cd96744d05e`) | `8cfed49b66de57e360ac61631d882dddfa23095d3ddb39fc2133eaf93892e79a` |
+| Amiri-OFL.txt | 1.003 | `OFL.txt` in the same archive | `72de68e5954f4fdd24702292ef5a32f003ca960ec9330dc86e5eefb5dffb9b22` |
+| GeistMono-Regular.ttf | 1.7.2 | `geist-font-v1.7.2.zip` from the GitHub release `v1.7.2` of vercel/geist-font, path `GeistMono/ttf/` (archive sha256 `7fc800d2ac6b92844895196e5041aca55d814c15db70c44f79b3b83ab82b04e2`; v1.8.1 was one day old) | `42d8ad2e610238e64e8abfcde3037c63f7850a73928742b7ab7229d897bcb155` |
+| GeistMono-OFL.txt | 1.7.2 | `OFL.txt` in the same archive | `c683bfbcc7e087f5d37a54ef628f10387c451a83ddc459b151403a164ac46c90` |
+
+Fraunces is the 72 pt optical-size static instance with SOFT 0 (as the hero sets it), semibold, the nearest static
+weight to the hero's 560.
