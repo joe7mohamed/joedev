@@ -40,7 +40,9 @@ test('sitemap and robots are served', async ({ request }) => {
 
 test('the sitemap lists both locales with their alternates', async ({ request }) => {
   const xml = await (await request.get('/sitemap.xml')).text();
-  for (const locale of ['en', 'ar']) expect(xml).toContain(`<loc>https://zakydev.com/${locale}</loc>`);
+  // owner decision 2026-10-17: English at the plain domain, Arabic at /ar
+  for (const url of ['https://zakydev.com/', 'https://zakydev.com/ar'])
+    expect(xml).toContain(`<loc>${url}</loc>`);
   expect(xml).toContain('hreflang="ar"');
   expect(xml).toContain('hreflang="x-default"');
 });

@@ -10,7 +10,7 @@ export default defineConfig({
   // locally, build first. NEXT_PUBLIC_E2E=1 compiles in the test-only switches (src/lib/e2e.ts), such as `?bg=soft`.
   webServer: {
     command: process.env.CI ? 'npm start' : 'NEXT_PUBLIC_E2E=1 npm run build && npm start',
-    url: 'http://localhost:3000/en',
+    url: 'http://localhost:3000/',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },

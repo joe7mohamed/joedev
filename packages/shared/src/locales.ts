@@ -1,3 +1,7 @@
+/**
+ * The locales and their direction. No imports: client components and the proxy read this module through
+ * `@zakydev/shared/locales`, so zod and the content never come with it (spec line 32, the route-JS budget).
+ */
 export const LOCALES = ['en', 'ar'] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = 'en';

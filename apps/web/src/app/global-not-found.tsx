@@ -16,7 +16,7 @@ export default function GlobalNotFound() {
       </head>
       <body>
         <main className="grid min-h-svh place-items-center gap-6 p-6">
-          <a href="/en" aria-label="ZakyDev">
+          <a href="/" aria-label="ZakyDev">
             <Mark size={48} />
           </a>
           <h1 className="font-display text-5xl">404</h1>

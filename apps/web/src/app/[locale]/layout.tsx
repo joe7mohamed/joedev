@@ -1,10 +1,11 @@
-import { dirOf, getHome, isLocale, LOCALES } from '@zakydev/shared';
+import { DEFAULT_LOCALE, dirOf, getHome, isLocale, LOCALES } from '@zakydev/shared';
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { preload } from 'react-dom';
 import { headlineFace } from '@/fonts/display';
 import { body, bodyAr, mono } from '@/lib/fonts';
+import { homePath } from '@/lib/home-path';
 import { siteUrl } from '@/lib/site';
 import { headScript } from '@/lib/theme-script';
 import '../globals.css';
@@ -31,7 +32,10 @@ export async function generateMetadata({
     metadataBase: new URL(siteUrl),
     title: seo.title,
     description: seo.description,
-    alternates: { canonical: `/${locale}`, languages: { en: '/en', ar: '/ar', 'x-default': '/en' } },
+    alternates: {
+      canonical: homePath(locale),
+      languages: { en: homePath('en'), ar: homePath('ar'), 'x-default': homePath(DEFAULT_LOCALE) },
+    },
   };
 }
 

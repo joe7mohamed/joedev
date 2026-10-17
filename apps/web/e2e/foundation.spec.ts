@@ -18,17 +18,18 @@ test('Arabic page is right-to-left with the agreed headline', async ({ page }) =
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('أبني برمجيات تصمد تحت الضغط.');
 });
 
-test('root redirects by preferred language', async ({ browser }) => {
-  const ar = await browser.newContext({ locale: 'ar-BH' });
-  const arPage = await ar.newPage();
-  await arPage.goto('/');
-  await expect(arPage).toHaveURL(/\/ar$/);
-  const fr = await browser.newContext({ locale: 'fr-FR' });
-  const frPage = await fr.newPage();
-  await frPage.goto('/');
-  await expect(frPage).toHaveURL(/\/en$/);
-  await ar.close();
-  await fr.close();
+// owner decision 2026-10-17: English lives at the plain domain for every visitor, Arabic at /ar
+test('root serves the English page to every visitor, whatever their language', async ({ browser }) => {
+  for (const locale of ['ar-BH', 'fr-FR']) {
+    const context = await browser.newContext({ locale });
+    const page = await context.newPage();
+    const response = await page.goto('/');
+    expect(response?.status(), locale).toBe(200);
+    expect(response?.request().redirectedFrom(), locale).toBeNull();
+    await expect(page).toHaveURL(/^https?:\/\/[^/]+\/$/);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await context.close();
+  }
 });
 
 test('unknown locale is a 404 with our own page, not the built-in one', async ({ page }) => {
@@ -65,18 +66,20 @@ test('a light-system visitor whose storage throws still gets the light theme', a
 
 test('canonical and hreflang links are absolute', async ({ page }) => {
   await page.goto('/en');
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /^https?:\/\/.*\/en$/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /^https?:\/\/[^/]+\/?$/);
   await expect(page.locator('link[rel="alternate"][hreflang="ar"]')).toHaveAttribute('href', /^https?:\/\//);
 });
 
-test('the language redirect is never shared-cached and keeps the query string', async ({ request }) => {
-  const ar = await request.get('/', { headers: { 'accept-language': 'ar-BH' }, maxRedirects: 0 });
-  expect(ar.status()).toBe(307);
-  expect(ar.headers().location).toMatch(/\/ar$/);
-  expect(ar.headers().vary).toContain('Accept-Language');
-  expect(ar.headers()['cache-control']).toContain('no-store');
-  const en = await request.get('/?utm=1', { headers: { 'accept-language': 'en-US' }, maxRedirects: 0 });
-  expect(en.headers().location).toMatch(/\/en\?utm=1$/);
+test('/en redirects permanently to the root and keeps the query string; the root does not vary by language', async ({
+  request,
+}) => {
+  const en = await request.get('/en?utm=1', { maxRedirects: 0 });
+  expect(en.status()).toBe(308);
+  expect(en.headers().location).toMatch(/^(https?:\/\/[^/]+)?\/\?utm=1$/);
+  const root = await request.get('/', { headers: { 'accept-language': 'ar-BH' }, maxRedirects: 0 });
+  expect(root.status()).toBe(200);
+  expect(root.headers().vary ?? '').not.toContain('Accept-Language');
+  expect(root.headers()['cache-control'] ?? '').not.toContain('no-store');
 });
 
 test('security headers are set, and HSTS has no includeSubDomains or preload', async ({ request }) => {
