@@ -1,6 +1,13 @@
 const OUT = 180;
 const IN = 500;
 const EASE = 'cubic-bezier(.2,.8,.2,1)';
+/**
+ * The prototype fades the word while it turns edge-on. Here the text stays at full opacity, so a contrast check never
+ * catches it half transparent; a clip that closes toward the middle line hides it instead. Open, the clip leaves room
+ * for the underline, descenders and the halo.
+ */
+const OPEN = 'inset(-40% -8% -40% -8%)';
+const SHUT = 'inset(50% -8% 50% -8%)';
 
 type Playback = { finished: Promise<unknown>; cancel(): void };
 export type Animatable = {
@@ -16,8 +23,8 @@ export function runSwap(el: Animatable, value: string, commit: (value: string) =
   for (const running of el.getAnimations()) running.cancel();
   const out = el.animate(
     [
-      { transform: 'none', opacity: 1 },
-      { transform: 'rotateX(-80deg) translateY(-35%)', opacity: 0 },
+      { transform: 'none', clipPath: OPEN },
+      { transform: 'rotateX(-80deg) translateY(-35%)', clipPath: SHUT },
     ],
     { duration: OUT, easing: 'ease-in', fill: 'none' },
   );
@@ -28,8 +35,8 @@ export function runSwap(el: Animatable, value: string, commit: (value: string) =
       commit(value);
       el.animate(
         [
-          { transform: 'rotateX(80deg) translateY(35%)', opacity: 0 },
-          { transform: 'none', opacity: 1 },
+          { transform: 'rotateX(80deg) translateY(35%)', clipPath: SHUT },
+          { transform: 'none', clipPath: OPEN },
         ],
         { duration: IN, easing: EASE, fill: 'none' },
       );
