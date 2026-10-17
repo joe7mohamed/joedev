@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
-import { gotoScene, test } from './helpers';
+import { gotoScene, shown, test } from './helpers';
 
 const gap = (page: Page, slot: string) =>
   page.evaluate((selector) => {
@@ -163,6 +163,23 @@ for (const path of ['/en', '/ar']) {
     // body 0.3 of five steps: the line has reached 0.3 × 5 / 4 of the way to the last station
     expect(Math.abs(m.width - span * 0.375)).toBeLessThan(4);
     expect(Math.abs((path === '/ar' ? m.right : m.left) - first)).toBeLessThanOrEqual(1);
+  });
+}
+
+// Spec 6.4, never a blank screen: in the first pixels of the process scene the work frame has shrunk into the rail
+// and the step text has not faded in yet, so the gold line must already show, as a dot on the first station.
+for (const path of ['/en', '/ar']) {
+  test(`the rail line shows from the first pixel of the process scene on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await gotoScene(page, 'process', 0);
+    expect(await shown(page)).toBe('gold');
+    const m = await page.evaluate(() => {
+      const r = (document.querySelector('[data-gold]') as Element).getBoundingClientRect();
+      const s = (document.querySelector('#process [data-station]') as Element).getBoundingClientRect();
+      return { left: r.left, right: r.right, width: r.width, centre: s.left + s.width / 2 };
+    });
+    expect(m.width).toBeLessThanOrEqual(4);
+    expect(Math.abs((path === '/ar' ? m.right : m.left) - m.centre)).toBeLessThanOrEqual(1);
   });
 }
 

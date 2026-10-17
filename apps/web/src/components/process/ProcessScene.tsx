@@ -73,14 +73,16 @@ function useProcessStep(count: number, box: RefObject<HTMLDivElement | null>, en
 /**
  * The gold element becomes the rail line: anchored on the first station (the right one in Arabic), its length is
  * the progress through the steps, full on the last station. This is a documented live slot (spec 5.0, 6.4): the
- * rail sits below the step text, so its position depends on text height, and it is measured every frame.
+ * rail sits below the step text, so its position depends on text height, and it is measured every frame. It starts
+ * as a dot on the first station, never at zero length: in the scene's first pixels the work frame has just shrunk into
+ * it and the step text has not faded in yet, so the line is all there is on screen (spec 6.4, never a blank screen).
  */
 function useRailSlot(slot: RefObject<HTMLDivElement | null>, count: number): void {
   useEffect(
     () =>
       registerSlot('process', (f, layer) => {
         const rail = pinnedRect(slot.current as HTMLElement, f.sticky, layer);
-        const w = rail.w * clamp((f.body * count) / (count - 1));
+        const w = Math.max(LINE, rail.w * clamp((f.body * count) / (count - 1)));
         const rtl = document.documentElement.dir === 'rtl';
         return {
           x: rtl ? rail.x + rail.w - w : rail.x,
