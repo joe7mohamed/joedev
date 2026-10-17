@@ -1,3 +1,4 @@
+import { whenLoaded } from './loaded';
 import { clamp, sceneProgress } from './math';
 
 export type SceneId = 'hero' | 'work' | 'process' | 'about' | 'contact';
@@ -48,6 +49,10 @@ let dirty = true;
 let lastY = 0;
 let velocity = 0;
 let observer: ResizeObserver | null = null;
+let stopWaiting: () => void = () => undefined;
+
+/** The loading screen covers the page: nothing on screen to update, so nothing is written (spec 5.1). */
+const held = (): boolean => document.documentElement.classList.contains('loading');
 
 /**
  * Pinned scenes: `before` until the section's top reaches the viewport top, `active` while it still has travel
@@ -148,6 +153,11 @@ const notify = (scroll: ScrollInfo): void => {
 const tick = (): void => {
   raf = 0;
   if (!running) return;
+  // the frame after the release catches up (start: whenLoaded)
+  if (held()) {
+    dirty = true;
+    return;
+  }
   const y = window.scrollY;
   velocity += (y - lastY - velocity) * 0.2;
   lastY = y;
@@ -251,9 +261,11 @@ export const engine = {
     document.addEventListener('visibilitychange', onVisibility);
     document.fonts?.ready.then(onResize).catch(() => undefined);
     onResize();
+    stopWaiting = whenLoaded(onScroll);
   },
   stop(): void {
     running = false;
+    stopWaiting();
     if (raf) cancelAnimationFrame(raf);
     if (refitRaf) cancelAnimationFrame(refitRaf);
     raf = 0;

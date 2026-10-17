@@ -32,11 +32,11 @@ const useHydrated = (): boolean =>
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
-/** Bar n is full once passed, follows the progress while current, and is empty ahead. */
+/** Bar n is full once passed, follows the progress while current, and is empty ahead. Unchanged bars are skipped. */
 const writeSegments = (root: HTMLElement, count: number, index: number, local: number): void => {
   for (let n = 0; n < count; n++) {
-    const fill = n < index ? 1 : n === index ? local : 0;
-    root.style.setProperty(`--seg${n}`, fill.toFixed(3));
+    const fill = (n < index ? 1 : n === index ? local : 0).toFixed(3);
+    if (root.style.getPropertyValue(`--seg${n}`) !== fill) root.style.setProperty(`--seg${n}`, fill);
   }
 };
 
