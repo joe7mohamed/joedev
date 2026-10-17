@@ -47,7 +47,7 @@ html {
   --stack-body: var(--face-body), system-ui, sans-serif;
   --lh-display: 1.02;
   --lh-body: 1.55;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--ink);
 }
 html[lang="ar"] {

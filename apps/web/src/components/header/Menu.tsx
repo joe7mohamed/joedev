@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { currentScene, sceneState } from '@/motion/current';
 import { engine, type SceneFrame, type SceneId } from '@/motion/engine';
 import { MenuIcon, type MenuId } from './menu-icons';
 import './menu.css';
@@ -8,28 +9,12 @@ import './menu.css';
 export type MenuItem = { id: MenuId; label: string };
 type MenuProps = { items: MenuItem[]; label: string };
 
-const ORDER: SceneId[] = ['hero', 'work', 'process', 'about', 'contact'];
 /** The about ring has nearly filled the screen with gold from this point of its tail (spec 5.2). */
 const ON_GOLD_OUT = 0.6;
 
-const stateOf = (frame: SceneFrame | undefined): string | undefined =>
-  frame?.sticky.parentElement?.dataset.state;
-
-/**
- * The current section is what the reader sees: the active scene covering the middle of the screen, else the last
- * active one. Scenes that flow can be active together; the hero means no current item. Pure arithmetic on the
- * engine's measured geometry, so nothing reads layout per frame.
- */
+/** The current menu item is the current scene; the hero means no current item. */
 const currentOf = (frames: Map<SceneId, SceneFrame>, y: number): MenuId | null => {
-  const active = ORDER.flatMap((id) => {
-    const frame = frames.get(id);
-    return frame && stateOf(frame) === 'active' ? [frame] : [];
-  });
-  const covering = active.find((frame) => {
-    const middle = y + frame.viewport / 2;
-    return frame.top <= middle && middle < frame.end + frame.viewport;
-  });
-  const id = (covering ?? active.at(-1))?.id;
+  const id = currentScene(frames, y);
   return id && id !== 'hero' ? id : null;
 };
 
@@ -108,7 +93,7 @@ export function Menu({ items, label }: MenuProps) {
         el.style.setProperty('--section-p', value);
       }
       const onGold =
-        (frames.get('about')?.out ?? 0) > ON_GOLD_OUT || stateOf(frames.get('contact')) === 'active';
+        (frames.get('about')?.out ?? 0) > ON_GOLD_OUT || sceneState(frames.get('contact')) === 'active';
       if (header.hasAttribute('data-on-gold') !== onGold) {
         if (onGold) header.setAttribute('data-on-gold', 'true');
         else header.removeAttribute('data-on-gold');

@@ -1,5 +1,34 @@
 /* Layers, lowest first: background 0, gold 1, scene content 2, header 5, loader 9. */
 
+/* The background (spec 5.8). The page's own background is a still gold glow, fixed to the screen; it is what shows
+   without script, with reduced motion and wherever WebGL is missing. The shader canvas covers it otherwise. */
+html {
+  background-image: radial-gradient(
+    120% 80% at 80% 30%,
+    color-mix(in srgb, var(--gold) 14%, var(--bg)),
+    var(--bg) 60%
+  );
+  background-attachment: fixed;
+}
+[data-bg] {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-bg] {
+    transition: opacity var(--slow) var(--ease);
+  }
+  @starting-style {
+    [data-bg] {
+      opacity: 0;
+    }
+  }
+}
+
 /* Stacked by default: readable with no script and with reduced motion. */
 [data-scene] {
   position: relative;

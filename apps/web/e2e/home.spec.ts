@@ -1128,3 +1128,83 @@ test('Latin runs in the Arabic contact facts are marked as English', async ({ pa
   await expect(first).toHaveText('البحرين · UTC+3');
   await expect(first.locator('span[lang="en"]')).toHaveText('UTC+3');
 });
+
+// Task 11: the background shader (spec 5.8).
+test('background is decorative, behind content, and absent with reduced motion', async ({ page }) => {
+  await page.goto('/en');
+  const canvas = page.locator('canvas[data-bg]');
+  await expect(canvas).toHaveAttribute('aria-hidden', 'true');
+  expect(await canvas.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe('none');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
+  await expect(page.locator('canvas[data-bg]')).toHaveCount(0);
+});
+
+test('text keeps AA contrast over the background in both themes', async ({ page }) => {
+  for (const theme of ['dark', 'light']) {
+    await page.goto('/en');
+    await page.evaluate((t) => {
+      document.documentElement.dataset.theme = t;
+      document.dispatchEvent(new Event('themechange'));
+    }, theme);
+    const { default: AxeBuilder } = await import('@axe-core/playwright');
+    await settle(page);
+    const results = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze();
+    expect(results.violations).toEqual([]);
+  }
+});
+
+const htmlBackground = (page: Page) =>
+  page.evaluate(() => getComputedStyle(document.documentElement).backgroundImage);
+
+test('the background sits fixed behind the gold element and the scenes', async ({ page }) => {
+  await page.goto('/en');
+  const canvas = page.locator('canvas[data-bg]');
+  await expect(canvas).toBeVisible();
+  const style = await canvas.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { position: s.position, z: s.zIndex };
+  });
+  expect(style).toEqual({ position: 'fixed', z: '0' });
+});
+
+test('with reduced motion the background is the CSS gradient, also when switched on later', async ({
+  page,
+}) => {
+  await page.goto('/en');
+  await expect(page.locator('canvas[data-bg]')).toHaveCount(1);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('canvas[data-bg]')).toHaveCount(0);
+  expect(await htmlBackground(page)).toContain('radial-gradient');
+  await page.reload();
+  await page.waitForTimeout(600);
+  await expect(page.locator('canvas[data-bg]')).toHaveCount(0);
+  expect(await htmlBackground(page)).toContain('radial-gradient');
+});
+
+test('without WebGL the canvas is hidden and the CSS gradient shows, with no errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    // biome-ignore lint/suspicious/noExplicitAny: the stub must accept every overload of getContext
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: any[]) {
+      if (String(args[0]).includes('webgl')) {
+        (window as unknown as { glRefused: boolean }).glRefused = true;
+        return null;
+      }
+      return original.apply(this, args as Parameters<typeof original>);
+    } as typeof original;
+  });
+  await page.goto('/en');
+  await page.waitForFunction(() => (window as unknown as { glRefused?: boolean }).glRefused === true);
+  await page.waitForTimeout(300);
+  await expect(page.locator('canvas[data-bg]')).toBeHidden();
+  expect(await htmlBackground(page)).toContain('radial-gradient');
+  await gotoScene(page, 'work', 0.3);
+  await expect(page.locator('canvas[data-bg]')).toBeHidden();
+  expect(errors).toEqual([]);
+});

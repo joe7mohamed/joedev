@@ -1,6 +1,7 @@
 import { getHome, isLocale } from '@zakydev/shared';
 import { notFound } from 'next/navigation';
 import { About } from '@/components/about/About';
+import { BackgroundLoader } from '@/components/background/BackgroundLoader';
 import { Contact } from '@/components/contact/Contact';
 import { SiteFooter } from '@/components/contact/SiteFooter';
 import { Header } from '@/components/header/Header';
@@ -17,6 +18,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const c = getHome(locale, { requireConfirmed: process.env.REQUIRE_CONFIRMED === '1' });
   return (
     <EngineProvider>
+      <BackgroundLoader />
       <Header locale={locale} nav={c.nav} />
       <GoldElement />
       <main id="main">
