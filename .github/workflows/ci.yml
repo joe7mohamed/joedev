@@ -41,9 +41,9 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_E2E: ""
-      # route JS of /en and /ar at most 170 kB gzip, and no zod in it (spec line 32)
+      # route JS of / and /ar (en.html, ar.html) at most 170 kB gzip, and no zod in it (spec line 32)
       - run: node apps/web/scripts/check-bundle.mjs
-      # Lighthouse on /en and /ar (apps/web/lighthouserc.json). The runner has no GPU, so the background is the CSS
+      # Lighthouse on / and /ar (apps/web/lighthouserc.json). The runner has no GPU, so the background is the CSS
       # fallback there (docs/DEPLOY.md, "Lighthouse"). Owner decision 2026-10-17: LCP (both pages) and /ar performance
       # only warn, because the lab simulation counts the fonts and scripts requested before the first paint; real-visitor
       # LCP after launch is the real test. Every other gate fails the job at its threshold.
