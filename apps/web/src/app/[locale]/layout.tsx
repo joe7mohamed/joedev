@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { preload } from 'react-dom';
+import { KeepRootState } from '@/components/KeepRootState';
 import { headlineFace } from '@/fonts/display';
 import { body, bodyAr, mono } from '@/lib/fonts';
 import { homePath } from '@/lib/home-path';
@@ -60,7 +61,10 @@ export default async function LocaleLayout({
             first paint until the hero is parsed (where supported; elsewhere it is ignored) */}
         <link rel="expect" href="#work" {...RENDER_BLOCKING} />
       </head>
-      <body>{children}</body>
+      <body>
+        <KeepRootState reactClasses={fonts} />
+        {children}
+      </body>
     </html>
   );
 }

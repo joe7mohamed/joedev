@@ -1,7 +1,9 @@
 'use client';
 
 import type { Locale } from '@zakydev/shared';
+import Link from 'next/link';
 import { useEffect } from 'react';
+import { homePath } from '@/lib/home-path';
 import { MOTION_OK } from '@/motion/useMedia';
 
 const KEY = 'zk-return-to';
@@ -32,7 +34,11 @@ const goTo = (id: string, fraction: number): void => {
   });
 };
 
-/** Links to the same place in the other language: the section in view and how far through it. */
+/**
+ * Links to the same place in the other language: the section in view and how far through it. It is a client-side
+ * navigation: both languages share the one root layout, `[locale]`, so the document stays and the new page mounts in
+ * it (KeepRootState carries <html>'s state over). Without script it is a plain link and the page opens at the top.
+ */
 export function LanguageSwitch({ locale, label }: { locale: Locale; label: string }) {
   const other: Locale = locale === 'en' ? 'ar' : 'en';
   useEffect(() => {
@@ -64,8 +70,12 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
     }
   };
   return (
-    <a
-      href={`/${other}`}
+    <Link
+      href={homePath(other)}
+      // the place is restored above; scrolling to the top first would only flash the hero
+      scroll={false}
+      // a prefetch would apply the other page's font preload here, and English never downloads Amiri
+      prefetch={false}
       hrefLang={other}
       lang={locale === 'ar' ? 'en' : undefined}
       aria-label={label}
@@ -73,6 +83,6 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
       className="grid size-11 place-items-center rounded-full border border-hair font-semibold"
     >
       {other === 'ar' ? 'ع' : 'EN'}
-    </a>
+    </Link>
   );
 }
