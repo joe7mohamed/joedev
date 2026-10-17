@@ -1,0 +1,28 @@
+/* Metric-matched fallbacks for the body and mono faces, which are not preloaded and swap in after the first paint
+   (lib/fonts.ts). The overrides are the ones next/font computes against Arial; next/font names only local(Arial),
+   which Linux and Android do not have, so the swap moved the hero there (Lighthouse CLS 0.12). Liberation Sans and
+   Arimo are metric-compatible with Arial, so the same overrides hold for them. */
+@font-face {
+  font-family: "Geist Fallback";
+  src: local("Arial"), local("Liberation Sans"), local("Arimo");
+  ascent-override: 95.94%;
+  descent-override: 28.16%;
+  line-gap-override: 0%;
+  size-adjust: 104.76%;
+}
+@font-face {
+  font-family: "Geist Mono Fallback";
+  src: local("Arial"), local("Liberation Sans"), local("Arimo");
+  ascent-override: 74.67%;
+  descent-override: 21.92%;
+  line-gap-override: 0%;
+  size-adjust: 134.59%;
+}
+@font-face {
+  font-family: "IBM Plex Sans Arabic Fallback";
+  src: local("Arial"), local("Liberation Sans"), local("Arimo");
+  ascent-override: 107.25%;
+  descent-override: 41.02%;
+  line-gap-override: 0%;
+  size-adjust: 101.17%;
+}

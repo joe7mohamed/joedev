@@ -9,6 +9,9 @@ const MAX_CLS = 0.05;
 /** Lighthouse's mobile CPU slowdown: without it hydration can beat the first paint and hide a shift. */
 const CPU_SLOWDOWN = 4;
 const SETTLE_MS = 2000;
+/** The preloaded display faces (fonts/display.ts); every other face is held back this long in the late-fonts case. */
+const HEADLINE_FACES = /\/(fraunces-latin|amiri-bold)\.[^/]*woff2$/;
+const LATE_FONT_MS = 1500;
 /**
  * Lighthouse's mobile viewport, the desktop one the other specs use, and the real short sizes: iPhone Safari's small
  * viewport with its toolbars (360 x 640, 390 x 664) and laptop Chrome (1280 x 632, 1366 x 657, 1536 x 730), then large
@@ -35,6 +38,7 @@ const measure = async (
   path: string,
   viewport: (typeof VIEWPORTS)[number],
   seen: boolean,
+  lateFonts = false,
 ) => {
   const context = await browser.newContext({
     viewport: { width: viewport.width, height: viewport.height },
@@ -42,6 +46,13 @@ const measure = async (
     hasTouch: viewport.mobile,
   });
   const page = await context.newPage();
+  // the body and mono faces are not preloaded: on a slow network they arrive well after the first paint
+  if (lateFonts)
+    await page.route(/\.woff2$/, async (route) => {
+      if (!HEADLINE_FACES.test(route.request().url()))
+        await new Promise((done) => setTimeout(done, LATE_FONT_MS));
+      await route.continue();
+    });
   const cdp = await context.newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU_SLOWDOWN });
   await page.addInitScript((intro) => {
@@ -115,5 +126,19 @@ for (const path of ['/en', '/ar']) {
         expect(cls, shifts.join('\n')).toBeLessThanOrEqual(MAX_CLS);
       });
     }
+  }
+}
+
+// The body and mono faces swap in after the first paint over metric-matched fallbacks, so even when they arrive late
+// nothing moves. Linux and Android have no Arial, so the fallbacks must also name its metric-compatible look-alikes.
+for (const path of ['/en', '/ar']) {
+  for (const viewport of VIEWPORTS.slice(0, 2)) {
+    test(`no layout shift when the body faces arrive late: ${path} ${viewport.width}x${viewport.height}`, async ({
+      browser,
+    }) => {
+      const { cls, shifts } = await measure(browser, path, viewport, true, true);
+      test.info().annotations.push({ type: 'cls', description: cls.toFixed(4) });
+      expect(cls, shifts.join('\n')).toBeLessThanOrEqual(MAX_CLS);
+    });
   }
 }
