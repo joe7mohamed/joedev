@@ -16,6 +16,15 @@ const MAX_RATIO = 1.5;
 const SCALE = 0.6;
 const PHONE = '(max-width: 860px)';
 
+/**
+ * Nothing of the background shows while the loading screen covers the page or the gold element fills the screen (the
+ * contact flood, GoldElement): it is not drawn then. The slow drift draws again within DRIFT_MS once it shows.
+ */
+const covered = (): boolean => {
+  const root = document.documentElement;
+  return root.classList.contains('loading') || root.hasAttribute('data-gold-full');
+};
+
 const themeOf = (): Theme => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
 
 /** Text colours that sit on the background, read from the theme's tokens so they never drift from the CSS. */
@@ -117,7 +126,7 @@ const painter = (canvas: HTMLCanvasElement, renderer: Renderer, still: boolean):
   let drawn = 0;
 
   const draw = (): void => {
-    if (document.hidden) return;
+    if (document.hidden || covered()) return;
     const now = performance.now();
     const dt = Math.min(MAX_STEP, (now - last) / 1000);
     last = now;

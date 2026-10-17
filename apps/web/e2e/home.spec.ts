@@ -1313,6 +1313,43 @@ test('the background draws nothing while the tab is hidden, and resumes when it 
   await expect.poll(() => drawsOf(page)).toBeGreaterThan(before);
 });
 
+// Nothing of the background shows under the loading screen or the solid gold contact screen, so it is not drawn.
+test('the background draws nothing under the gold flood, and resumes when it leaves', async ({ page }) => {
+  await page.addInitScript(countDraws);
+  await page.goto(SHADER);
+  await expect(page.locator('canvas[data-bg]')).toBeVisible();
+  await gotoScene(page, 'contact', 1);
+  await expect(page.locator('html')).toHaveAttribute('data-gold-full', '');
+  const before = await drawsOf(page);
+  await page.waitForTimeout(800);
+  expect(await drawsOf(page)).toBe(before);
+  await gotoScene(page, 'about', 0.5);
+  await expect(page.locator('html')).not.toHaveAttribute('data-gold-full');
+  await expect.poll(() => drawsOf(page)).toBeGreaterThan(before);
+});
+
+test('the background draws nothing under the loading screen', async ({ browser }) => {
+  // a first visit, with the screenshots slow, so the loading screen stays for a while
+  const context = await browser.newContext();
+  await context.addInitScript(countDraws);
+  await context.route('**/_next/image**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await route.continue();
+  });
+  const page = await context.newPage();
+  await page.goto(SHADER);
+  await expect(page.locator('html')).toHaveClass(/\bloading\b/);
+  await expect(page.locator('canvas[data-bg]')).toHaveCount(1, { timeout: 2500 });
+  const before = await drawsOf(page);
+  await page.waitForTimeout(400);
+  const loading = await page.evaluate(() => document.documentElement.classList.contains('loading'));
+  test.skip(!loading, 'the loading screen finished before the check');
+  expect(await drawsOf(page)).toBe(before);
+  await expect(page.locator('html')).not.toHaveClass(/\bloading\b/, { timeout: 8000 });
+  await expect.poll(() => drawsOf(page)).toBeGreaterThan(before);
+  await context.close();
+});
+
 test('the background renders at 0.6 of the pixel ratio, capped at 1.5', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
   await context.addInitScript(() => sessionStorage.setItem('zk-intro', '1'));

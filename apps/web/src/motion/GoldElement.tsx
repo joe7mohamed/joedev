@@ -28,6 +28,15 @@ export function GoldElement() {
       // which scene the gold element is on: a slot it is not on draws its own stand-in (the rail line, the ring)
       if (!shape) delete root.dataset.goldOn;
       else if (root.dataset.goldOn !== shape.on) root.dataset.goldOn = shape.on;
+      // the screen is solid gold (the contact flood): nothing behind it needs drawing (Background)
+      const full =
+        !!shape &&
+        shape.fill >= 1 &&
+        shape.x <= 0 &&
+        shape.y <= 0 &&
+        shape.x + shape.w >= layer.current.clientWidth &&
+        shape.y + shape.h >= layer.current.clientHeight;
+      root.toggleAttribute('data-gold-full', full);
       if (!shape || shape.w < 2) {
         el.style.visibility = 'hidden';
         return;
@@ -46,6 +55,7 @@ export function GoldElement() {
     return () => {
       unsubscribe();
       delete root.dataset.goldOn;
+      root.removeAttribute('data-gold-full');
     };
   }, []);
   return (
