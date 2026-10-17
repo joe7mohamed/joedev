@@ -4,8 +4,9 @@ import { gotoScene, test } from './helpers';
 /*
  * Visual snapshots. Font rendering differs between operating systems, so the baselines are made and compared only in
  * the Playwright Docker image (`npm run e2e:visual -w web`, and the CI `visual` job); the main e2e run skips @visual.
- * `?bg=soft` runs the shader on the image's software GL and `?freeze=1` stops the time-based loops (E2E builds only);
- * `animations: 'disabled'` settles the CSS ones.
+ * The image has only software GL, so the background is the CSS fallback here (its grain would bloat every PNG); the
+ * shader's look is covered by contrast.spec.ts and the shader's own tests. `?freeze=1` stops the time-based loops
+ * (E2E builds only); `animations: 'disabled'` settles the CSS ones.
  */
 /** Software GL draws a full desktop frame slowly, and a stable screenshot needs two identical ones in a row. */
 const SHOT_TIMEOUT_MS = 30_000;
@@ -27,8 +28,8 @@ for (const path of ['/en', '/ar']) {
       await page.addInitScript((t) => {
         localStorage.setItem('zk-theme', t);
       }, theme);
-      await page.goto(`${path}?bg=soft&freeze=1`);
-      // the background mounts once the page is idle; shoot only after it has (hidden if WebGL is missing)
+      await page.goto(`${path}?freeze=1`);
+      // the background mounts once the page is idle and hides itself on software GL; shoot only after that
       await expect(page.locator('canvas[data-bg]')).toHaveCount(1, { timeout: 10_000 });
       for (const [id, f] of shots) {
         await gotoScene(page, id, f);
