@@ -1,6 +1,6 @@
 /* The hero's one-shot load build (spec 5.3). It runs under html.intro, which the head script sets before first
-   paint when motion is allowed, so it starts with the server-painted page and never restarts when the app adds
-   html.enhanced. Every animation fills backwards only: it ends at the element's resting, visible style even if no
+   paint when motion is allowed, so it starts with the server-painted page (or when the loading screen releases
+   it) and never restarts when the app adds html.enhanced. Every animation fills backwards only: it ends at the element's resting, visible style even if no
    app script ever runs (spec 6.5). Scroll-driven styles and loops stay in hero-motion.css. */
 @media (prefers-reduced-motion: no-preference) {
   /* Arabic rises word by word, without rotation. */
@@ -57,6 +57,12 @@
   }
   html.intro [data-bracket="close"] {
     --from: 18px;
+  }
+  /* The loading screen holds the whole build until it releases the page (loader.css), then it plays from its
+     start. Without any script the head script's timeout releases it, so the build still plays and ends visible. */
+  html.intro.loading [data-hero] *,
+  html.intro.loading [data-hero] *::before {
+    animation-play-state: paused;
   }
 }
 

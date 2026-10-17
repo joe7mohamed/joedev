@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 import { engine, type SceneFrame } from '@/motion/engine';
 import { pinnedRect, registerSlot } from '@/motion/gold';
+import { whenLoaded } from '@/motion/loaded';
 import { clamp, range, smooth } from '@/motion/math';
 import { FINE_POINTER, MOTION_OK, useMedia } from '@/motion/useMedia';
 import { useSceneFrame } from '@/motion/useSceneFrame';
@@ -14,7 +15,8 @@ const POINTER_UNTIL = 0.12;
 const MIN_LINE = 4;
 /**
  * The underline draws in once the headline has built (prototype `play()`: delay 1.05 s, 0.9 s). The build starts
- * with the first paint (hero-intro.css), so the delay is counted on the page clock, from navigation start.
+ * with the first paint (hero-intro.css), or when the loading screen releases it, so the delay is counted on the
+ * page clock from that origin (motion/loaded.ts).
  */
 const DRAW_AT = 1050;
 const DRAW_MS = 900;
@@ -61,17 +63,30 @@ const paint = ({ root, h1 }: Parts, g: Geometry, progress: number): void => {
 
 type Zoom = { apply(f: SceneFrame): void; remeasure(): void };
 
-/** Draws the underline in, from DRAW_AT on the page clock; reads 1 at once when motion is reduced. */
+/** Draws the underline in, DRAW_AT after the build's origin; reads 1 at once when motion is reduced. */
 const startDrawIn = (): { drawn(): number; stop(): void } => {
   let drawn = window.matchMedia(MOTION_OK).matches ? 0 : 1;
   let raf = 0;
+  let origin = 0;
   const draw = (now: number): void => {
-    drawn = inOut(clamp((now - DRAW_AT) / DRAW_MS));
+    drawn = inOut(clamp((now - origin - DRAW_AT) / DRAW_MS));
     engine.invalidate();
     raf = drawn < 1 ? requestAnimationFrame(draw) : 0;
   };
-  if (drawn < 1) raf = requestAnimationFrame(draw);
-  return { drawn: () => drawn, stop: () => cancelAnimationFrame(raf) };
+  const stopWaiting =
+    drawn < 1
+      ? whenLoaded((at) => {
+          origin = at;
+          raf = requestAnimationFrame(draw);
+        })
+      : () => undefined;
+  return {
+    drawn: () => drawn,
+    stop: () => {
+      stopWaiting();
+      cancelAnimationFrame(raf);
+    },
+  };
 };
 
 /**

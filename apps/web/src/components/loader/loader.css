@@ -1,0 +1,119 @@
+/* The loading screen (spec 5.1), layer 9 (home.css). It shows only under html.loading, which the head script sets
+   on the first visit of a session and removes after 6 s at the latest; nothing on the page depends on it, so the
+   page underneath is complete the whole time. Once the mark flies to the header (data-flying) the overlay stays
+   until the app removes it, while the page is already released. */
+[data-loader] {
+  display: none;
+}
+html.loading [data-loader],
+[data-loader][data-flying] {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+[data-loader][data-flying] {
+  pointer-events: none;
+}
+/* The page does not scroll under the loader; the reserved gutter keeps its width, so nothing is re-measured. */
+html.loading {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
+[data-loader] svg {
+  width: min(34vw, 170px);
+  height: auto;
+  overflow: visible;
+}
+[data-spark] {
+  fill: var(--gold);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* The counter and its bar. */
+[data-loader-meter] {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+[data-loader-count] {
+  font:
+    500 13px var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+[data-loader-count] b {
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+[data-loader-track] {
+  display: block;
+  width: min(180px, 40vw);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--hair);
+  overflow: hidden;
+}
+[data-loader-track] u {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+[dir="rtl"] [data-loader-track] u {
+  transform-origin: 100% 50%;
+}
+
+/* The halves search for each other until the counter reaches 100, then lock (the app snaps them home) and the
+   spark flashes from the centre. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-loader]:not([data-locked]) [data-half="a"] {
+    animation: loader-seek-a 1.1s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+  }
+  [data-loader]:not([data-locked]) [data-half="b"] {
+    animation: loader-seek-b 1.1s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+  }
+  [data-loader][data-locked] [data-spark] {
+    animation: loader-spark 0.6s ease-out both;
+  }
+}
+@keyframes loader-seek-a {
+  0%,
+  100% {
+    transform: translate(9px, -3px);
+  }
+  50% {
+    transform: translate(1px, 0);
+  }
+}
+@keyframes loader-seek-b {
+  0%,
+  100% {
+    transform: translate(-9px, 3px);
+  }
+  50% {
+    transform: translate(-1px, 0);
+  }
+}
+@keyframes loader-spark {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(4.2);
+    opacity: 0;
+  }
+}

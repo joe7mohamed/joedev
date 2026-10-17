@@ -9,3 +9,6 @@ export const SHOT = { width: 1280, height: 800 } as const;
 
 /** The optimised URL every `<Image src={image} {...SHOT}>` of this screenshot loads. */
 export const shotUrl = (image: string): string => getImageProps({ src: image, alt: '', ...SHOT }).props.src;
+
+/** Each project screenshot once, at the URL every image of it loads; projects without one are skipped. */
+export const shotUrls = (images: string[]): string[] => [...new Set(images.filter(Boolean).map(shotUrl))];

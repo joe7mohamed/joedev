@@ -1,13 +1,15 @@
 'use client';
 
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
+import { whenLoaded } from '@/motion/loaded';
 import { HOLD_MS, stepTyper, type TyperState, textOf } from '@/motion/typer';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
 import './typed-title.css';
 
 /**
  * The first title types in by a stepped clip from first paint (hero-intro.css), one step per letter, starting when
- * the row around it fades in, on the page clock (from navigation start). Spec 5.3: 48–88 ms per character.
+ * the row around it fades in, on the page clock: from navigation start, or from the moment the loading screen
+ * released the build. Spec 5.3: 48–88 ms per character.
  */
 const TYPE_AT_MS = 1050;
 const TYPE_STEP_MS = 68;
@@ -57,10 +59,15 @@ export function TypedTitle({ titles, dir }: { titles: string[]; dir: 'ltr' | 'rt
       timer = window.setTimeout(() => tick(next.state), next.delay);
     };
     // the first title holds for the usual time once it has typed in
-    const typedIn = TYPE_AT_MS + first.shown * TYPE_STEP_MS;
-    const hold = Math.max(0, typedIn - performance.now()) + HOLD_MS;
-    timer = window.setTimeout(() => tick(first), hold);
-    return () => window.clearTimeout(timer);
+    const stopWaiting = whenLoaded((origin) => {
+      const typedIn = origin + TYPE_AT_MS + first.shown * TYPE_STEP_MS;
+      const hold = Math.max(0, typedIn - performance.now()) + HOLD_MS;
+      timer = window.setTimeout(() => tick(first), hold);
+    });
+    return () => {
+      stopWaiting();
+      window.clearTimeout(timer);
+    };
   }, [moving, titles]);
   return (
     <>

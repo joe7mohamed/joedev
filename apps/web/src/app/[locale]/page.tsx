@@ -6,7 +6,9 @@ import { Contact } from '@/components/contact/Contact';
 import { SiteFooter } from '@/components/contact/SiteFooter';
 import { Header } from '@/components/header/Header';
 import { Hero } from '@/components/hero/Hero';
+import { Loader } from '@/components/loader/Loader';
 import { Process } from '@/components/process/Process';
+import { shotUrls } from '@/components/work/screenshot';
 import { Work } from '@/components/work/Work';
 import { EngineProvider } from '@/motion/EngineProvider';
 import { GoldElement } from '@/motion/GoldElement';
@@ -39,6 +41,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         </Scene>
       </main>
       <SiteFooter text={c.contact.footer} />
+      <Loader images={shotUrls(c.projects.map((p) => p.image))} />
     </EngineProvider>
   );
 }

@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { settle } from './helpers';
+import { expect } from '@playwright/test';
+import { settle, test } from './helpers';
 
 test('English page is left-to-right with the agreed headline', async ({ page }) => {
   await page.goto('/en');
