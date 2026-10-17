@@ -45,7 +45,7 @@
   min-width: 0;
 }
 [data-process] [data-process-step] > *,
-[data-process] [data-process-step] > [data-item-body] > * {
+[data-process] [data-process-step] > :where([data-item-body]) > * {
   margin: 0;
 }
 [data-process] [data-step-title] {

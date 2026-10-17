@@ -45,7 +45,11 @@ export function useHiddenItems(
     let height = '';
     if (live) {
       el.setAttribute('data-measuring', '');
-      height = `${Math.max(0, ...[...el.querySelectorAll<HTMLElement>(ITEM)].map((item) => item.offsetHeight))}px`;
+      // fractional heights: a rounded one would move the scene by part of a pixel
+      const heights = [...el.querySelectorAll<HTMLElement>(ITEM)].map(
+        (item) => item.getBoundingClientRect().height,
+      );
+      height = `${Math.max(0, ...heights)}px`;
       el.removeAttribute('data-measuring');
     }
     if (el.style.minHeight === height) return false;
