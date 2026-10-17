@@ -1,14 +1,15 @@
 'use client';
 
-import { type HomeContent, plain } from '@zakydev/shared';
+import { type HomeContent, type Locale, plain } from '@zakydev/shared';
 import { type CSSProperties, Fragment, useEffect, useState } from 'react';
 import { icons } from '@/components/icons';
+import { MixedText } from '@/components/MixedText';
 import { registerSlot } from '@/motion/gold';
 import { useSceneFrame } from '@/motion/useSceneFrame';
 import { CopyEmail } from './CopyEmail';
 import './contact.css';
 
-type ContactProps = { content: HomeContent['contact'] };
+type ContactProps = { content: HomeContent['contact']; locale: Locale };
 type ProfileProps = { href: string; name: string; icon: string };
 
 /** Place and time zone, languages, reply promise (prototype app.js 255). */
@@ -47,6 +48,31 @@ function usePlayOnce(): boolean {
   return play;
 }
 
+/**
+ * Tells the page footer (SiteFooter, after <main>) how the scene stands, on <html>: `active` while the pinned scene is
+ * the one on screen, `flowing` while it flows at natural height. The footer shows, or joins the flow, from that.
+ */
+function useSceneState(): void {
+  useSceneFrame('contact', (frame) => {
+    const section = frame.sticky.parentElement;
+    const root = document.documentElement;
+    const state = section?.hasAttribute('data-unpinned')
+      ? 'flowing'
+      : section?.dataset.state === 'active'
+        ? 'active'
+        : null;
+    if (root.dataset.contactScene === (state ?? undefined)) return;
+    if (state) root.dataset.contactScene = state;
+    else delete root.dataset.contactScene;
+  });
+  useEffect(
+    () => () => {
+      delete document.documentElement.dataset.contactScene;
+    },
+    [],
+  );
+}
+
 /** A profile link; its brand icon is a single-colour mask (DESIGN.md), hidden from assistive technology. */
 function Profile({ href, name, icon }: ProfileProps) {
   const mask = `url(/icons/${icon}.svg) center / contain no-repeat`;
@@ -60,11 +86,13 @@ function Profile({ href, name, icon }: ProfileProps) {
 
 /**
  * Contact (spec 5.7): on the gold screen, in dark ink and centred, the label, the question rising word by word, one
- * sentence, the email typing itself in, "Copy email", the two profiles, three facts and the one-line footer. The
+ * sentence, the email typing itself in, "Copy email", the two profiles and three facts; the one-line footer is the
+ * page's own (SiteFooter). The
  * address is always real text in a `mailto:` link; the typing is only a clip over it.
  */
-export function Contact({ content }: ContactProps) {
+export function Contact({ content, locale }: ContactProps) {
   useFlood();
+  useSceneState();
   const play = usePlayOnce();
   // a fixed sentence: its words never reorder, so their position is a stable key
   const words = content.heading.split(/\s+/).map((word, i) => ({ word, key: `${i}:${word}` }));
@@ -111,17 +139,14 @@ export function Contact({ content }: ContactProps) {
             return (
               <li key={text}>
                 <Icon />
-                <span>{text}</span>
+                <span>
+                  <MixedText text={text} locale={locale} />
+                </span>
               </li>
             );
           })}
         </ul>
       </div>
-      <footer data-contact-footer>
-        <span lang="en" dir="ltr">
-          {content.footer}
-        </span>
-      </footer>
     </div>
   );
 }

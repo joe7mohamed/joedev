@@ -189,8 +189,8 @@ html:not(.enhanced) main {
   html:not(.enhanced) {
     scroll-padding-block: 64px 88px;
   }
+  /* the space below the last line for the bottom bar is kept by the page footer, which follows main (contact.css) */
   html:not(.enhanced) main {
     padding-top: 56px;
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
 }

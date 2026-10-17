@@ -168,7 +168,7 @@ html[dir="rtl"] [data-marker]::after {
     margin: 0;
     padding: 6px;
     /* the bar keeps its offset; below the links it reaches over the home indicator */
-    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(6px + var(--safe-bottom));
     justify-content: space-between;
   }
   [data-menu] a {
@@ -202,7 +202,7 @@ html[dir="rtl"] [data-marker]::after {
   }
   [data-marker] {
     top: 6px;
-    bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(6px + var(--safe-bottom));
   }
   [data-marker]::after {
     inset: auto 18px 5px;

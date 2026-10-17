@@ -2,6 +2,7 @@ import { getHome, isLocale } from '@zakydev/shared';
 import { notFound } from 'next/navigation';
 import { About } from '@/components/about/About';
 import { Contact } from '@/components/contact/Contact';
+import { SiteFooter } from '@/components/contact/SiteFooter';
 import { Header } from '@/components/header/Header';
 import { Hero } from '@/components/hero/Hero';
 import { Process } from '@/components/process/Process';
@@ -32,9 +33,10 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <About content={c.about} />
         </Scene>
         <Scene id="contact" length={1.5} tail={0}>
-          <Contact content={c.contact} />
+          <Contact content={c.contact} locale={locale} />
         </Scene>
       </main>
+      <SiteFooter text={c.contact.footer} />
     </EngineProvider>
   );
 }

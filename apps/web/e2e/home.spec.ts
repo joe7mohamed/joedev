@@ -941,7 +941,7 @@ test('profile links open in a new tab as rel="me" and their icons are decorative
     await expect(link.locator('[aria-hidden="true"]')).toHaveCount(1);
   }
   await expect(page.locator('#contact a[href^="mailto:"]')).toHaveAttribute('lang', 'en');
-  await expect(page.locator('#contact footer')).toHaveText('ZakyDev · Youssef Zaky · Bahrain');
+  await expect(page.getByRole('contentinfo')).toHaveText('ZakyDev · Youssef Zaky · Bahrain');
   await expect(page.locator('#contact [data-contact-meta] li')).toHaveCount(3);
   await expect(page.locator('#contact [data-contact-meta] svg[aria-hidden="true"]')).toHaveCount(3);
 });
@@ -979,9 +979,11 @@ test('with reduced motion the contact section is solid gold and fully shown', as
   expect(await contact.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(212, 175, 55)');
   expect(await contact.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(20, 18, 14)');
   await contact.scrollIntoViewIfNeeded();
-  for (const part of ['h2', 'a[href^="mailto:"]', 'button', 'footer', '[data-contact-meta]']) {
+  for (const part of ['h2', 'a[href^="mailto:"]', 'button', '[data-contact-meta]']) {
     await expect(contact.locator(part).first(), part).toBeVisible();
   }
+  // the footer is the page's own, right after <main> (fix round 1)
+  await expect(page.getByRole('contentinfo')).toBeVisible();
   const running = await contact.evaluate((el) => el.getAnimations({ subtree: true }).length);
   expect(running).toBe(0);
 });
@@ -998,3 +1000,131 @@ for (const scheme of ['dark', 'light'] as const) {
     expect(results.violations).toEqual([]);
   });
 }
+
+// Fix round 1, spec 7: the footer is the page-level contentinfo landmark, after <main>, in every mode.
+const footerText = 'ZakyDev · Youssef Zaky · Bahrain';
+const toBottom = (page: Page) =>
+  page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+for (const path of ['/en', '/ar']) {
+  test(`the footer is the page's contentinfo landmark on ${path}, enhanced and stacked`, async ({ page }) => {
+    await page.goto(path);
+    await gotoScene(page, 'contact', 1);
+    const footer = page.getByRole('contentinfo');
+    await expect(footer).toBeVisible();
+    await expect(footer).toHaveText(footerText);
+    await expect(footer).toHaveCSS('opacity', '1');
+    await expect(page.locator('main footer')).toHaveCount(0);
+    await expect(page.locator('main + footer')).toHaveCount(1);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(page.locator('html')).not.toHaveClass(/enhanced/);
+    await toBottom(page);
+    await expect(footer).toBeVisible();
+    await expect(footer).toHaveText(footerText);
+    // in normal flow (relative only lifts it above the background layers)
+    expect(await footer.evaluate((el) => getComputedStyle(el).position)).toMatch(/^(static|relative)$/);
+    expect(await footer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(212, 175, 55)');
+  });
+
+  test(`the footer is the page's contentinfo landmark on ${path} without JavaScript`, async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    await page.goto(path);
+    await toBottom(page);
+    const footer = page.getByRole('contentinfo');
+    await expect(footer).toBeVisible();
+    await expect(footer).toHaveText(footerText);
+    // the gold screen's muted ink on its gold surface
+    expect(await footer.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(74, 64, 38)');
+    expect(await footer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(212, 175, 55)');
+    await context.close();
+  });
+}
+
+// The engine's LAST rule: nothing may add scroll height below #contact while it is pinned, or it would stop being
+// active at the very bottom (and the header would leave the gold).
+test('the fixed footer adds no scroll height and shows only on the contact scene', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'about', 0.5);
+  const footer = page.getByRole('contentinfo');
+  await expect(footer).toHaveCSS('opacity', '0');
+  await toBottom(page);
+  await page.waitForTimeout(500);
+  await expect(page.locator('#contact')).toHaveAttribute('data-state', 'active');
+  await expect(page.locator('#contact')).not.toHaveAttribute('data-unpinned', 'true');
+  const m = await page.evaluate(() => {
+    const contact = (document.getElementById('contact') as HTMLElement).getBoundingClientRect();
+    return { height: document.documentElement.scrollHeight, bottom: contact.bottom + window.scrollY };
+  });
+  expect(Math.abs(m.height - m.bottom)).toBeLessThanOrEqual(1);
+  await expect(footer).toHaveCSS('opacity', '1');
+  expect(await footer.evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
+});
+
+// Spec 7: the phone footer and the space kept for it include the home-indicator inset. Playwright reports an inset of
+// 0, so the test sets the one custom property every bottom offset reads in place of env().
+test('the phone footer clears the bottom bar with a home-indicator inset', async ({ page }, info) => {
+  test.skip(info.project.name !== 'phone');
+  await page.goto('/en');
+  await page.addStyleTag({ content: ':root{--safe-bottom:34px}' });
+  await gotoScene(page, 'contact', 1);
+  const m = await page.evaluate(() => {
+    const footer = (document.querySelector('body > footer') as HTMLElement).getBoundingClientRect();
+    const bar = (document.querySelector('[data-menu]') as HTMLElement).getBoundingClientRect();
+    const meta = (
+      document.querySelector('#contact [data-contact-meta]') as HTMLElement
+    ).getBoundingClientRect();
+    return { footer: footer.bottom, footerTop: footer.top, bar: bar.top, meta: meta.bottom };
+  });
+  expect(m.footer).toBeLessThanOrEqual(m.bar);
+  expect(m.meta).toBeLessThanOrEqual(m.footerTop);
+});
+
+// Minor (a): a refused copy after a successful one never keeps saying "Copied".
+test('a refused copy clears an earlier "Copied"', async ({ page, context }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/en');
+  await gotoScene(page, 'contact', 1);
+  await page.getByRole('button', { name: 'Copy email' }).click();
+  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: () => Promise.reject(new Error('denied')) },
+      configurable: true,
+    });
+  });
+  await page.getByRole('button', { name: 'Copied' }).click();
+  // at once, well inside the 1.6 s a success would keep saying "Copied"
+  await expect(page.getByRole('button', { name: 'Copy email' })).toBeVisible({ timeout: 300 });
+  await expect(page.locator('#contact [aria-live="polite"]')).toHaveText('', { timeout: 300 });
+  expect(await page.evaluate(() => String(getSelection()))).toBe('youssef@zakydev.com');
+});
+
+// Minor (b): the pill keeps its width while its label swaps, so the profile links never move.
+test('the copy pill keeps its width while it says "Copied"', async ({ page, context }, info) => {
+  test.skip(info.project.name !== 'desktop');
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/ar');
+  await gotoScene(page, 'contact', 1);
+  const measure = () =>
+    page.evaluate(() => {
+      const button = (document.querySelector('#contact [data-copy]') as HTMLElement).getBoundingClientRect();
+      const link = (document.querySelector('#contact [data-profile]') as HTMLElement).getBoundingClientRect();
+      return { width: button.width, link: link.left };
+    });
+  const before = await measure();
+  await page.getByRole('button', { name: 'انسخ البريد' }).click();
+  await expect(page.getByRole('button', { name: 'تم النسخ' })).toBeVisible();
+  const after = await measure();
+  expect(Math.abs(after.width - before.width)).toBeLessThanOrEqual(0.5);
+  expect(Math.abs(after.link - before.link)).toBeLessThanOrEqual(0.5);
+});
+
+// Minor (c): Latin runs inside Arabic facts are marked as English.
+test('Latin runs in the Arabic contact facts are marked as English', async ({ page }) => {
+  await page.goto('/ar');
+  await gotoScene(page, 'contact', 1);
+  const first = page.locator('#contact [data-contact-meta] li').first();
+  await expect(first).toHaveText('البحرين · UTC+3');
+  await expect(first.locator('span[lang="en"]')).toHaveText('UTC+3');
+});

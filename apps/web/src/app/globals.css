@@ -14,6 +14,8 @@
   --quick: 180ms;
   --std: 450ms;
   --slow: 900ms;
+  /* the home-indicator inset, read once here so every bottom offset uses the same value (tests can set it) */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 [data-theme="light"] {
   color-scheme: light;

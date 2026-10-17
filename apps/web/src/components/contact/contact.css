@@ -2,7 +2,9 @@
    scene sits on solid gold: the gold element floods the screen behind it. Wherever the gold element is not on
    screen (no script, reduced motion, or a scene that flows) the section paints the same gold itself. */
 
-#contact {
+/* The gold screen's ink, on the scene and on the page footer that rests at its foot. */
+#contact,
+[data-site-footer] {
   --ink: var(--on-gold);
   --muted: #4a4026;
   --hair: rgb(20 18 14 / 0.3);
@@ -19,7 +21,6 @@ html.enhanced #contact {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 48px;
   width: 100%;
   text-align: center;
 }
@@ -66,6 +67,17 @@ html[lang="ar"] [data-contact] [data-contact-heading] {
   justify-content: center;
   gap: 14px 22px;
   margin-top: 6px;
+}
+/* both labels of the copy pill share one cell: it keeps the wider one's width while they swap */
+[data-contact] [data-copy] {
+  display: inline-grid;
+  place-items: center;
+}
+[data-contact] [data-copy-label] {
+  grid-area: 1 / 1;
+}
+[data-contact] [data-copy-label][data-shown="false"] {
+  visibility: hidden;
 }
 [data-contact] [data-profile] {
   display: inline-flex;
@@ -118,30 +130,60 @@ html[lang="ar"] [data-contact] [data-contact-heading] {
   color: var(--accent);
 }
 
-[data-contact] [data-contact-footer] {
-  align-self: stretch;
+/* The page footer (spec 7's contentinfo landmark) follows <main>. Stacked, and while the contact scene flows, it is
+   the last band of the gold screen in normal flow, keeping the space the phone's bottom bar covers. */
+:root {
+  --contact-foot: 26px;
+}
+[data-site-footer] {
+  position: relative;
+  z-index: 2;
+  padding: 0 clamp(1.25rem, 6vw, 6rem) clamp(2rem, 5vw, 3.5rem);
   color: var(--muted);
   font-size: 12.5px;
   text-align: start;
 }
-
-/* Pinned, the column is centred on the screen and the footer rests at its foot, in a band the scene keeps free for
-   it, so the content can never run under it (the engine's fit check measures the column). */
-html.enhanced #contact:not([data-unpinned]) [data-sticky] {
-  --foot: 26px;
-  padding-bottom: calc(var(--foot) + 32px);
+html.enhanced[data-contact-scene="flowing"] #contact [data-sticky] {
+  padding-bottom: 48px;
 }
-html.enhanced #contact:not([data-unpinned]) [data-contact-footer] {
-  position: absolute;
+/* Pinned, it rests at the foot of the screen and adds no scroll height below the last scene (the engine's last
+   scene stays active to the very bottom). It shows only while the contact scene is active, in a band the scene keeps
+   free, so the content can never run under it (the engine's fit check measures the column). */
+html.enhanced:not([data-contact-scene="flowing"]) [data-site-footer] {
+  position: fixed;
   inset-inline: clamp(1.25rem, 6vw, 6rem);
-  bottom: var(--foot);
+  bottom: var(--contact-foot);
+  z-index: 3;
+  padding: 0;
+  background: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--std);
+}
+html.enhanced[data-contact-scene="active"] [data-site-footer] {
+  opacity: 1;
+  pointer-events: auto;
+}
+html.enhanced #contact:not([data-unpinned]) [data-sticky] {
+  padding-bottom: calc(var(--contact-foot) + 32px);
 }
 
 @media (max-width: 860px) {
-  /* above the bottom menu bar */
+  /* above the bottom menu bar and the home indicator */
+  :root {
+    --contact-foot: calc(84px + var(--safe-bottom));
+  }
+  [data-site-footer] {
+    padding: 0 20px calc(80px + var(--safe-bottom));
+    font-size: 11px;
+    text-align: center;
+  }
+  html.enhanced:not([data-contact-scene="flowing"]) [data-site-footer] {
+    inset-inline: 20px;
+    padding: 0;
+  }
   html.enhanced #contact:not([data-unpinned]) [data-sticky] {
-    --foot: 84px;
-    padding-bottom: calc(var(--foot) + 30px);
+    padding-bottom: calc(var(--contact-foot) + 30px);
   }
   [data-contact-main] {
     gap: 12px;
@@ -156,13 +198,6 @@ html.enhanced #contact:not([data-unpinned]) [data-contact-footer] {
   [data-contact] [data-contact-meta] {
     gap: 6px 14px;
     font-size: 13px;
-  }
-  [data-contact] [data-contact-footer] {
-    font-size: 11px;
-    text-align: center;
-  }
-  html.enhanced #contact:not([data-unpinned]) [data-contact-footer] {
-    inset-inline: 20px;
   }
 }
 
