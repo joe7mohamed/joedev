@@ -19,28 +19,16 @@ The owner decided these on 2026-10-17.
    - in Arabic, the loader bar fills from the right, like the header progress bar.
 8. **URLs: English at `/`, Arabic at `/ar`.** Every visitor gets the English page at the plain domain; `/` no longer redirects by the browser's language. `/en` is a permanent redirect (308) to `/`, query string kept. Canonical, hreflang (`x-default` → `/`), `og:url`, the structured data and the sitemap use `https://zakydev.com/` and `https://zakydev.com/ar`. The language switch is now an in-place, client-side navigation: no page reload, and every frame shows the reader's scene and step where they were (the theme too); without script it is still a plain link. Both pages stay prerendered. (`docs/DEPLOY.md` lists the routes and the outside curl checks.)
 
-## 2. Copy to confirm (spec 12)
+## 2. Copy: confirmed (spec 12)
 
-These strings are wrapped in `u()`. A build with `REQUIRE_CONFIRMED=1` fails until every one is confirmed or changed (`packages/shared/src/content/home.en.ts` / `home.ar.ts`).
+**All copy is confirmed.** The owner confirmed every text that was waiting (they were wrapped in `u()`) and revised some of them on 2026-10-17. No `u()` is left in `packages/shared/src/content/home.en.ts` or `home.ar.ts`, a unit test keeps it that way, and `REQUIRE_CONFIRMED=1 npm run build` passes. Every text that was waiting was confirmed as written, except the ones revised below.
 
-| Key | English | Arabic |
-| --- | --- | --- |
-| nav.sections (menu label) | Sections | الأقسام |
-| hero.titles[1] | Full-stack developer | مطوّر Full-Stack |
-| hero.availability | Available for new projects | متاح لمشاريع جديدة |
-| Wazifi and Talmeeha meta | My own product | مشروعي الخاص |
-| process.live (badge) | LIVE | LIVE |
-| step 1 "You get" | A clear plan | خطة واضحة |
-| step 2 "You get" | Screens you can click through | شاشات يمكنك تجربتها |
-| step 3 "You get" | A working version, early | نسخة تعمل، مبكرًا |
-| step 4 "You get" | Fewer surprises | مفاجآت أقل |
-| step 5 "You get" | A live product, looked after | منتج يعمل، مع متابعة |
-| monitoring tools | Logs · health checks | Logs · health checks |
-| about: day job | I build software for a hospital. | أبني برمجيات لمستشفى. |
-| about: after work | League of Legends, Valorant and TFT. Read the map, make the call, adapt. | League of Legends و Valorant و TFT. أقرأ الخريطة، أقرّر، وأتكيّف. |
-| about drawing label | HEALTHCARE → CODE | HEALTHCARE → CODE |
-| about drawing games | LOL · VALORANT · TFT | LOL · VALORANT · TFT |
-| contact meta | Reply within two working days | أردّ خلال يومي عمل |
+Revised on 2026-10-17:
+- **Arabic:** availability (أستقبل مشاريع جديدة), the visit link (زيارة الموقع), the Nuammer category, the rotating words, the Wazifi and Talmeeha captions, the Build, Test and Launch sentences, steps 2–5 "you get", the LIVE badge (now مباشر, set in the Arabic body face), two fact labels (مقيم في, وظيفتي), the day-job and marshal facts, the Riot disclaimer, the contact heading and sentence, and the footer (ZakyDev · يوسف زكي · البحرين). The Arabic page now names the person in Arabic (`site.name` يوسف زكي); a new `site.latinName` keeps the Latin form for what must stay Latin.
+- **English:** the Wazifi description ("CV" for "résumé"), steps 2, 4 and 5 "you get", and the Riot disclaimer ("isn't affiliated with or endorsed by").
+- **SEO:** new titles and descriptions in both languages. The structured data is now a `ProfilePage` whose main entity is the Person (name in the page's language, the Latin name and the brand as alternates, job title, email, address, languages, the tools from the projects and steps, the sharing card, GitHub and LinkedIn).
+
+**City:** the structured data gives the address as Manama (المنامة), Bahrain, from a new shared key `site.city`. Manama appears in the structured data only; the page itself still says Bahrain.
 
 Also from spec 12:
 - one line per project (the hardest problem and what you did), for later case studies;
