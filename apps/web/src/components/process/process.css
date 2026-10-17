@@ -44,7 +44,8 @@
   align-content: start;
   min-width: 0;
 }
-[data-process] [data-process-step] > * {
+[data-process] [data-process-step] > *,
+[data-process] [data-process-step] > [data-item-body] > * {
   margin: 0;
 }
 [data-process] [data-step-title] {
@@ -117,14 +118,15 @@ html.enhanced #process:not([data-unpinned]) [data-process-scene] [data-build] {
   max-width: none;
   max-height: 58svh;
 }
-/* All steps share one grid cell, so the column always has the height of the tallest one and the engine's fit
-   check (pin or flow) sees it, whichever step is in view; the rail below never moves. The others are invisible,
-   inert and aria-hidden. */
+/* All steps share one grid cell, kept as tall as the tallest one (useHiddenItems), so the engine's fit check (pin or
+   flow) sees it, whichever step is in view; the rail below never moves. The others are out of sight only: they stay
+   in the accessibility tree, and the rest of each waits to be found (home.css). */
 html.enhanced #process:not([data-unpinned]) [data-process-step] {
   grid-area: 1 / 1;
 }
 html.enhanced #process:not([data-unpinned]) [data-process-step]:not([data-current]) {
-  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 html.enhanced #process:not([data-unpinned]) [data-step-title] {
   font-size: clamp(52px, 7.8vw, 124px);

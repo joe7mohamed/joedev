@@ -1,5 +1,5 @@
 import type { HomeContent } from '@zakydev/shared';
-import { Fragment, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Swap } from '@/motion/Swap';
 import type { Shot } from './screenshot';
 
@@ -7,14 +7,14 @@ export type Project = HomeContent['projects'][number];
 
 type ProjectTextProps = {
   project: Project;
+  /** Its place in the scene (0-based), which the scene's hidden-item handling reads (useHiddenItems). */
+  index: number;
   /** Everything below the name, rendered on the server (ProjectBody). */
   body: ReactNode;
   /** The article's screenshot, with the project's description of it as alt text. */
   shot: Shot;
   /** The project in view; in the stacked layout simply the first one. */
   current: boolean;
-  /** Enhanced and not in view: out of sight and out of the accessibility tree. */
-  hidden: boolean;
   /** The first screenshot is preloaded: the hero zoom reveals it (spec 6.2). */
   preload: boolean;
   /** Hydrated and the page is stacked (reduced motion, or a scene too tall to pin): the screenshot shows here. */
@@ -48,23 +48,20 @@ function StackedShot({ shot, preload, stacked }: Pick<ProjectTextProps, 'shot' |
  * One project as a complete article. In the stacked layout every project shows this in full. In enhanced mode only
  * the current one shows: its name flips through `Swap`, and everything else is keyed by the project, so a new
  * project remounts it and replays the settle-in animation, which only ever fills backwards and so always ends on
- * the visible resting style.
+ * the visible resting style. The others stay in the accessibility tree by name, out of sight, with their bodies
+ * waiting to be found (`data-item-body`, useHiddenItems). The article takes focus only from script (tabIndex -1), so
+ * focusing it can bring it into view without adding a tab stop.
  */
-export function ProjectText({ project, body, shot, current, hidden, preload, stacked }: ProjectTextProps) {
+export function ProjectText({ project, index, body, shot, current, preload, stacked }: ProjectTextProps) {
   return (
-    <article
-      data-project-text
-      data-current={current || undefined}
-      inert={hidden || undefined}
-      aria-hidden={hidden || undefined}
-    >
+    <article data-project-text data-item data-index={index} data-current={current || undefined} tabIndex={-1}>
       <h3 data-name lang="en">
         <Swap value={project.name} />
       </h3>
-      <Fragment key={project.id}>
+      <div key={project.id} data-item-body>
         {body}
         <StackedShot shot={shot} preload={preload} stacked={stacked} />
-      </Fragment>
+      </div>
     </article>
   );
 }

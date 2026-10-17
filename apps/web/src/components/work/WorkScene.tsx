@@ -4,6 +4,7 @@ import type { HomeContent } from '@zakydev/shared';
 import { type ReactNode, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { fixedRect, registerSlot } from '@/motion/gold';
 import { currentFirst, stepAt } from '@/motion/math';
+import { useHiddenItems } from '@/motion/useHiddenItems';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
 import { useSceneFrame } from '@/motion/useSceneFrame';
 import { ProjectBars } from './ProjectBars';
@@ -87,6 +88,7 @@ function useWorkSlot(slot: RefObject<HTMLDivElement | null>): void {
 export function WorkScene({ work, projects, bodies, shots }: WorkSceneProps) {
   const root = useRef<HTMLDivElement>(null);
   const slot = useRef<HTMLDivElement>(null);
+  const projectsBox = useRef<HTMLDivElement>(null);
   const enhanced = useMedia(MOTION_OK);
   const hydrated = useHydrated();
   const count = projects.length;
@@ -95,6 +97,7 @@ export function WorkScene({ work, projects, bodies, shots }: WorkSceneProps) {
 
   const live = enhanced && !step.flowing;
   const at = live ? step.current : 0;
+  useHiddenItems('work', projectsBox, live, at, count);
   return (
     <div ref={root} data-fade data-work data-project={at}>
       <div data-work-text>
@@ -105,7 +108,7 @@ export function WorkScene({ work, projects, bodies, shots }: WorkSceneProps) {
           </p>
         </div>
         <ProjectBars names={projects.map((p) => p.name)} current={at} />
-        <div data-projects>
+        <div ref={projectsBox} data-projects>
           {/* the current project's article first; the stacked layout (at 0) keeps the order as written */}
           {currentFirst(count, at).map((i) => {
             const project = projects[i] as Project;
@@ -113,10 +116,10 @@ export function WorkScene({ work, projects, bodies, shots }: WorkSceneProps) {
               <ProjectText
                 key={i === at ? 'current' : project.id}
                 project={project}
+                index={i}
                 body={bodies[i]}
                 shot={shots[i] as Shot}
                 current={i === at}
-                hidden={live && i !== at}
                 preload={i === 0}
                 stacked={hydrated && !live}
               />

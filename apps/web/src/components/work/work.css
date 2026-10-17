@@ -36,7 +36,8 @@
   align-content: start;
   min-width: 0;
 }
-[data-project-text] > * {
+[data-project-text] > *,
+[data-project-text] > [data-item-body] > * {
   margin: 0;
 }
 [data-name] {
@@ -118,13 +119,15 @@ html.enhanced #work:not([data-unpinned]) [data-frame] {
   width: 100%;
   aspect-ratio: 16 / 10;
 }
-/* All projects share one grid cell, so the column always has the height of the tallest one and the engine's fit
-   check (pin or flow) sees it, whichever project is in view. The others are invisible, inert and aria-hidden. */
+/* All projects share one grid cell, kept as tall as the tallest one (useHiddenItems), so the engine's fit check (pin
+   or flow) sees it, whichever project is in view. The others are out of sight only: they stay in the accessibility
+   tree, and their bodies wait to be found (home.css). */
 html.enhanced #work:not([data-unpinned]) [data-project-text] {
   grid-area: 1 / 1;
 }
 html.enhanced #work:not([data-unpinned]) [data-project-text]:not([data-current]) {
-  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 html.enhanced #work:not([data-unpinned]) [data-shot] {
   display: none;
@@ -135,13 +138,14 @@ html.enhanced #work:not([data-unpinned]) [data-shot] {
     column-gap: 20px;
     align-items: center;
   }
-  [data-project-text] > * {
+  [data-project-text] > *,
+  [data-project-text] > [data-item-body] > * {
     grid-column: 1 / -1;
   }
-  [data-project-text] > [data-tools] {
+  [data-project-text] > [data-item-body] > [data-tools] {
     grid-column: 1;
   }
-  [data-project-text] > [data-visit] {
+  [data-project-text] > [data-item-body] > [data-visit] {
     grid-column: 2;
     justify-self: end;
   }

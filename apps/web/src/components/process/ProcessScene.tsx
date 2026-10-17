@@ -5,6 +5,7 @@ import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'rea
 import type { SceneFrame } from '@/motion/engine';
 import { pinnedRect, registerSlot } from '@/motion/gold';
 import { clamp, currentFirst, stepAt, stepDraw } from '@/motion/math';
+import { useHiddenItems } from '@/motion/useHiddenItems';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
 import { useSceneFrame } from '@/motion/useSceneFrame';
 import { StepRail } from './StepRail';
@@ -105,6 +106,7 @@ function useRailSlot(slot: RefObject<HTMLDivElement | null>, count: number): voi
 export function ProcessScene({ content, drawing, tools, check, tick }: ProcessSceneProps) {
   const box = useRef<HTMLDivElement>(null);
   const slot = useRef<HTMLDivElement>(null);
+  const stepsBox = useRef<HTMLOListElement>(null);
   const enhanced = useMedia(MOTION_OK);
   const count = content.steps.length;
   const progress = useProcessStep(count, box, enhanced);
@@ -112,6 +114,7 @@ export function ProcessScene({ content, drawing, tools, check, tick }: ProcessSc
 
   const live = enhanced && !progress.flowing;
   const at = live ? progress.current : 0;
+  useHiddenItems('process', stepsBox, live, at, count);
   return (
     <div data-fade data-process>
       <div data-process-main>
@@ -123,7 +126,7 @@ export function ProcessScene({ content, drawing, tools, check, tick }: ProcessSc
           <p data-count dir="ltr" aria-hidden="true">
             <b>{pad(at + 1)}</b> / {pad(count)}
           </p>
-          <ol data-process-steps>
+          <ol ref={stepsBox} data-process-steps>
             {currentFirst(count, at).map((i) => (
               <StepText
                 key={i === at ? 'current' : i}
@@ -133,7 +136,6 @@ export function ProcessScene({ content, drawing, tools, check, tick }: ProcessSc
                 check={check}
                 tools={tools[i]}
                 current={i === at}
-                hidden={live && i !== at}
               />
             ))}
           </ol>

@@ -207,6 +207,13 @@ html[lang="ar"] [data-scene] [data-label] {
   font-weight: 500;
 }
 
+/* A project's or step's body (useHiddenItems) adds no box of its own: its parts sit in the item's layout. While it waits
+   to be found (hidden="until-found") it is a box, so it can skip its content; measuring the tallest item shows it. */
+[data-item-body]:not([hidden]),
+[data-measuring] [data-item-body] {
+  display: contents;
+}
+
 /* A new project or step settles in: 12 px, 35 ms apart. Backwards fill only, so it always ends on its resting
    style, however often it is interrupted (spec 6.5). */
 @media (prefers-reduced-motion: no-preference) {

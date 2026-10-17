@@ -250,6 +250,8 @@ export const engine = {
     return () => listeners.delete(listener);
   },
   invalidate: onScroll,
+  /** Measures the scenes again (pin or flow, geometry) after content changed size without a resize. */
+  refit: onResize,
   /** Scrolls so that the scene's body equals the fraction; a scene that flows is reached at its top. */
   scrollToScene(id: SceneId, bodyFraction = 0.06): void {
     const scene = scenes.get(id);
