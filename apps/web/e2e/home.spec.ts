@@ -850,6 +850,23 @@ test('Latin text in the about scene is marked as English on the Arabic page', as
   }
 });
 
+// Latin runs inside Arabic sentences ("F1 و WEC", "League of Legends", "Riot Games") are marked as English too.
+test('Latin runs in the Arabic fact cards and the disclaimer are marked as English', async ({ page }) => {
+  await page.goto('/ar');
+  await gotoScene(page, 'about', 0.5);
+  const texts = page.locator('#about :is([data-fact-body], [data-disclaimer])');
+  await expect(texts).toHaveCount(5);
+  const unmarked = await texts.evaluateAll((els) =>
+    els.flatMap((el) =>
+      [...el.childNodes]
+        .filter((node) => node.nodeType === Node.TEXT_NODE && /[A-Za-z]/.test(node.textContent ?? ''))
+        .map((node) => node.textContent),
+    ),
+  );
+  expect(unmarked).toEqual([]);
+  await expect(page.locator('#about [data-disclaimer] span[lang="en"]').first()).toBeAttached();
+});
+
 test('contact always exposes the real email and both profiles', async ({ page }) => {
   await page.goto('/en');
   await gotoScene(page, 'contact', 1);

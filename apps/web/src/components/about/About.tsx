@@ -1,12 +1,13 @@
-import type { HomeContent } from '@zakydev/shared';
+import type { HomeContent, Locale } from '@zakydev/shared';
 import { plain } from '@zakydev/shared/text';
 import { icons } from '@/components/icons';
 import { Mark } from '@/components/Mark';
+import { MixedText } from '@/components/MixedText';
 import { FactCard } from './FactCard';
 import { LoopRing } from './LoopRing';
 import './about.css';
 
-type AboutProps = { content: HomeContent['about'] };
+type AboutProps = { content: HomeContent['about']; locale: Locale };
 
 /** One icon per stage, clockwise from the top (prototype app.js LOOP_ICONS). */
 const LOOP_ICONS = [
@@ -24,7 +25,7 @@ const LOOP_ICONS = [
  * The text comes first in the document; on screen the ring sits on the start side (desktop) or on top (phone).
  * Without script or with reduced motion the ring rests on the first stage and the cards show their finished scenes.
  */
-export function About({ content }: AboutProps) {
+export function About({ content, locale }: AboutProps) {
   const stages = content.loop.map((stage) => ({ name: stage.name, tools: plain(stage.tools) }));
   return (
     <div data-fade data-about>
@@ -33,10 +34,12 @@ export function About({ content }: AboutProps) {
         <h2 data-about-heading>{content.heading}</h2>
         <ul data-facts>
           {content.facts.map((fact) => (
-            <FactCard key={fact.id} fact={fact} labels={content.sceneLabels} />
+            <FactCard key={fact.id} fact={fact} labels={content.sceneLabels} locale={locale} />
           ))}
         </ul>
-        <p data-disclaimer>{content.disclaimer}</p>
+        <p data-disclaimer>
+          <MixedText text={content.disclaimer} locale={locale} />
+        </p>
       </div>
       <LoopRing
         stages={stages}
