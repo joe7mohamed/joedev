@@ -6,9 +6,9 @@ import { gotoScene, settle, test } from './helpers';
  * with no surface of its own, must reach 4.5:1 (3:1 when large) against what is really rendered around its glyphs:
  * the shader, the page-colour halo and anything else behind them. Method of Task 11's measurement (task-11-report.md,
  * "Fix round (pre-review)"): one shot of the page with every text fill transparent, one glyph mask per layer of
- * non-overlapping elements, and per element the background pixels within RING px of its glyphs, of which the lowest
- * TAIL may fall short: where the halo's anti-aliased edge meets the smoke (Task 11's acceptance measure). WCAG's
- * understanding of 1.4.3 counts a halo that fills the letters' counters as the text's background.
+ * non-overlapping elements, and per element the background pixels within RING px of its glyphs. The darkest of them
+ * (the worst contrast) decides: spec 5.8, never below AA. WCAG's understanding of 1.4.3 counts a halo that fills the
+ * letters' counters as the text's background.
  * The shader runs on software GL only with `?bg=soft`, and `?freeze=1` holds its clock still.
  */
 
@@ -21,11 +21,8 @@ const SCENES: Array<[string, number]> = [
 ];
 /** Background pixels this close to a glyph (Chebyshev distance) count. */
 const RING = 1;
-/**
- * The share of a ring's pixels that may fall short. At 0 (the single worst pixel) the phone's light About label
- * reads 4.18:1 at the halo's soft edge, 9 of its 602 ring pixels (task-13b-report.md).
- */
-const TAIL = 0.02;
+/** The share of a ring's pixels that may fall short: none. */
+const TAIL = 0;
 const GLYPH = '#f0f';
 
 type Item = {

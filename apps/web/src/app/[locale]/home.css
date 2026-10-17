@@ -55,6 +55,21 @@ body::before {
     1px -1px var(--bg),
     -1px 1px var(--bg);
   --halo: var(--halo-ring), var(--halo-ring), 0 0 1px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);
+  /* a second, 2 px ring for the scene labels in the light theme: their accent has the least room on cream */
+  --halo-wide:
+    var(--halo-ring),
+    var(--halo-ring),
+    2px 0 var(--bg),
+    -2px 0 var(--bg),
+    0 2px var(--bg),
+    0 -2px var(--bg),
+    1.5px 1.5px var(--bg),
+    -1.5px -1.5px var(--bg),
+    1.5px -1.5px var(--bg),
+    -1.5px 1.5px var(--bg),
+    0 0 1px var(--bg),
+    0 0 2px var(--bg),
+    0 0 4px var(--bg);
   --glow: var(--halo), 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
   text-shadow: var(--halo);
   position: relative;
@@ -68,6 +83,11 @@ body::before {
 /* browsers reset text-shadow on buttons; the scene's own buttons (stations, bars) sit on the background too */
 :where([data-scene]) button {
   text-shadow: inherit;
+}
+/* The halo is only for text over the background. Drawings keep their own text plain (SVG labels, the LIVE badge),
+   and so does text on a surface of its own: the diagram cards, the tool chips and the rail's station discs. */
+[data-scene] :is(svg, [data-diagram], [data-tools] li, [data-step-tools] li, [data-rail] [data-station]) {
+  text-shadow: none;
 }
 
 /* Pinned layout (html.pinned: set by the head script before first paint, kept by EngineProvider, layout only): each
@@ -156,6 +176,10 @@ html.enhanced #contact [data-sticky] {
     monospace;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+/* the light theme's accent reaches only 4.65:1 on plain cream, so over smoke the labels need the wider halo (spec 5.8) */
+html[data-theme="light"] [data-scene] [data-label] {
+  text-shadow: var(--halo-wide);
 }
 html[lang="ar"] [data-scene] [data-label] {
   font-family: var(--stack-body);
