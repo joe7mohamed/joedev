@@ -138,7 +138,7 @@ Mobile, /en and /ar; gates 90 / 100 / 100 / 100; record scores, TTFB and server 
 ### 8. Sign-off and merge (you decide)
 - Confirm or change every `u()` string (Claude gives the list).
 - Claude sets `REQUIRE_CONFIRMED=1` in Velocity env, redeploys, opens the PR to `main` only on your word; then switch branch to `main`, auto-deploy on.
-- Owner housekeeping: done for MongoDB (no longer used) and the old root `.env` (deleted); optionally claim the npm org `zakydev`.
+- Owner housekeeping, still open: delete the `joedb` database user (or the whole project) in MongoDB Atlas. Its password is in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10). Deleting the local `.env`, which is already done, does not revoke it; only deleting the Atlas user does. Optionally claim the npm org `zakydev`.
 
 ## LCP after launch
 

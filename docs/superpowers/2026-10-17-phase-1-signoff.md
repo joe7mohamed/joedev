@@ -12,7 +12,7 @@ The owner decided these on 2026-10-17.
 2. **Arabic font: self-hosted, preloaded on `/ar` only.** The two display faces (Fraunces, Amiri) are now files in the repository, built from the upstream releases (`docs/VERSIONS.md`). Each page preloads only its headline's face: Fraunces on `/en`, Amiri on `/ar`. `/en` never downloads Amiri. The body and mono faces load without preload, over size-matched fallbacks. The `/ar` font-swap shift is gone: 0.015–0.021 on desktop, where it was 0.05–0.10. The Lighthouse CI step stays parked: on `/ar` the performance score is 0.80–0.87 in the lab, below 0.9, because Lighthouse counts the Amiri and Arabic body font downloads before the first paint (see the owner-round report, round 2). `/en` passes every gate except LCP.
 3. **Route-JS budget: 170 kB gzip.** Both pages load 149,898 bytes, so about 20 kB is left (spec line 32, `check-bundle.mjs`, `docs/DEPLOY.md`).
 4. **Large phones: fixed.** Phones about 414–430 × 832–836, a window about 860 × 700 and the 768 × 1024 tablet now pin every scene, in both languages. The tested sizes that pinned before measure the same as before.
-5. **Secrets.** MongoDB is no longer used, and the old root `.env` has been deleted. It was never tracked in git, and nothing in the repository reads it.
+5. **Secrets: still open.** MongoDB is no longer used, and the untracked root `.env` is deleted. Deleting the `.env` does not revoke anything: the MongoDB Atlas password is in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10). **Still to do (owner):** delete the `joedb` database user, or the whole project, in MongoDB Atlas. Only that revokes the password. Spec 12 item 4 stays open until you confirm it.
 6. **Two small differences from the prototype, accepted:**
    - the loader's `%` is a literal sign;
    - in Arabic, the loader bar fills from the right, like the header progress bar.
@@ -43,7 +43,7 @@ These strings are wrapped in `u()`. A build with `REQUIRE_CONFIRMED=1` fails unt
 Also from spec 12:
 - one line per project (the hardest problem and what you did), for later case studies;
 - a native read-through of all the Arabic copy;
-- the leaked MongoDB Atlas credentials and the untracked root `.env`: done, MongoDB is no longer used and the `.env` is deleted (item 1.5);
+- **open:** delete the `joedb` database user (or the whole project) in MongoDB Atlas. The password is in the public history (888cc10), and deleting the local `.env` does not revoke it (item 1.5);
 - optional: claim the npm org `zakydev`.
 
 ## 3. Known small items left on purpose
