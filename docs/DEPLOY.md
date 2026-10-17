@@ -87,8 +87,8 @@ from 150 kB on 2026-10-17).
 `node apps/web/scripts/check-bundle.mjs` checks it after `npm run build`; CI runs it on the production build. To see
 what is in the scripts: `npx next analyze` in `apps/web`.
 
-Headroom: about 16 kB. Both routes load 153,514 bytes of the 170,000, so 16,486 bytes are left (the URL round added
-3,616 bytes: the language switch became a `next/link` client-side navigation). The limit was
+Headroom: about 19 kB. Both routes load 150,717 bytes of the 170,000, so 19,283 bytes are left (the URL round added
+819 bytes: the language switch navigates with `useRouter().push`; `next/link` would have cost 3,616). The limit was
 150 kB until 2026-10-17, when the final fix wave of Phase 1 had left only 0.1 kB; the owner raised it rather than split
 the route. A feature that adds client JavaScript should still say how much it adds; the limit itself does not move
 again without an owner decision.
