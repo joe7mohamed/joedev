@@ -103,6 +103,9 @@ const needed = (sticky: HTMLElement): number => {
  */
 const fitScenes = (): void => {
   layout += 1;
+  // measuring puts every scene back to pinned for a moment; scroll anchoring would then move the page by the height
+  // a scene that flows above the viewport gained or lost, so the scroll position is put back afterwards
+  const y = window.scrollY;
   const viewports = new Map<SceneId, number>();
   for (const [id, { section, sticky }] of scenes) {
     section.removeAttribute('data-unpinned');
@@ -131,6 +134,7 @@ const fitScenes = (): void => {
       beforeUnpinned,
     };
   }
+  if (window.scrollY !== y) window.scrollTo({ top: y, behavior: 'instant' });
 };
 
 /** Writes an inline custom property or attribute only when its value changed; `null` removes it. */

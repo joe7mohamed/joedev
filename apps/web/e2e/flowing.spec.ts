@@ -61,6 +61,21 @@ for (const path of ['/en', '/ar']) {
   });
 }
 
+// Refitting (a resize, the phone's address bar, fonts) measures every scene with nothing flowing for a moment; the
+// browser's scroll anchoring must not move the page while it does.
+test('refitting while a scene flows does not move the page', async ({ page }) => {
+  await flowWork(page);
+  await gotoScene(page, 'about', 0.5);
+  const before = await page.evaluate(() => window.scrollY);
+  for (let i = 0; i < 3; i++) {
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    await page.waitForTimeout(200);
+  }
+  expect(await page.evaluate(() => window.scrollY)).toBe(before);
+  await expect(page.locator('#about')).toHaveAttribute('data-state', 'active');
+  await expect(page.locator('html')).toHaveAttribute('data-gold-on', 'about');
+});
+
 test('the gold element never sits on a scene that flows', async ({ page }) => {
   await flowWork(page);
   // the middle of the flowing work scene fills the screen
