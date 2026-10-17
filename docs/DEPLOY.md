@@ -1,8 +1,15 @@
 # Deploying
 
 Notes a deployment has to respect. The site is fully static: `/en`, `/ar`, their sharing images, the sitemap,
-robots.txt, the manifest and the icon are all prerendered by `next build`. Only the `/` language redirect
-(`src/proxy.ts`) runs per request.
+robots.txt, the manifest, the icon and the PNG app icons are all prerendered by `next build`. Only the `/` language
+redirect (`src/proxy.ts`) runs per request.
+
+## Build machine: network
+
+`next build` downloads the web fonts (`next/font/google`, `src/lib/fonts.ts`) and self-hosts them in the build
+output. The build machine needs outbound HTTPS to `fonts.googleapis.com` and `fonts.gstatic.com`; an offline build
+fails. Nothing is fetched at run time: visitors only ever load fonts from the site itself. If the build host cannot
+reach Google Fonts, switch the faces to `next/font/local` with the font files committed.
 
 ## Environment
 
@@ -12,7 +19,7 @@ robots.txt, the manifest and the icon are all prerendered by `next build`. Only 
 | `NEXT_PUBLIC_E2E` | Test builds only. Never set it for a deployment. |
 | `REQUIRE_CONFIRMED` | `1` makes the build fail while any copy still waits for the owner's confirmation. |
 
-## Sharing image
+## Sharing image and app icons
 
 `app/[locale]/opengraph-image.tsx` renders at build time with `satori` and `@resvg/resvg-js`, reading the fonts
 committed under `apps/web/assets/og/`. The build machine needs:
@@ -21,7 +28,9 @@ committed under `apps/web/assets/og/`. The build machine needs:
   (`@resvg/resvg-js-linux-x64-gnu` on a glibc Linux x64 host); it has no install script;
 - the `apps/web/assets/og/` folder in the checkout.
 
-Nothing is fetched from the network at build time or at run time for the image.
+The PNG app icons (`app/app-icons/[file]/route.ts`, `app/apple-icon.ts`, `src/lib/app-icon.ts`) are rendered the
+same way from `public/brand/zakydev-icon-gold.svg`. Nothing is fetched from the network at build time or at run time
+for the image or the icons.
 
 ## Content-Security-Policy
 
@@ -62,3 +71,69 @@ and without the background shader's chunk, which loads later) stay at or below 1
 `node apps/web/scripts/check-bundle.mjs` checks it after `npm run build`; CI runs it on the production build. To see
 what is in the scripts: `npx next analyze` in `apps/web`.
 
+Headroom: almost none. At the end of Phase 1 (final fix wave) both routes load 149.9 kB of the 150 kB, so 0.1 kB is
+left (149.0 kB before that wave, whose fixes took 0.9 kB). The next feature that adds client JavaScript must first make room elsewhere (move markup to the
+server, split a rarely used part into a chunk that loads later); the limit itself does not move.
+
+## Deploy steps (owner + Claude)
+
+You click; Claude reads the results back and checks from outside. Never paste passwords or tokens into chat.
+
+### 0. Before you start (Claude)
+- CI green on `rebuild/zakydev` at the commit being deployed.
+- Next.js / React security releases newer than docs/VERSIONS.md checked; bump if one exists and has cleared min-release-age.
+
+### 1. Cloudflare: save what is there (you)
+1. Cloudflare dashboard → zakydev.com → DNS → Records → **Export** (zone file). Keep the file; send Claude only the record *names and types* (no need to share values).
+2. Tell Claude every subdomain you see (e.g. `mail.`, `calendar.`) so each can be checked for HTTPS before HSTS ever widens.
+
+Never touch: **MX**, **TXT** (SPF `v=spf1 … _spf.google.com`, `_dmarc`, `google._domainkey`, `google-site-verification`), or any other subdomain.
+
+### 2. Velocity: create the app (you)
+Cloudways → Velocity → Launch application → GitHub → repo `joe7mohamed/joedev`.
+
+| Field | Value |
+| --- | --- |
+| Server location | closest to Bahrain from the list (tell Claude which) |
+| Framework preset | Next.js (pick it yourself — the dashboard does not always auto-detect) |
+| Branch | `rebuild/zakydev` (switch to `main` after the merge) |
+| Node version | **24.x** (if only 22 is offered, stop and tell Claude) |
+| Package manager | npm |
+| Root directory | `./` |
+| Build command | `npm run build` |
+| Start command | `npm start` |
+| Auto-deploy | **Off** for now |
+
+Environment variables (before the first deploy):
+- `NEXT_PUBLIC_SITE_URL` = `https://zakydev.com`
+- Do **not** set `NEXT_PUBLIC_E2E`. Leave `REQUIRE_CONFIRMED` unset until sign-off.
+
+### 3. First deploy on the temporary address (you deploy, Claude reads)
+- Copy the build log to Claude (or the lines with Node/npm versions and any error).
+- The build downloads the fonts: it needs outbound HTTPS to `fonts.googleapis.com` and `fonts.gstatic.com` (see "Build machine: network").
+- Known possible fixes Claude will tell you to apply, one at a time:
+  - npm older than 11.19 → build command `npm install -g npm@11 && npm run build` (or Claude relaxes devEngines).
+  - `turbo: not found` → build command `npm ci --include=dev && npm run build`.
+- Watch Monitoring during the build; tell Claude the peak memory (Starter: 2 GB shared).
+- Send Claude the temporary `*.cloudwaysnodeapps.com` URL; Claude checks `/en`, `/ar`, `/`, `/fr` (404).
+
+### 4. Connect the domain (you)
+1. Velocity → Domain Management → add `zakydev.com` and `www.zakydev.com`.
+2. Velocity shows the records to create. **Copy them from the dashboard** (CNAME preferred; A records if the apex CNAME is refused).
+3. Cloudflare DNS: delete only existing **A / AAAA / CNAME** on `@` and `www` (if any), then add Velocity's records with **Proxy status: DNS only (grey cloud)**.
+4. Wait for Velocity to mark the domain Active (up to 24 h, it emails you).
+
+### 5. CDN panel in Velocity (you)
+- Caching on; Image Optimization (Polish) **Off**; WAF / rate limiting / Browser Integrity Check at defaults.
+- After every deploy: **Purge**.
+
+### 6. Verify (Claude, from outside)
+curl checks for 200 / lang+dir / Accept-Language redirect / 404 / www→apex 308 / HSTS (no includeSubDomains, no preload) / cf-cache-status not HIT for HTML / `dig MX` still Google. Then you send a test email to youssef@zakydev.com from another account.
+
+### 7. Lighthouse on the live site (Claude)
+Mobile, /en and /ar; gates 90 / 100 / 100 / 100; record scores, TTFB and server location.
+
+### 8. Sign-off and merge (you decide)
+- Confirm or change every `u()` string (Claude gives the list).
+- Claude sets `REQUIRE_CONFIRMED=1` in Velocity env, redeploys, opens the PR to `main` only on your word; then switch branch to `main`, auto-deploy on.
+- Owner housekeeping: rotate the old MongoDB credentials and delete the untracked root `.env`; optionally claim the npm org `zakydev`.
