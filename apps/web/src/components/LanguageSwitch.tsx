@@ -50,6 +50,7 @@ const handledByBrowser = (event: MouseEvent<HTMLAnchorElement>): boolean =>
  * stays and the new page mounts in it (KeepRootState carries <html>'s state over). Any other click, and every click
  * without script, is the plain link. It never prefetches: a prefetched other page would apply its font preload here,
  * and English never downloads Amiri. `next/link` would add its prefetch machinery only to turn it off.
+ * It must stay inside EngineProvider: on the pinned page the place is restored on the provider's `zk:enhanced` event.
  */
 export function LanguageSwitch({ locale, label }: { locale: Locale; label: string }) {
   const other: Locale = locale === 'en' ? 'ar' : 'en';
@@ -89,8 +90,9 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
     }
   };
   const onClick = (event: MouseEvent<HTMLAnchorElement>): void => {
-    remember();
+    // a new tab or window: nothing is stored, or this tab would keep a stale place and jump to it on its next load
     if (handledByBrowser(event)) return;
+    remember();
     event.preventDefault();
     // the browser's scroll stays (the place is restored above); scrolling to the top first would only flash the hero
     router.push(href, { scroll: false });

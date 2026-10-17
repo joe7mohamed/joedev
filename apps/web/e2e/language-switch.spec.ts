@@ -279,6 +279,27 @@ test('a modified click on the switch is left to the browser: a new tab, and this
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
+// URL round re-review: a click left to the browser stores no place, so no stale one waits in this tab and moves it on
+// its next load.
+test('a modified click on the switch leaves no place behind: a reload of this tab does not jump', async ({
+  page,
+  context,
+}) => {
+  await page.goto('/');
+  await gotoScene(page, 'process', 0.5);
+  const opened = context.waitForEvent('page');
+  await page.locator('header a[hreflang="ar"]').click({ modifiers: ['ControlOrMeta'] });
+  await (await opened).waitForLoadState();
+  expect(await page.evaluate(() => sessionStorage.getItem('zk-return-to'))).toBeNull();
+  // back at the top, then a reload: the page must stay on the hero
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.classList.contains('enhanced'));
+  await page.waitForTimeout(700);
+  expect((await placeOf(page)).id).toBe('hero');
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(10);
+});
+
 test('the switch never prefetches the other page, not on view, hover or focus', async ({ page }) => {
   const fetched: string[] = [];
   page.on('request', (r) => {
