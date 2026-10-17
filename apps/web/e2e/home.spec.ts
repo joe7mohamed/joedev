@@ -279,6 +279,18 @@ test('without JavaScript every section is readable', async ({ browser }) => {
   await expect(page.getByRole('link', { name: 'youssef@zakydev.com' })).toBeVisible();
 });
 
+// Without script there is no stored choice and no head script: the page follows the system setting.
+for (const scheme of ['light', 'dark'] as const) {
+  test(`without JavaScript the page follows a ${scheme} system theme`, async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false, colorScheme: scheme });
+    const page = await context.newPage();
+    await page.goto('/en');
+    const background = await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor);
+    expect(background).toBe(scheme === 'light' ? 'rgb(250, 249, 246)' : 'rgb(15, 14, 12)');
+    await context.close();
+  });
+}
+
 test('without JavaScript every project and every process step is shown', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();

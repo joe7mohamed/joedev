@@ -26,6 +26,19 @@
   --hair: rgb(26 24 20 / 0.14);
   --accent: #8a6d1f;
 }
+/* Without script no theme is set (the head script always sets one): the page follows the system, with the same light
+   tokens as above. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --bg: #faf9f6;
+    --panel: #f1eee6;
+    --ink: #1a1814;
+    --muted: #6a6457;
+    --hair: rgb(26 24 20 / 0.14);
+    --accent: #8a6d1f;
+  }
+}
 
 @theme inline {
   --color-bg: var(--bg);
