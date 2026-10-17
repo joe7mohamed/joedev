@@ -242,7 +242,8 @@ html.enhanced [data-gold-face] {
   border: 2px solid var(--gold);
   border-radius: inherit;
   background: rgb(212 175 55 / var(--fill, 0));
-  box-shadow: 0 40px 90px -40px rgb(0 0 0 / 0.75);
+  /* the lift shadow belongs to the floating project frame only: under the ring it greyed the smoke in a box */
+  box-shadow: 0 40px 90px -40px rgb(0 0 0 / calc(0.75 * var(--tilt, 0)));
   /* --tilt (0..1) comes from the slot: only the project frame floats, tilts with the pointer and sways */
   transform: translateY(calc(var(--bob, 0) * 6px * var(--tilt, 0))) perspective(1100px)
     rotateY(calc(var(--turn-y) * var(--tilt, 0))) rotateX(calc(var(--turn-x) * var(--tilt, 0)));
