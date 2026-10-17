@@ -111,4 +111,21 @@ describe('engine', () => {
     expect(seen).toHaveBeenCalled();
     engine.stop();
   });
+
+  it('reports a failing listener and still calls the others (spec 6.5)', async () => {
+    const page = fakePage();
+    const reported = vi.fn();
+    vi.stubGlobal('reportError', reported);
+    const engine = await startEngine(page);
+    const failure = new Error('island failed');
+    engine.subscribe(() => {
+      throw failure;
+    });
+    const after = vi.fn();
+    engine.subscribe(after);
+    page.flush();
+    expect(reported).toHaveBeenCalledWith(failure);
+    expect(after).toHaveBeenCalled();
+    engine.stop();
+  });
 });

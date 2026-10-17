@@ -150,8 +150,9 @@ const notify = (scroll: ScrollInfo): void => {
     try {
       listener(frames, scroll);
     } catch (error) {
-      // one failing island must not stop the others (spec 6.5)
-      if (process.env.NODE_ENV !== 'production') console.error(error);
+      // one failing island must not stop the others (spec 6.5); the error still reaches the console and any
+      // error reporting, without breaking the loop
+      reportError(error);
     }
   }
 };
