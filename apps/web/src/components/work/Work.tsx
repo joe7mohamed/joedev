@@ -3,7 +3,7 @@
 import type { HomeContent } from '@zakydev/shared';
 import { type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { pinnedRect, registerSlot } from '@/motion/gold';
-import { stepAt } from '@/motion/math';
+import { currentFirst, stepAt } from '@/motion/math';
 import { MOTION_OK, useMedia } from '@/motion/useMedia';
 import { useSceneFrame } from '@/motion/useSceneFrame';
 import { ProjectBars } from './ProjectBars';
@@ -32,12 +32,6 @@ const writeSegments = (root: HTMLElement, count: number, index: number, local: n
     root.style.setProperty(`--seg${n}`, fill.toFixed(3));
   }
 };
-
-/** The current project's article first, then the others in order; the stacked layout keeps the order as written. */
-const orderOf = (count: number, at: number): number[] => [
-  at,
-  ...Array.from({ length: count }, (_, i) => i).filter((i) => i !== at),
-];
 
 /**
  * Follows the scene: which project is current (and which was before it), whether the scene flows because it does
@@ -102,7 +96,8 @@ export function Work({ work, projects }: WorkProps) {
         </div>
         <ProjectBars names={projects.map((p) => p.name)} current={at} />
         <div data-projects>
-          {orderOf(count, at).map((i) => {
+          {/* the current project's article first; the stacked layout (at 0) keeps the order as written */}
+          {currentFirst(count, at).map((i) => {
             const project = projects[i] as Project;
             return (
               <ProjectText

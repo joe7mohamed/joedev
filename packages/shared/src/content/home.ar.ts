@@ -75,6 +75,7 @@ export const homeAr: HomeContent = {
   process: {
     label: 'كيف أعمل',
     youGet: 'تحصل على',
+    live: u('LIVE'),
     steps: [
       {
         name: 'أفهم',

@@ -75,6 +75,7 @@ export const homeEn: HomeContent = {
   process: {
     label: 'How I work',
     youGet: 'You get',
+    live: u('LIVE'),
     steps: [
       {
         name: 'Understand',

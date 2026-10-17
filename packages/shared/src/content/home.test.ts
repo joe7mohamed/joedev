@@ -37,6 +37,10 @@ describe('home content', () => {
     expect(plain(home.en.nav.sections)).toBe('Sections');
     expect(plain(home.ar.nav.sections)).toBe('الأقسام');
   });
+  it('names the live badge of the build drawing in both locales', () => {
+    expect(plain(home.en.process.live)).toBe('LIVE');
+    expect(plain(home.ar.process.live)).toBe('LIVE');
+  });
   it('labels each project diagram in both locales', () => {
     const counts = { 'request-path': 3, 'provider-fallback': 3, 'server-sync': 1 } as const;
     for (const l of ['en', 'ar'] as const) {

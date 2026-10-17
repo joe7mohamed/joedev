@@ -1,0 +1,178 @@
+/* How I work (spec 5.5). Stacked by default: without script, with reduced motion, or when the scene is too tall to
+   pin, every step shows in full after the label and the finished drawing follows. The scene layout below applies
+   only while the scene is pinned in enhanced mode. The drawing is in build-scene.css, the rail in rail.css. */
+
+[data-process] {
+  --process-shadow: 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+}
+[data-process-main] {
+  display: grid;
+  gap: 28px;
+}
+[data-process-text] {
+  display: grid;
+  gap: 14px;
+  align-content: center;
+  min-width: 0;
+}
+/* first in the document (the test hooks and the phone order expect the drawing first), after the text on screen */
+[data-process-scene] {
+  order: 1;
+  min-width: 0;
+}
+[data-process-scene] [data-build] {
+  max-width: 520px;
+}
+/* the counter and the rail only mean something while the scene plays */
+[data-process] :is([data-count], [data-rail]) {
+  display: none;
+}
+
+[data-process] [data-process-steps] {
+  display: grid;
+  gap: 48px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+[data-process] [data-process-step] {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+}
+[data-process] [data-process-step] > * {
+  margin: 0;
+}
+[data-process] [data-step-title] {
+  perspective: 900px;
+  font: 600 clamp(40px, 6vw, 72px) / 1.12 var(--stack-display);
+  letter-spacing: -0.03em;
+  text-shadow: var(--process-shadow);
+}
+html[lang="ar"] [data-process] [data-step-title] {
+  line-height: 1.6;
+}
+[data-process] [data-step-sentence] {
+  max-width: 44ch;
+  color: var(--muted);
+  font-size: clamp(16px, 1.45vw, 20px);
+  text-shadow: var(--process-shadow);
+}
+[data-process] [data-step-get] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 17px;
+  line-height: 1.55;
+  text-align: start;
+}
+[data-process] [data-step-get] svg {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  color: var(--gold);
+}
+[data-process] [data-step-get] small {
+  display: block;
+  color: var(--muted);
+  font:
+    500 10.5px / 1.5 var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+html[lang="ar"] [data-process] [data-step-get] small {
+  font-family: var(--stack-body);
+  font-size: 12.5px;
+}
+[data-process] [data-step-tools] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+[data-process] [data-step-tools] li {
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+/* tool names read left to right, but on the stacked Arabic page the row still starts on the page's start edge */
+html[dir="rtl"]:not(.enhanced) [data-process] [data-step-tools],
+html[dir="rtl"] #process[data-unpinned] [data-step-tools] {
+  justify-content: flex-end;
+}
+
+/* The pinned scene: the text beside the drawing, the rail below. */
+html.enhanced #process:not([data-unpinned]) :is([data-count], [data-rail]) {
+  display: block;
+}
+html.enhanced #process:not([data-unpinned]) [data-process-text] {
+  translate: 0 calc((1 - var(--enter, 1)) * 46px - (1 - var(--exit, 1)) * 46px);
+}
+html.enhanced #process:not([data-unpinned]) [data-process-scene] [data-build] {
+  max-width: none;
+  max-height: 58svh;
+}
+/* All steps share one grid cell, so the column always has the height of the tallest one and the engine's fit
+   check (pin or flow) sees it, whichever step is in view; the rail below never moves. The others are invisible,
+   inert and aria-hidden. */
+html.enhanced #process:not([data-unpinned]) [data-process-step] {
+  grid-area: 1 / 1;
+}
+html.enhanced #process:not([data-unpinned]) [data-process-step]:not([data-current]) {
+  visibility: hidden;
+}
+html.enhanced #process:not([data-unpinned]) [data-step-title] {
+  font-size: clamp(52px, 7.8vw, 124px);
+}
+@media (min-width: 861px) {
+  html.enhanced #process:not([data-unpinned]) [data-process] {
+    gap: clamp(18px, 4vh, 46px);
+  }
+  /* the counter reads left to right but sits on the start side, the right one in Arabic */
+  html.enhanced #process:not([data-unpinned]) [data-count] {
+    justify-self: start;
+  }
+  html.enhanced #process:not([data-unpinned]) [data-process-main] {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    gap: clamp(20px, 4vw, 64px);
+    align-items: center;
+  }
+}
+/* the phone scene is one centred column: drawing, label, counter, step, rail */
+@media (max-width: 860px) {
+  html.enhanced #process:not([data-unpinned]) [data-process] {
+    gap: 12px;
+  }
+  html.enhanced #process:not([data-unpinned]) [data-process-main] {
+    gap: 6px;
+    justify-items: center;
+  }
+  html.enhanced #process:not([data-unpinned]) [data-process-scene] {
+    order: -1;
+    width: 100%;
+  }
+  html.enhanced #process:not([data-unpinned]) [data-process-scene] [data-build] {
+    max-height: 31svh;
+  }
+  html.enhanced #process:not([data-unpinned]) :is([data-process-text], [data-process-step]) {
+    justify-items: center;
+  }
+  html.enhanced #process:not([data-unpinned]) [data-step-title] {
+    font-size: clamp(40px, 12vw, 60px);
+  }
+  html.enhanced #process:not([data-unpinned]) [data-step-sentence] {
+    margin-inline: auto;
+  }
+  html.enhanced #process:not([data-unpinned]) [data-step-get] {
+    font-size: 15px;
+  }
+  html.enhanced #process:not([data-unpinned]) [data-step-tools] {
+    justify-content: center;
+  }
+}

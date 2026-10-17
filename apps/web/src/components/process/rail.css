@@ -1,0 +1,175 @@
+/* The step rail (spec 5.5; prototype style.css `.ticks`, `.nd`): five 30 px stations spread across the scene. The
+   gold line is the gold element, sitting on [data-rail-line], a zero-height line through the stations' centres
+   from the first to the last. Shown only while the scene is pinned (process.css). */
+
+[data-rail] {
+  position: relative;
+  width: 100%;
+  margin-top: -13.5px;
+}
+[data-rail] [data-rail-line] {
+  position: absolute;
+  inset-inline: 15px;
+  top: 15px;
+  height: 0;
+}
+[data-rail] [data-stations] {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* exactly 30 px, so the first and last centres sit on the line's ends; names overflow around their station */
+[data-rail] [data-stations] li {
+  display: flex;
+  flex: 0 0 30px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  color: var(--muted);
+  transition: color var(--std);
+}
+[data-rail] [data-stations] li.done {
+  color: var(--accent);
+}
+[data-rail] [data-stations] li.current {
+  color: var(--ink);
+}
+/* a 44 px target that takes only the station's 30 px of the layout */
+[data-rail] [data-stations] button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  width: 44px;
+  min-height: 44px;
+  margin: -7px;
+  padding: 7px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+[data-rail] [data-station] {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--hair);
+  border-radius: 50%;
+  background: var(--bg);
+  transition:
+    background var(--std),
+    border-color var(--std),
+    transform var(--std) var(--ease);
+}
+[data-rail] [data-station] b {
+  color: var(--muted);
+  font:
+    500 11px / 1 var(--face-mono),
+    ui-monospace,
+    monospace;
+  transition: opacity var(--quick);
+}
+[data-rail] [data-station] svg {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  stroke: var(--on-gold);
+  stroke-width: 2.4;
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity var(--std),
+    transform var(--std) var(--ease);
+}
+[data-rail] [data-station-name] {
+  font:
+    500 13px / 1.4 var(--face-mono),
+    ui-monospace,
+    monospace;
+  white-space: nowrap;
+}
+html[lang="ar"] [data-rail] [data-station-name] {
+  font-family: var(--stack-body);
+  font-size: 15px;
+}
+/* the first and last names keep to the scene's edges */
+[data-rail] [data-stations] li:first-child [data-station-name] {
+  align-self: flex-start;
+}
+[data-rail] [data-stations] li:last-child [data-station-name] {
+  align-self: flex-end;
+}
+
+/* passed: gold with a tick */
+[data-rail] [data-stations] li.done [data-station] {
+  border-color: var(--gold);
+  background: var(--gold);
+}
+[data-rail] [data-stations] li.done [data-station] b {
+  opacity: 0;
+}
+[data-rail] [data-stations] li.done [data-station] svg {
+  opacity: 1;
+  transform: none;
+}
+/* current: larger, with a halo that pulses while motion is allowed */
+[data-rail] [data-stations] li.current [data-station] {
+  border-color: var(--gold);
+  transform: scale(1.18);
+}
+[data-rail] [data-stations] li.current [data-station] b {
+  color: var(--ink);
+}
+[data-rail] [data-stations] li.current [data-station]::after {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-rail] [data-stations] li.current [data-station]::after {
+    animation: station-halo 1.9s ease-out infinite;
+  }
+}
+@keyframes station-halo {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+@media (hover: hover) {
+  [data-rail] [data-stations] button:hover [data-station] {
+    border-color: var(--gold);
+  }
+}
+
+/* phones show only the current name; the others stay in the accessibility tree */
+@media (max-width: 860px) {
+  [data-rail] {
+    margin-top: 0;
+  }
+  [data-rail] [data-station-name],
+  html[lang="ar"] [data-rail] [data-station-name] {
+    font-size: 12.5px;
+  }
+  [data-rail] [data-stations] li:not(.current) [data-station-name] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}

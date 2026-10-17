@@ -1,0 +1,178 @@
+/* The build drawing (spec 5.5; prototype style.css `.scn`). Step N's progress `--pN` draws the `dN` strokes and
+   fades in the `oN` shapes. Every `--pN` rests at 1, so the drawing is finished unless the scene is playing and
+   Process writes them. No non-scaling strokes: they break the pathLength dashes (spec 5.6). */
+
+[data-build] {
+  --p0: 1;
+  --p1: 1;
+  --p2: 1;
+  --p3: 1;
+  --p4: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  direction: ltr;
+}
+[data-build] .sc {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+[data-build] .gd {
+  stroke: var(--gold);
+}
+
+/* strokes draw on: the dash covers the whole path at 1 and has left it (round cap included) at 0 */
+[data-build] :is(.d0, .d1, .d2, .d3, .d4) {
+  stroke-dasharray: 1 2;
+}
+[data-build] .d0 {
+  stroke-dashoffset: calc((1 - var(--p0)) * 1.04);
+}
+[data-build] .d1 {
+  stroke-dashoffset: calc((1 - var(--p1)) * 1.04);
+}
+[data-build] .d2 {
+  stroke-dashoffset: calc((1 - var(--p2)) * 1.04);
+}
+[data-build] .d3 {
+  stroke-dashoffset: calc((1 - var(--p3)) * 1.04);
+}
+[data-build] .d4 {
+  stroke-dashoffset: calc((1 - var(--p4)) * 1.04);
+}
+[data-build] .o1 {
+  opacity: var(--p1);
+}
+[data-build] .o2 {
+  opacity: var(--p2);
+}
+[data-build] .o3 {
+  opacity: var(--p3);
+}
+[data-build] .o4 {
+  opacity: var(--p4);
+}
+
+/* 1 Understand: the bubbles step back once the design starts; the ghost window shows only in between */
+[data-build] .talk {
+  opacity: calc(1 - var(--p1) * 0.8);
+  transform: scale(calc(1 - var(--p1) * 0.06));
+  transform-origin: 50% 40%;
+}
+[data-build] .ghost {
+  stroke-dasharray: 4 7;
+  opacity: calc(var(--p0) * (1 - var(--p1)) * 0.6);
+}
+/* 3 Build: the blocks fill and the button turns gold */
+[data-build] .fi {
+  fill: var(--ink);
+}
+[data-build] .fi.o2 {
+  opacity: calc(var(--p2) * 0.13);
+}
+[data-build] :is(.fg, .fg2, .dotc) {
+  fill: var(--gold);
+}
+[data-build] .fg2.o2 {
+  opacity: calc(var(--p2) * 0.32);
+}
+[data-build] .pk {
+  fill: var(--gold);
+  transform-box: fill-box;
+  transform-origin: center;
+  /* at rest the packet has reached the database */
+  transform: translateX(98px);
+}
+/* 4 Test: ticks and the pointer */
+[data-build] .ck {
+  stroke: var(--gold);
+  stroke-width: 3.6;
+}
+[data-build] .ptr {
+  fill: var(--ink);
+  stroke: var(--bg);
+  stroke-width: 1.2;
+}
+/* 5 Launch: the window lifts, the badge and two rings appear, the heartbeat draws */
+[data-build] .lift {
+  transform: translateY(calc(var(--p4) * -14px));
+}
+[data-build] .lt {
+  fill: var(--on-gold);
+  font:
+    600 13px var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+}
+[data-build] .ld {
+  fill: var(--on-gold);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+[data-build] .ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.4;
+  transform-box: fill-box;
+  transform-origin: center;
+  /* a still pulse at rest */
+  transform: scale(0.86);
+  opacity: 0.35;
+}
+[data-build] .ring.r2 {
+  transform: scale(1.05);
+  opacity: 0.15;
+}
+
+/* The small loops run only in the playing page with motion allowed. */
+@media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-build] .ptr {
+    animation: build-pointer 1.6s ease-in-out infinite;
+  }
+  html.enhanced [data-build] .pk {
+    animation: build-packet 1.5s ease-in-out infinite alternate;
+  }
+  html.enhanced [data-build] .ld {
+    animation: build-live 1.2s ease-in-out infinite;
+  }
+  html.enhanced [data-build] .ring {
+    animation: build-ring 2.8s ease-out infinite;
+  }
+  html.enhanced [data-build] .ring.r2 {
+    animation-delay: 1.4s;
+  }
+}
+@keyframes build-pointer {
+  50% {
+    transform: translate(-5px, -5px);
+  }
+}
+@keyframes build-packet {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translateX(98px);
+  }
+}
+@keyframes build-live {
+  50% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+}
+@keyframes build-ring {
+  from {
+    transform: scale(0.55);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+}

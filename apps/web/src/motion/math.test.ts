@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clamp, lerpRect, mix, range, sceneProgress, smooth, stepAt } from './math';
+import { clamp, currentFirst, lerpRect, mix, range, sceneProgress, smooth, stepAt, stepDraw } from './math';
 
 describe('math', () => {
   it('clamps', () => {
@@ -48,6 +48,17 @@ describe('math', () => {
     expect(stepAt(0.5, 5)).toEqual({ index: 2, local: 0.5 });
     expect(stepAt(1, 5)).toEqual({ index: 4, local: 1 });
     expect(stepAt(0.999, 3).index).toBe(2);
+  });
+  it('puts the current item first and keeps the others in order', () => {
+    expect(currentFirst(5, 0)).toEqual([0, 1, 2, 3, 4]);
+    expect(currentFirst(5, 3)).toEqual([3, 0, 1, 2, 4]);
+  });
+  it('draws each step over the first 62% of its share of the body', () => {
+    expect(stepDraw(0, 0, 5)).toBe(0);
+    expect(stepDraw(0.124, 0, 5)).toBeCloseTo(1, 5);
+    expect(stepDraw(0.5, 2, 5)).toBeCloseTo(smooth(0.5 / 0.62), 5);
+    expect(stepDraw(0.5, 3, 5)).toBe(0);
+    expect(stepDraw(1, 4, 5)).toBe(1);
   });
   it('interpolates rectangles', () => {
     expect(lerpRect({ x: 0, y: 0, w: 10, h: 2 }, { x: 100, y: 50, w: 30, h: 20 }, 0.5)).toEqual({

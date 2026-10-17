@@ -78,6 +78,8 @@ export const homeContentSchema = z.object({
   process: z.object({
     label: z.string().min(1),
     youGet: z.string().min(1),
+    /** The badge the build drawing shows once the app is live (prototype index.html line 102). */
+    live: text,
     steps: z
       .array(
         z.object({

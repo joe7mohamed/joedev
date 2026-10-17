@@ -103,6 +103,8 @@ export const icons = {
       <path d="M6.800 10.200l2.200 2.200 4.200-4.600" />
     </>,
   ),
+  // prototype app.js 278 (process station tick)
+  Tick: make(<path d="M5.5 10.4l3 3 6-6.6" />),
   // prototype app.js 265 LOOP_ICONS[6]
   Pulse: make(
     <>

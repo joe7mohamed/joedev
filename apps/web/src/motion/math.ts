@@ -41,3 +41,12 @@ export const lerpRect = (a: Rect, b: Rect, t: number): Rect => ({
   w: mix(a.w, b.w, t),
   h: mix(a.h, b.h, t),
 });
+
+/** Step `n`'s drawing progress: 0 → 1 over the first 62% of its share of the body (spec 5.5). */
+export const stepDraw = (body: number, n: number, steps: number): number => smooth((body * steps - n) / 0.62);
+
+/** The current item first, then the others in order (it keeps its element, so its name can flip). */
+export const currentFirst = (count: number, at: number): number[] => [
+  at,
+  ...Array.from({ length: count }, (_, i) => i).filter((i) => i !== at),
+];

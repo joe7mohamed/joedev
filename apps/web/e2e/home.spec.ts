@@ -269,8 +269,7 @@ test('without JavaScript every section is readable', async ({ browser }) => {
   await expect(page.getByRole('link', { name: 'youssef@zakydev.com' })).toBeVisible();
 });
 
-// Enable this test in Task 8, once the work and process scenes exist.
-test.fixme('without JavaScript every project and every process step is shown', async ({ browser }) => {
+test('without JavaScript every project and every process step is shown', async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto('/en');
@@ -766,4 +765,38 @@ test('Latin project names keep their tracking on the Arabic page, Arabic text ha
   expect(en.name).not.toBe('normal');
   expect(ar.name).toBe(en.name);
   expect(['normal', '0px']).toContain(ar.headline);
+});
+
+test('process walks through five steps with what the client gets', async ({ page }) => {
+  await page.goto('/en');
+  const names = ['Understand', 'Design', 'Build', 'Test', 'Launch'];
+  const gives = [
+    'A clear plan',
+    'Screens you can click through',
+    'A working version, early',
+    'Fewer surprises',
+    'A live product, looked after',
+  ];
+  for (let i = 0; i < 5; i++) {
+    await gotoScene(page, 'process', (i + 0.5) / 5);
+    await expect(page.locator('#process [data-step-name]')).toHaveText(names[i] as string);
+    await expect(page.locator('#process [data-gives]')).toContainText(gives[i] as string);
+  }
+});
+
+test('process stations are buttons and the drawing is finished at the end', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'process', 0.05);
+  await page
+    .locator('#process')
+    .getByRole('button', { name: /Launch/ })
+    .click();
+  await expect(page.locator('#process [data-step-name]')).toHaveText('Launch');
+  await gotoScene(page, 'process', 1);
+  await page.waitForTimeout(300);
+  const p4 = await page
+    .locator('#process svg')
+    .first()
+    .evaluate((el) => Number(getComputedStyle(el).getPropertyValue('--p4')));
+  expect(p4).toBe(1);
 });

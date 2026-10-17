@@ -113,3 +113,76 @@ test('the work scene is pinned only if every project fits, else it flows', async
     await workFits(page, `${path} ${width}x${height}`);
   }
 });
+
+for (const path of ['/en', '/ar']) {
+  test(`rail line passes through every station centre on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await gotoScene(page, 'process', 0.97);
+    const off = await page.evaluate(() => {
+      const mid = (el: Element) => {
+        const r = el.getBoundingClientRect();
+        return r.top + r.height / 2;
+      };
+      const line = mid(document.querySelector('[data-gold]') as Element);
+      return Math.max(
+        ...[...document.querySelectorAll('#process [data-station]')].map((s) => Math.abs(mid(s) - line)),
+      );
+    });
+    expect(off).toBeLessThanOrEqual(1);
+  });
+}
+
+test('LIVE badge reads left to right in Arabic', async ({ page }) => {
+  await page.goto('/ar');
+  await gotoScene(page, 'process', 1);
+  const direction = await page
+    .locator('#process svg')
+    .first()
+    .evaluate((el) => getComputedStyle(el).direction);
+  expect(direction).toBe('ltr');
+});
+
+// Spec 5.0 / 5.5: the rail line starts on the first station (the right one in Arabic) and its length is the
+// progress through the steps; also makes sure the station-centre test above has five stations to measure.
+for (const path of ['/en', '/ar']) {
+  test(`rail line grows from the first station on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await gotoScene(page, 'process', 0.3);
+    const m = await page.evaluate(() => {
+      const centre = (el: Element) => {
+        const r = el.getBoundingClientRect();
+        return r.left + r.width / 2;
+      };
+      const stations = [...document.querySelectorAll('#process [data-station]')].map(centre);
+      const gold = (document.querySelector('[data-gold]') as Element).getBoundingClientRect();
+      return { stations, left: gold.left, right: gold.right, width: gold.width };
+    });
+    expect(m.stations).toHaveLength(5);
+    const first = m.stations[0] as number;
+    const span = Math.abs((m.stations[4] as number) - first);
+    // body 0.3 of five steps: the line has reached 0.3 × 5 / 4 of the way to the last station
+    expect(Math.abs(m.width - span * 0.375)).toBeLessThan(4);
+    expect(Math.abs((path === '/ar' ? m.right : m.left) - first)).toBeLessThanOrEqual(1);
+  });
+}
+
+// Review focus (spec 6.5): fast back-and-forth scrolling between steps must still end on the right, fully opaque text.
+test('step text is fully opaque and current after rapid scrolling between steps', async ({ page }) => {
+  await page.goto('/ar');
+  await gotoScene(page, 'process', 0.1);
+  for (const f of [0.3, 0.7, 0.95, 0.1, 0.5, 0.9, 0.3, 0.5]) {
+    await page.evaluate((fraction) => {
+      const el = document.getElementById('process') as HTMLElement;
+      const viewport = window.innerHeight;
+      const body = el.offsetHeight - viewport - Number(el.dataset.tail) * viewport;
+      window.scrollTo({ top: el.offsetTop + body * fraction, behavior: 'instant' });
+    }, f);
+    await page.waitForTimeout(90);
+  }
+  await page.waitForTimeout(1500);
+  await expect(page.locator('#process [data-step-name]')).toHaveText('أبني');
+  const opacities = await page
+    .locator('#process [data-current] :is(h3, h3 span, p, li)')
+    .evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)));
+  expect(Math.min(...opacities)).toBe(1);
+});
