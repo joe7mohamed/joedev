@@ -109,10 +109,12 @@ Owner decision 2026-10-17 (dialog 4): each face keeps only what its page sets in
 | amiri-bold.woff2 | 1.003 | `Amiri-1.003/Amiri-Bold.ttf` in `Amiri-1.003.zip` (the release above, archive sha256 `81af0aff7d2086d8af24cea7202f7546130997982534691373485cd96744d05e`): the Arabic block and Basic Latin plus the joiners and direction marks (`U+0020-007E, U+0600-06FF, U+200C-200F`, also its `unicode-range`), with every feature the browser applies by default (ccmp, locl, init, medi, fina, rlig, liga, rtlm, curs, kern, mark, mkmk); the stylistic sets, fractions and proportional digits, all off by default, are dropped. Only the bold is used (the page sets Amiri at 600 and 700). 87 kB | `246039b527b6baae988f726ccd054e50906599fa4a675b0f8a71c8eeea996923` |
 | Amiri-OFL.txt | 1.003 | the same file as `assets/og/Amiri-OFL.txt` | `72de68e5954f4fdd24702292ef5a32f003ca960ec9330dc86e5eefb5dffb9b22` |
 
-Rebuild with `apps/web/scripts/display-fonts.py`, which uses fontTools' subsetter (pyftsubset) and instancer at
-fontTools 4.60.1, with brotli 1.1.0, installed outside the repository (the script's header has the command). The build
-is byte-reproducible. A text the page adds later that falls outside these ranges is set in the next face of its stack:
-extend the range in the script and in `display.css` together.
+Rebuild with `apps/web/scripts/display-fonts.py` (`npm run fonts -w web`), which uses fontTools' subsetter
+(pyftsubset) and instancer at fontTools 4.60.1, with brotli 1.1.0, installed outside the repository; it downloads the
+two archives and checks their sha256. The build is byte-reproducible. The character sets come from
+`apps/web/src/fonts/subsets.json`, which `src/fonts/display-text.test.ts` checks every display string of the content
+against (the content keys are listed in `src/fonts/display-text.ts`), together with the `unicode-range` in
+`display.css`. The one-line command is in docs/DEPLOY.md, "Display fonts after a copy change".
 
 ## Phase 1 Task 13b: visual snapshots, Lighthouse, bundle budget
 

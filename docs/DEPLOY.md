@@ -140,6 +140,18 @@ Mobile, /en and /ar; gates 90 / 100 / 100 / 100; record scores, TTFB and server 
 - Claude sets `REQUIRE_CONFIRMED=1` in Velocity env, redeploys, opens the PR to `main` only on your word; then switch branch to `main`, auto-deploy on.
 - Owner housekeeping, still open: delete the `joedb` database user (or the whole project) in MongoDB Atlas. Its password is in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10). Deleting the local `.env`, which is already done, does not revoke it; only deleting the Atlas user does. Optionally claim the npm org `zakydev`.
 
+## Display fonts after a copy change
+
+The display faces (Fraunces on `/en`, Amiri on `/ar`) carry only the characters in `apps/web/src/fonts/subsets.json`.
+`npm test` fails (`src/fonts/display-text.test.ts`) when any display string of the content (headline, project names,
+step names, headings, the email) uses a character outside them. Then add the code points to `subsets.json` and the same
+`unicode-range` to `apps/web/src/fonts/display.css`, and regenerate the files with one command from the repository root
+(it downloads the upstream releases and checks their sha256; docs/VERSIONS.md):
+
+`python3 -m pip install --target /tmp/zk-fonttools fonttools==4.60.1 brotli==1.1.0 && PYTHONPATH=/tmp/zk-fonttools npm run fonts -w web`
+
+Then update the files' sha256 in docs/VERSIONS.md.
+
 ## LCP after launch
 
 Lighthouse's LCP, locally and in CI, is a lab simulation on a throttled connection. After launch, real-visitor LCP (the

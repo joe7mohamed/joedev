@@ -7,7 +7,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "e2e": "playwright test --grep-invert @visual",
     "e2e:visual": "docker run --rm --ipc=host --init --user \"$(id -u):$(id -g)\" -e HOME=/tmp -v \"$PWD/../..\":/work -w /work/apps/web mcr.microsoft.com/playwright:v1.64.0-noble npx playwright test --grep @visual",
-    "test": "vitest run"
+    "test": "vitest run",
+    "fonts": "python3 scripts/display-fonts.py"
   },
   "license": "UNLICENSED",
   "type": "module",

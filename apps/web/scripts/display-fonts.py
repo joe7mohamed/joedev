@@ -1,12 +1,18 @@
 """Rebuilds the self-hosted display faces in apps/web/src/fonts/ (docs/VERSIONS.md, "Self-hosted display faces").
 
-Needs fontTools 4.60.1 and brotli 1.1.0 (`python3 -m pip install --target <dir> fonttools==4.60.1 brotli==1.1.0`, then
-run with PYTHONPATH=<dir>), and the two upstream release archives:
+Each face keeps the characters listed in src/fonts/subsets.json, which display-text.test.ts checks every display
+string of the content against, and only its default features. After a copy change that the test flags, add the code
+points to subsets.json (and the same unicode-range to display.css), then run (docs/DEPLOY.md, "Display fonts"):
+  python3 -m pip install --target /tmp/zk-fonttools fonttools==4.60.1 brotli==1.1.0 && PYTHONPATH=/tmp/zk-fonttools npm run fonts -w web
+The script downloads the two upstream release archives and checks their sha256, unless they are given as arguments:
   python3 apps/web/scripts/display-fonts.py UnderCaseType_Fraunces_1.000.zip Amiri-1.003.zip
-Each face keeps only the characters and default features its page sets in it.
 """
 
+import hashlib
+import json
 import sys
+import tempfile
+import urllib.request
 import zipfile
 from io import BytesIO
 from pathlib import Path
@@ -16,14 +22,33 @@ from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 
 OUT = Path(__file__).resolve().parent.parent / "src" / "fonts"
-# Fraunces: Basic Latin and the typographic punctuation English copy uses
-FRAUNCES_RANGE = "U+0020-007E,U+00A0,U+00B7,U+2013-2014,U+2018-201D,U+2026"
+SUBSETS = json.loads((OUT / "subsets.json").read_text())
 # the features on by default (the weight-dependent glyph swaps, ligatures, kerning); not the case forms or ss01
 FRAUNCES_FEATURES = ["rvrn", "liga", "kern", "mark", "mkmk", "ccmp", "locl"]
-# Amiri: the Arabic block, Basic Latin, and the joiners and direction marks
-AMIRI_RANGE = "U+0020-007E,U+0600-06FF,U+200C-200F"
 # every feature on by default for Arabic text; the stylistic sets, fractions and proportional digits are off by default
 AMIRI_FEATURES = ["ccmp", "locl", "init", "medi", "fina", "rlig", "liga", "rtlm", "curs", "kern", "mark", "mkmk"]
+# the upstream release archives (docs/VERSIONS.md)
+ARCHIVES = [
+    (
+        "https://github.com/undercasetype/Fraunces/releases/download/1.000/UnderCaseType_Fraunces_1.000.zip",
+        "8d8b81dfaeb89433f5c908e1d8d0a4b202bd627bd80d4cd5ff56f311fdcad19f",
+    ),
+    (
+        "https://github.com/aliftype/amiri/releases/download/1.003/Amiri-1.003.zip",
+        "81af0aff7d2086d8af24cea7202f7546130997982534691373485cd96744d05e",
+    ),
+]
+
+
+def fetch(url: str, sha256: str, folder: Path) -> str:
+    """Downloads a release archive and refuses it unless its sha256 is the recorded one."""
+    path = folder / url.rsplit("/", 1)[1]
+    with urllib.request.urlopen(url) as response:  # noqa: S310 (a fixed https URL)
+        path.write_bytes(response.read())
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if digest != sha256:
+        sys.exit(f"{path.name}: sha256 {digest}, expected {sha256}")
+    return str(path)
 
 
 def codepoints(ranges: str) -> list[int]:
@@ -52,21 +77,24 @@ def write_subset(font: TTFont, ranges: str, name: str, features: list[str] | Non
 def main(fraunces_zip: str, amiri_zip: str) -> None:
     # recalcTimestamp=False keeps the upstream timestamps, so a rebuild gives the same bytes
     # Fraunces: the variable web font with WONK fixed at 0, as Google Fonts serves it; the page uses all three remaining
-    # axes (opsz through optical sizing, wght and SOFT in the hero build and the pointer weight). The same ranges are
-    # the face's unicode-range in display.css.
+    # axes (opsz through optical sizing, wght and SOFT in the hero build and the pointer weight).
     with zipfile.ZipFile(fraunces_zip) as archive:
         data = archive.read("UnderCaseType_Fraunces_1.000/Fonts - Web/Fraunces[SOFT,WONK,opsz,wght].woff2")
     fraunces = TTFont(BytesIO(data), recalcTimestamp=False)
     fraunces.flavor = None
     fraunces = instancer.instantiateVariableFont(fraunces, {"WONK": 0})
-    write_subset(fraunces, FRAUNCES_RANGE, "fraunces-latin.woff2", FRAUNCES_FEATURES)
-    # Amiri Bold: the Arabic block plus Basic Latin (the punctuation, digits and Latin names the Arabic headings carry),
+    write_subset(fraunces, SUBSETS["fraunces"]["unicodeRange"], SUBSETS["fraunces"]["file"], FRAUNCES_FEATURES)
+    # Amiri Bold: the characters in subsets.json (the Arabic block, and Basic Latin for the punctuation, digits and Latin
+    # names the Arabic headings carry),
     # with only the features the browser applies by default: joining, ligatures, marks, cursive attachment and kerning.
-    # The same ranges are the face's unicode-range in display.css.
     with zipfile.ZipFile(amiri_zip) as archive:
         amiri = TTFont(BytesIO(archive.read("Amiri-1.003/Amiri-Bold.ttf")), recalcTimestamp=False)
-    write_subset(amiri, AMIRI_RANGE, "amiri-bold.woff2", AMIRI_FEATURES)
+    write_subset(amiri, SUBSETS["amiri"]["unicodeRange"], SUBSETS["amiri"]["file"], AMIRI_FEATURES)
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    if len(sys.argv) == 3:
+        main(sys.argv[1], sys.argv[2])
+    else:
+        with tempfile.TemporaryDirectory() as folder:
+            main(*(fetch(url, sha256, Path(folder)) for url, sha256 in ARCHIVES))
