@@ -35,9 +35,24 @@ export interface LdUrls {
   imageUrl: string;
 }
 
-/** Every tool named by the projects and the process steps, once each, in the order they first appear. */
+/** How the content joins a technology and a detail of it in one tool chip ("PostgreSQL · RLS"). */
+const JOINER = ' · ';
+/**
+ * Tool names in the content that are not technologies on their own: a practice ("Server-owned state") and a feature
+ * of a technology already listed ("RLS", PostgreSQL's row-level security).
+ */
+export const NOT_TECHNOLOGIES: ReadonlySet<string> = new Set(['Server-owned state', 'RLS']);
+
+/**
+ * The technologies named by the projects and the process steps: joined chips split, practices and features left
+ * out, each once, in the order they first appear.
+ */
 export const knowsAbout = (content: HomeContent): string[] => [
-  ...new Set([...content.projects.flatMap((p) => p.tools), ...content.process.steps.flatMap((s) => s.tools)]),
+  ...new Set(
+    [...content.projects.flatMap((p) => p.tools), ...content.process.steps.flatMap((s) => s.tools)]
+      .flatMap((tool) => tool.split(JOINER))
+      .filter((name) => !NOT_TECHNOLOGIES.has(name)),
+  ),
 ];
 
 /** schema.org ProfilePage of the home page, its Person the main entity; every value from the shared content. */

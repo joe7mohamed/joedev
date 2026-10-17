@@ -1,6 +1,6 @@
 import { getHome } from '@zakydev/shared';
 import { describe, expect, it } from 'vitest';
-import { knowsAbout, profilePageLd, serializeLd } from './structured-data';
+import { knowsAbout, NOT_TECHNOLOGIES, profilePageLd, serializeLd } from './structured-data';
 
 const TOOLS = [
   'Next.js',
@@ -10,11 +10,9 @@ const TOOLS = [
   'Docker',
   'GitHub Actions',
   'Supabase',
-  'PostgreSQL · RLS',
+  'PostgreSQL',
   'Vercel AI SDK',
   'Supabase Realtime',
-  'Server-owned state',
-  'PostgreSQL',
   'Vitest',
   'Playwright',
   'Vercel',
@@ -73,6 +71,19 @@ describe('knowsAbout', () => {
   it('lists every tool of the projects and the steps once, in order of first use', () => {
     expect(knowsAbout(getHome('en'))).toEqual(TOOLS);
     expect(knowsAbout(getHome('ar'))).toEqual(TOOLS);
+  });
+
+  it('names technologies only: joined entries are split, practices and features are left out', () => {
+    for (const l of ['en', 'ar'] as const) {
+      const list = knowsAbout(getHome(l));
+      expect(list.filter((name) => name.includes(' · '))).toEqual([]);
+      expect(list.filter((name) => NOT_TECHNOLOGIES.has(name))).toEqual([]);
+      expect(new Set(list).size).toBe(list.length);
+    }
+    // the content does hold both kinds, so the filter is doing work
+    const raw = getHome('en').projects.flatMap((p) => p.tools);
+    expect(raw).toContain('PostgreSQL · RLS');
+    expect(raw).toContain('Server-owned state');
   });
 });
 

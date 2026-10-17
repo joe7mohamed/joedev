@@ -48,6 +48,9 @@ test('metadata, alternates and structured data are present', async ({ page }) =>
   expect(person.knowsLanguage).toEqual(['ar', 'en']);
   expect(person.knowsAbout).toContain('Next.js');
   expect(new Set(person.knowsAbout).size).toBe(person.knowsAbout.length);
+  // technology names only: no joined chips ("PostgreSQL · RLS"), no practices ("Server-owned state")
+  expect(person.knowsAbout.filter((name: string) => name.includes(' · '))).toEqual([]);
+  expect(person.knowsAbout).not.toContain('Server-owned state');
   expect(person.sameAs).toEqual([
     'https://github.com/joe7mohamed',
     'https://linkedin.com/in/youssef7mohamed',
