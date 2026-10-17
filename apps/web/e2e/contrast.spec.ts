@@ -12,11 +12,15 @@ import { gotoScene, settle, test } from './helpers';
  * The shader runs on software GL only with `?bg=soft`, and `?freeze=1` holds its clock still.
  */
 
-/** The scene positions of Task 11's shoot (hero, first project, first step, the ring at mid-loop). */
+/**
+ * The scene positions of Task 11's shoot (hero, first project, first step, the ring at mid-loop), and the last step,
+ * where the build drawing shows its LIVE badge.
+ */
 const SCENES: Array<[string, number]> = [
   ['hero', 0],
   ['work', 0.167],
   ['process', 0.23],
+  ['process', 0.95],
   ['about', 0.5],
 ];
 /** Background pixels this close to a glyph (Chebyshev distance) count. */
@@ -24,6 +28,11 @@ const RING = 1;
 /** The share of a ring's pixels that may fall short: none. */
 const TAIL = 0;
 const GLYPH = '#f0f';
+/** A background this opaque is the text's own surface; anything lighter is a veil the shader shows through. */
+const OPAQUE = 0.95;
+/** Text fills off: HTML text by its colour, SVG text by its fill and stroke. */
+const NO_TEXT =
+  '*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important} text,tspan{fill:transparent!important;stroke:transparent!important}';
 
 type Item = {
   i: number;
@@ -34,21 +43,29 @@ type Item = {
   h: number;
   rgb: number[];
   large: boolean;
+  svg: boolean;
 };
-type Result = { text: string; contrast: number; need: number } | null;
+type Result = { text: string; contrast: number; need: number; svg: boolean } | null;
 
-/** Every text element on screen that sits on the background; marks each with `data-ci`. */
+/**
+ * Every text element on screen with the shader behind it, HTML and SVG `<text>` alike; marks each with `data-ci`. A
+ * surface counts as the text's own background only when it is (nearly) opaque: translucent veils (the diagram card,
+ * the tool chips, the fact cards) are measured through, as rendered.
+ */
 const collect = (page: Page): Promise<Item[]> =>
-  page.evaluate(() => {
+  page.evaluate((opaque) => {
     const onBackground = (el: Element): boolean => {
       for (let e: Element | null = el; e && e !== document.body; e = e.parentElement) {
         const s = getComputedStyle(e);
         const alpha = s.backgroundColor.match(/[\d.]+/g);
-        if (alpha && (alpha.length < 4 ? 1 : Number(alpha[3])) > 0.05) return false;
+        if (alpha && (alpha.length < 4 ? 1 : Number(alpha[3])) >= opaque) return false;
         if (s.backgroundImage !== 'none' && e !== document.documentElement) return false;
       }
       return true;
     };
+    /** SVG text paints with `fill`, at the drawing's scale. */
+    const svgScale = (el: Element): number =>
+      el instanceof SVGGraphicsElement ? (el.getScreenCTM()?.a ?? 1) : 1;
     const opacity = (el: Element): number => {
       let o = 1;
       for (let e: Element | null = el; e; e = e.parentElement) o *= Number(getComputedStyle(e).opacity);
@@ -62,9 +79,13 @@ const collect = (page: Page): Promise<Item[]> =>
       if (r.width < 2 || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
       // hidden, fading out of view, or on a surface of its own: the shader is not what is behind it
       if (s.visibility !== 'visible' || opacity(el) < 0.9 || !onBackground(el)) continue;
-      const fill =
-        s.webkitTextFillColor && !s.webkitTextFillColor.endsWith(', 0)') ? s.webkitTextFillColor : s.color;
-      const size = Number.parseFloat(s.fontSize);
+      const svg = el instanceof SVGElement;
+      const fill = svg
+        ? s.fill
+        : s.webkitTextFillColor && !s.webkitTextFillColor.endsWith(', 0)')
+          ? s.webkitTextFillColor
+          : s.color;
+      const size = Number.parseFloat(s.fontSize) * svgScale(el);
       const i = items.length;
       el.setAttribute('data-ci', String(i));
       items.push({
@@ -73,10 +94,11 @@ const collect = (page: Page): Promise<Item[]> =>
         ...{ x: r.left, y: r.top, w: r.width, h: r.height },
         rgb: (fill.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number),
         large: size >= 24 || (Number(s.fontWeight) >= 700 && size >= 18.66),
+        svg,
       });
     }
     return items;
-  });
+  }, OPAQUE);
 
 /** Elements whose boxes overlap go into different layers, so each glyph mask holds only its own glyphs. */
 const layersOf = (items: Item[]): Item[][] => {
@@ -150,6 +172,7 @@ const analyse = (helper: Page, glyphs: Buffer, scene: Buffer, items: Item[]): Pr
           text: bx.text,
           contrast: ratios[Math.floor(ratios.length * tail)] ?? 0,
           need: bx.large ? 3 : 4.5,
+          svg: bx.svg,
         };
       });
     },
@@ -159,23 +182,22 @@ const analyse = (helper: Page, glyphs: Buffer, scene: Buffer, items: Item[]): Pr
 /** The shots one scene position needs, and every element's result. */
 const measureScene = async (page: Page, helper: Page): Promise<Result[]> => {
   await settle(page);
-  // looping CSS animations (the gold element's bob, the drawings) rest at their start, the same in every run
+  // looping CSS animations (the gold element's bob, the drawings) are cancelled to their resting style, as the visual
+  // snapshots' `animations: 'disabled'` does: a decoration in motion passing over a label (the map pin's drop) is not
+  // the label's background, and the same frame is measured in every run
   await page.evaluate(() => {
     for (const a of document.getAnimations())
-      if (a.effect?.getComputedTiming().iterations === Infinity) a.currentTime = 0;
+      if (a.effect?.getComputedTiming().iterations === Infinity) a.cancel();
   });
   const items = await collect(page);
-  const bare = await page.addStyleTag({
-    content:
-      '*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important}',
-  });
+  const bare = await page.addStyleTag({ content: NO_TEXT });
   const scene = await page.screenshot({ scale: 'css' });
   await bare.evaluate((el) => (el as Element).remove());
   const results: Result[] = [];
   for (const layer of layersOf(items)) {
     const selector = layer.map((it) => `[data-ci="${it.i}"],[data-ci="${it.i}"]::before`).join(',');
     const paint = await page.addStyleTag({
-      content: `*,*::before,*::after{text-shadow:none!important;color:transparent!important;-webkit-text-fill-color:transparent!important;caret-color:transparent!important} ${selector}{color:${GLYPH}!important;-webkit-text-fill-color:${GLYPH}!important}`,
+      content: `${NO_TEXT} *,*::before,*::after{text-shadow:none!important;caret-color:transparent!important} ${selector}{color:${GLYPH}!important;-webkit-text-fill-color:${GLYPH}!important;fill:${GLYPH}!important}`,
     });
     results.push(...(await analyse(helper, await page.screenshot({ scale: 'css' }), scene, layer)));
     await paint.evaluate((el) => (el as Element).remove());
@@ -203,22 +225,25 @@ for (const path of ['/en', '/ar']) {
       await page.goto(`${path}?bg=soft&freeze=1`);
       const canvas = page.locator('canvas[data-bg]');
       await expect(canvas).toHaveCount(1, { timeout: 10_000 });
-      test.skip(
-        await canvas.evaluate((el) => (el as HTMLCanvasElement).hidden === true),
-        'no WebGL in this browser',
-      );
+      const noWebGL = await canvas.evaluate((el) => (el as HTMLCanvasElement).hidden === true);
+      // a local browser without WebGL skips; in CI the guard must really run, so a missing shader fails there
+      expect(noWebGL && Boolean(process.env.CI), 'the shader runs in CI').toBe(false);
+      test.skip(noWebGL, 'no WebGL in this browser');
       const helper = await blankPage(context);
       const below: string[] = [];
       let checked = 0;
+      let drawn = 0;
       for (const [id, f] of SCENES) {
         await gotoScene(page, id, f);
         for (const r of await measureScene(page, helper)) {
           if (!r) continue;
           checked++;
+          if (r.svg) drawn++;
           if (r.contrast < r.need) below.push(`${id}: "${r.text}" ${r.contrast.toFixed(2)} < ${r.need}`);
         }
       }
       expect(checked, 'text elements measured').toBeGreaterThan(10);
+      expect(drawn, 'SVG text measured (the diagram labels, the LIVE badge)').toBeGreaterThan(0);
       expect(below).toEqual([]);
     });
   }

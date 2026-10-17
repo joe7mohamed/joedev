@@ -69,6 +69,10 @@
     monospace;
   letter-spacing: 0.1em;
 }
+/* the light card's veil lets smoke through; a touch of ink keeps its small labels at AA without a halo (spec 5.8) */
+html[data-theme="light"] [data-fx] .fx-t {
+  fill: color-mix(in srgb, var(--muted) 75%, var(--ink));
+}
 [data-fx] .fx-ecg {
   stroke-dasharray: 0.28 1;
   /* at rest the gold run sits on the beat */

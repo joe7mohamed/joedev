@@ -11,9 +11,9 @@
   --accent: var(--on-gold);
   background: var(--gold);
   color: var(--ink);
-  /* text on gold needs no halo (home.css), the label's wider one included */
+  /* text on gold needs no halo (home.css), the labels' soft glow included */
   text-shadow: none;
-  --halo-wide: none;
+  --halo-soft: none;
 }
 /* while the gold element plays it is the gold screen */
 html.enhanced #contact {

@@ -55,21 +55,22 @@ body::before {
     1px -1px var(--bg),
     -1px 1px var(--bg);
   --halo: var(--halo-ring), var(--halo-ring), 0 0 1px var(--bg), 0 0 2px var(--bg), 0 0 4px var(--bg);
-  /* a second, 2 px ring for the scene labels in the light theme: their accent has the least room on cream */
-  --halo-wide:
-    var(--halo-ring),
-    var(--halo-ring),
-    2px 0 var(--bg),
-    -2px 0 var(--bg),
-    0 2px var(--bg),
-    0 -2px var(--bg),
-    1.5px 1.5px var(--bg),
-    -1.5px -1.5px var(--bg),
-    1.5px -1.5px var(--bg),
-    -1.5px 1.5px var(--bg),
-    0 0 1px var(--bg),
+  /* small accent text in the light theme (scene labels, rail names) has the least room on cream: a 1.5 px page-colour
+     ring that fades out softly, instead of a hard outline */
+  --halo-soft:
+    var(--halo),
+    1.5px 0 var(--bg),
+    -1.5px 0 var(--bg),
+    0 1.5px var(--bg),
+    0 -1.5px var(--bg),
+    1px 1px var(--bg),
+    -1px -1px var(--bg),
+    1px -1px var(--bg),
+    -1px 1px var(--bg),
     0 0 2px var(--bg),
-    0 0 4px var(--bg);
+    0 0 2px var(--bg),
+    0 0 4px var(--bg),
+    0 0 8px var(--bg);
   --glow: var(--halo), 0 1px 30px color-mix(in srgb, var(--bg) 70%, transparent);
   text-shadow: var(--halo);
   position: relative;
@@ -177,9 +178,10 @@ html.enhanced #contact [data-sticky] {
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
-/* the light theme's accent reaches only 4.65:1 on plain cream, so over smoke the labels need the wider halo (spec 5.8) */
-html[data-theme="light"] [data-scene] [data-label] {
-  text-shadow: var(--halo-wide);
+/* the light theme's accent reaches only 4.65:1 on plain cream, so over smoke its small text needs the soft glow
+   (spec 5.8) */
+html[data-theme="light"] [data-scene] :is([data-label], [data-rail] [data-station-name]) {
+  text-shadow: var(--halo-soft);
 }
 html[lang="ar"] [data-scene] [data-label] {
   font-family: var(--stack-body);
