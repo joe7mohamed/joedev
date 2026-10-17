@@ -152,6 +152,12 @@ production build of `/en` and `/ar`, mobile, three runs each, asserting the medi
 Chrome's WebGL there is software-rendered, so the page shows the CSS gradient instead of the shader
 (`failIfMajorPerformanceCaveat`), and Lighthouse measures that fallback, not the shader.
 
+Owner decision 2026-10-17: two assertions only warn, the LCP of both pages and the performance score of `/ar`. Lantern,
+Lighthouse's simulation, counts every font and script requested before the first paint (on `/ar` about 87 kB of Amiri
+and the Arabic body faces), so the lab LCP stays near 3 s and `/ar` performance near 0.89 although the headline paints
+at once. Every other assertion fails the job at its threshold. Real-visitor LCP after launch is the real LCP test (see
+"LCP after launch").
+
 Locally, under WSL, point `CHROME_PATH` at a Linux Chrome (chrome-launcher otherwise picks the Windows one) and run
 inside the port-3000 namespace, for example
 `CHROME_PATH=/usr/bin/google-chrome unshare -rn bash -c 'ip link set lo up && npx --yes @lhci/cli@0.15.1 autorun --config=apps/web/lighthouserc.json --collect.settings.chromeFlags=--no-sandbox'`
