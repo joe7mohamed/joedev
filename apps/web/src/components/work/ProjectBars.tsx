@@ -17,7 +17,7 @@ export function ProjectBars({ names, current }: ProjectBarsProps) {
           key={name}
           type="button"
           aria-label={name}
-          aria-pressed={i === current}
+          aria-current={i === current ? 'true' : undefined}
           onClick={() => engine.scrollToScene('work', (i + 0.5) / names.length)}
         >
           <i style={{ '--f': `var(--seg${i}, 0)` } as CSSProperties} />

@@ -728,6 +728,17 @@ test('project bars are buttons that jump to a project', async ({ page }) => {
   await expect(page.locator('#work [data-current] h3')).toHaveText('Talmeeha');
 });
 
+// Navigation, not a toggle: the bar of the project in view is marked current, as the process stations are.
+test('the bar of the project in view is marked current, not pressed', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'work', 0.5);
+  const bars = page.locator('#work [data-bars] button');
+  await expect(bars).toHaveCount(3);
+  await expect(page.locator('#work [data-bars] button[aria-pressed]')).toHaveCount(0);
+  await expect(page.locator('#work [data-bars] button[aria-current="true"]')).toHaveCount(1);
+  await expect(bars.nth(1)).toHaveAttribute('aria-current', 'true');
+});
+
 // Controller ruling: the hero zoom and the work frame share one optimised URL for the first screenshot.
 test('the first screenshot is downloaded once for the hero zoom and the work frame', async ({ page }) => {
   const requests: string[] = [];
