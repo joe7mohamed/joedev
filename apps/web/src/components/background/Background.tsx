@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { param } from '@/lib/e2e';
 import { currentScene } from '@/motion/current';
 import { engine, type SceneFrame, type SceneId } from '@/motion/engine';
 import { advance, easeSide, guardRoom, hexOf, pressOf, scrollOf, strengthOf, textSideOf } from './drift';
@@ -192,8 +193,9 @@ const run = (canvas: HTMLCanvasElement, renderer: Renderer, onLost: () => void):
 };
 
 /**
- * The liquid gold background (spec 5.8): one fixed, decorative canvas behind everything. Where WebGL is missing,
- * the shader fails, or the context is lost, the canvas hides and the page's CSS gradient shows (home.css).
+ * The liquid gold background (spec 5.8): one fixed, decorative canvas behind everything. Where WebGL is missing or
+ * only in software, the shader fails, or the context is lost, the canvas hides and the page's CSS gradient shows
+ * (home.css).
  * Mounted only when motion is allowed (BackgroundLoader); unmounting releases the GL context.
  * Every run of the effect makes its own canvas: a released context cannot be had again from the same element, and
  * React may run the effect twice on one element (StrictMode, Fast Refresh).
@@ -210,7 +212,8 @@ export default function Background() {
     const hide = (): void => {
       canvas.hidden = true;
     };
-    const renderer = createRenderer(canvas);
+    // E2E builds only: `?bg=soft` lets the shader's own tests run it on the headless browser's software WebGL
+    const renderer = createRenderer(canvas, param('bg') === 'soft');
     if (!renderer) hide();
     const stop = renderer ? run(canvas, renderer, hide) : undefined;
     return () => {

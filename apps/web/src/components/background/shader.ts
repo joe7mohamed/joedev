@@ -147,19 +147,44 @@ const link = (gl: WebGLRenderingContext): WebGLProgram | null => {
   return null;
 };
 
-/** Sets up WebGL on the canvas. Returns null, and never throws, when WebGL or the shader is unavailable. */
-export const createRenderer = (canvas: HTMLCanvasElement): Renderer | null => {
+/** WebGL drawn on the CPU: Chrome's SwiftShader, Mesa's llvmpipe and softpipe, Windows' Basic Render Driver. */
+const SOFTWARE = /swiftshader|llvmpipe|softpipe|basic render driver|software rasterizer/i;
+export const isSoftwareRenderer = (name: string): boolean => SOFTWARE.test(name);
+
+/**
+ * The renderer's name. Firefox reports it as RENDERER; Chrome and Safari mask that as "WebKit WebGL" and give the
+ * real one through WEBGL_debug_renderer_info.
+ */
+const rendererOf = (gl: WebGLRenderingContext): string => {
+  const reported = String(gl.getParameter(gl.RENDERER) ?? '');
+  const info = /webkit webgl/i.test(reported) ? gl.getExtension('WEBGL_debug_renderer_info') : null;
+  return info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL) ?? '') : reported;
+};
+
+/** Gives the context back at once, for a canvas that stays hidden. */
+const release = (gl: WebGLRenderingContext): void => {
+  gl.getExtension('WEBGL_lose_context')?.loseContext();
+};
+
+/**
+ * Sets up WebGL on the canvas. Returns null, and never throws, when WebGL or the shader is unavailable. WebGL that
+ * would run in software (no GPU, a blocklisted one, headless browsers) counts as unavailable: the shader would cost
+ * every scroll frame on the CPU, so the page shows its still CSS gradient instead (spec 5.8). The context flag
+ * catches a blocklisted GPU; headless Chromium ignores it, so the renderer's name is checked as well.
+ * `allowSoftware` lifts both for end-to-end tests only.
+ */
+export const createRenderer = (canvas: HTMLCanvasElement, allowSoftware = false): Renderer | null => {
   let gl: WebGLRenderingContext | null = null;
   try {
-    gl = canvas.getContext('webgl', { antialias: false });
+    gl = canvas.getContext('webgl', { antialias: false, failIfMajorPerformanceCaveat: !allowSoftware });
   } catch {
     return null;
   }
   if (!gl) return null;
-  const program = link(gl);
+  const program = allowSoftware || !isSoftwareRenderer(rendererOf(gl)) ? link(gl) : null;
   if (!program) {
     // the canvas is hidden for good: give its context back now
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    release(gl);
     return null;
   }
   const context = gl;
@@ -191,7 +216,7 @@ export const createRenderer = (canvas: HTMLCanvasElement): Renderer | null => {
       context.drawArrays(context.TRIANGLES, 0, 3);
     },
     release() {
-      context.getExtension('WEBGL_lose_context')?.loseContext();
+      release(context);
     },
   };
 };

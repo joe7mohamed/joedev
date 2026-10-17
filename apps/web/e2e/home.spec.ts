@@ -1132,8 +1132,11 @@ test('Latin runs in the Arabic contact facts are marked as English', async ({ pa
 });
 
 // Task 11: the background shader (spec 5.8).
+// Headless browsers have only software WebGL, which the page refuses (fix round 2); the shader's own tests ask an
+// E2E build (NEXT_PUBLIC_E2E=1) to allow it. Tests about the fallback load the plain page.
+const SHADER = '/en?bg=soft';
 test('background is decorative, behind content, and absent with reduced motion', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto(SHADER);
   const canvas = page.locator('canvas[data-bg]');
   await expect(canvas).toHaveAttribute('aria-hidden', 'true');
   expect(await canvas.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe('none');
@@ -1161,7 +1164,7 @@ const htmlBackground = (page: Page) =>
   page.evaluate(() => getComputedStyle(document.body, '::before').backgroundImage);
 
 test('the background sits fixed behind the gold element and the scenes', async ({ page }) => {
-  await page.goto('/en');
+  await page.goto(SHADER);
   const canvas = page.locator('canvas[data-bg]');
   await expect(canvas).toBeVisible();
   const style = await canvas.evaluate((el) => {
@@ -1258,7 +1261,7 @@ test('the background draws nothing while the tab is hidden, and resumes when it 
   page,
 }) => {
   await page.addInitScript(countDraws);
-  await page.goto('/en');
+  await page.goto(SHADER);
   await expect(page.locator('canvas[data-bg]')).toBeVisible();
   await expect.poll(() => drawsOf(page)).toBeGreaterThan(3);
   await setHidden(page, true);
@@ -1274,7 +1277,7 @@ test('the background renders at 0.6 of the pixel ratio, capped at 1.5', async ({
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2 });
   await context.addInitScript(() => sessionStorage.setItem('zk-intro', '1'));
   const page = await context.newPage();
-  await page.goto('/en');
+  await page.goto(SHADER);
   const canvas = page.locator('canvas[data-bg]');
   await expect(canvas).toBeVisible();
   const size = await canvas.evaluate((el: HTMLCanvasElement) => ({
@@ -1296,7 +1299,7 @@ test('a lost GL context hides the background and leaves the CSS gradient, with n
     if (message.type() === 'error') errors.push(message.text());
   });
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/en');
+  await page.goto(SHADER);
   const canvas = page.locator('canvas[data-bg]');
   await expect(canvas).toBeVisible();
   await canvas.evaluate((el: HTMLCanvasElement) =>
@@ -1307,4 +1310,33 @@ test('a lost GL context hides the background and leaves the CSS gradient, with n
   await page.evaluate(() => window.scrollBy({ top: 800, behavior: 'instant' }));
   await page.waitForTimeout(300);
   expect(errors).toEqual([]);
+});
+
+// Fix round 2: software WebGL (no GPU, headless CI) gets the CSS gradient, as if WebGL were missing.
+test('without a GPU the page refuses software WebGL and shows the CSS gradient', async ({ page }) => {
+  await page.addInitScript(() => {
+    const getContext = HTMLCanvasElement.prototype.getContext;
+    const asked: unknown[] = [];
+    (window as unknown as { asked: unknown[] }).asked = asked;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: unknown[]) {
+      if (String(args[0]).includes('webgl')) asked.push(args[1]);
+      return getContext.apply(this, args as Parameters<typeof getContext>);
+    } as typeof getContext;
+  });
+  await page.goto('/en');
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { asked: unknown[] }).asked.length))
+    .toBeGreaterThan(0);
+  const asked = await page.evaluate(() => (window as unknown as { asked: unknown[] }).asked[0]);
+  expect(asked).toMatchObject({ failIfMajorPerformanceCaveat: true });
+  // headless Chromium ignores that flag, so the page also refuses a software renderer by name
+  const software = await page.evaluate(() => {
+    const gl = document.createElement('canvas').getContext('webgl');
+    const info = gl?.getExtension('WEBGL_debug_renderer_info');
+    const name = gl && info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+    return gl === null || /swiftshader|llvmpipe|softpipe|basic render driver/i.test(name);
+  });
+  test.skip(!software, 'this browser has hardware WebGL, so the shader runs');
+  await expect(page.locator('canvas[data-bg]')).toBeHidden();
+  expect(await htmlBackground(page)).toContain('radial-gradient');
 });

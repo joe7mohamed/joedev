@@ -12,6 +12,10 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    # an end-to-end build: compiles in the test-only switches (apps/web/src/lib/e2e.ts). Turborepo hashes
+    # NEXT_PUBLIC_* for `build`, so this build is never replayed as a production one. Deployments do not set it.
+    env:
+      NEXT_PUBLIC_E2E: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

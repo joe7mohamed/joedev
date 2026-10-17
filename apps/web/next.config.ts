@@ -13,6 +13,9 @@ const security = [
 const config: NextConfig = {
   transpilePackages: ['@zakydev/shared'],
   poweredByHeader: false,
+  // always defined, so Next inlines it as a literal even when unset and the test-only code it guards
+  // (src/lib/e2e.ts) folds away in production builds
+  env: { NEXT_PUBLIC_E2E: process.env.NEXT_PUBLIC_E2E === '1' ? '1' : '' },
   // the root layout lives in app/[locale]/, so unknown URLs need app/global-not-found.tsx
   experimental: { globalNotFound: true },
   images: {
