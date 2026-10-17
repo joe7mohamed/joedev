@@ -20,7 +20,8 @@
 /* On the gold screen the header switches to dark ink (spec 5.2); the mark's lower half turns ivory (below). */
 [data-header][data-on-gold] {
   --ink: var(--on-gold);
-  --muted: color-mix(in srgb, var(--on-gold) 75%, var(--gold));
+  /* 80 %: on the capsule's tint over gold (#c19f33) this is 5.1:1; 75 % was 4.48:1, under AA */
+  --muted: color-mix(in srgb, var(--on-gold) 80%, var(--gold));
   --hair: rgb(20 18 14 / 0.3);
   --accent: var(--on-gold);
   --cap: rgb(20 18 14 / 0.1);
