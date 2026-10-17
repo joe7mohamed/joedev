@@ -33,6 +33,15 @@ describe('proxy', () => {
     expect(response.headers.get('location')).toBe(`${ORIGIN}/?utm=1`);
   });
 
+  it("passes Next's other forms of the two paths through instead of redirecting them", () => {
+    for (const path of ['/index', '/en.json', '/en.rsc']) {
+      const response = run(path);
+      expect(response.status, path).toBe(200);
+      expect(response.headers.get('location'), path).toBeNull();
+      expect(response.headers.get('x-middleware-next'), path).toBe('1');
+    }
+  });
+
   it('runs only on / and /en, so /ar, the sharing images and the rest never pass through it', () => {
     expect(config.matcher).toEqual(['/', '/en']);
   });

@@ -14,8 +14,12 @@ export function proxy(request: NextRequest) {
     url.pathname = INTERNAL;
     return NextResponse.rewrite(url);
   }
-  url.pathname = '/';
-  return NextResponse.redirect(url, 308);
+  if (url.pathname === INTERNAL) {
+    url.pathname = '/';
+    return NextResponse.redirect(url, 308);
+  }
+  // the matcher also lets through Next's other forms of these paths (/index, /en.json, …): left to Next
+  return NextResponse.next();
 }
 
 // only these two: /ar, the sharing images (/en/opengraph-image) and every other file never pass through the proxy
