@@ -3,8 +3,11 @@
 /** The counter never runs ahead of this much time since the loader started, so it always visibly counts. */
 const MIN_MS = 900;
 /**
- * After this long on the page clock the loader stops waiting and reads 1. Counted from navigation start, so the
- * lock (420 ms) and the start of the fly (250 ms) always fall before the head script's own 6 s timeout.
+ * After this long on the page clock the loader stops waiting and reads 1. Counted from navigation start. The counter
+ * still eases up to the snap (about 460 ms from 0), then the lock (420 ms) and the start of the fly (250 ms) follow,
+ * so the worst case is about 6.13 s: the head script's own 6 s timeout can win. That is benign: once the fly has
+ * started, `data-flying` keeps the overlay until it lands; before that, `fly` and `tick` see the overlay already gone
+ * and stop (sequence.ts), so the page is simply shown without the fly.
  */
 const GIVE_UP_MS = 5000;
 /** The shown value eases 16% of the way to its target per 60 Hz frame, and snaps to 1 above 0.992. */
