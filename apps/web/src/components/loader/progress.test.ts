@@ -19,6 +19,10 @@ describe('targetOf', () => {
     expect(targetOf({ loaded: 0, total: 4, sinceStart: 4999, pageTime: 4999 })).toBe(0);
   });
 
+  it('never reads below 0 when the first frame is stamped before the loader started', () => {
+    expect(targetOf({ loaded: 4, total: 4, sinceStart: -3, pageTime: 1200 })).toBe(0);
+  });
+
   it('reads 1 when there is nothing to load, once the minimum time has passed', () => {
     expect(targetOf({ loaded: 0, total: 0, sinceStart: 900, pageTime: 900 })).toBe(1);
   });
@@ -39,6 +43,11 @@ describe('stepShown', () => {
   it('snaps to 1 above 0.992 once the target is 1', () => {
     expect(stepShown(0.991, 1, FRAME)).toBe(1);
     expect(stepShown(0.99, 0.995, FRAME)).toBeLessThan(1);
+  });
+
+  it('never moves backwards on a frame stamped before the last one', () => {
+    expect(stepShown(0, 1, -4)).toBe(0);
+    expect(stepShown(0.3, 1, -4)).toBe(0.3);
   });
 
   it('never overshoots after a long pause', () => {

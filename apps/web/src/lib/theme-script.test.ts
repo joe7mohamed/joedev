@@ -21,10 +21,15 @@ const run = ({ stored = null, light = false, motion = true, seen = false, storag
     },
   };
   const timers: { run: () => void; ms: number }[] = [];
+  const written: Record<string, string> = {};
   const storage = (value: string | null) => ({
     getItem: () => {
       if (storageThrows) throw new Error('blocked');
       return value;
+    },
+    setItem: (key: string, v: string) => {
+      if (storageThrows) throw new Error('blocked');
+      written[key] = v;
     },
   });
   const matchMedia = (query: string) => ({
@@ -37,7 +42,7 @@ const run = ({ stored = null, light = false, motion = true, seen = false, storag
     matchMedia,
     (fn: () => void, ms: number) => timers.push({ run: fn, ms }),
   );
-  return { html, classes, timers };
+  return { html, classes, timers, written };
 };
 
 describe('head script', () => {
@@ -52,6 +57,12 @@ describe('head script', () => {
     expect(classes.has('intro')).toBe(true);
     expect(classes.has('loading')).toBe(true);
     expect(timers.map((t) => t.ms)).toEqual([6000]);
+  });
+
+  it('marks the loader seen for the session as soon as it shows', () => {
+    expect(run({}).written).toEqual({ 'zk-intro': '1' });
+    expect(run({ seen: true }).written).toEqual({});
+    expect(run({ motion: false }).written).toEqual({});
   });
 
   it('removes the loader after 6 s even if no app script ever runs', () => {

@@ -24,3 +24,19 @@ test('no loader with reduced motion', async ({ page }) => {
   await page.goto('/en');
   await expect(page.locator('html')).not.toHaveClass(/loading/);
 });
+
+test('a loader the safety timeout cleared does not return in the same session', async ({ browser }) => {
+  const context = await browser.newContext();
+  // the app arrives after the head script's 6 s timeout has already cleared the loader
+  await context.route('**/_next/static/chunks/**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 6500));
+    await route.continue();
+  });
+  const page = await context.newPage();
+  await page.goto('/en', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('html')).toHaveClass(/loading/);
+  await expect(page.locator('html')).not.toHaveClass(/loading/, { timeout: 8000 });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  expect(await page.evaluate(() => document.documentElement.classList.contains('loading'))).toBe(false);
+  await context.close();
+});

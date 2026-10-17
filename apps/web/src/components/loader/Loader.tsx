@@ -2,8 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { FULL } from '@/components/Mark';
-import { runLoader } from './sequence';
+import { releasePage, runLoader } from './sequence';
 import './loader.css';
+
+/**
+ * A loader that goes away before it finished (the page unmounts mid-count) releases the page at once. The release
+ * waits one task, so React's development double-run of effects (unmount, mount again) does not end the loader.
+ */
+let pendingRelease = 0;
 
 /** The overlay mark's size without styles; loader.css sizes it to the viewport. */
 const SIZE = 170;
@@ -31,7 +37,12 @@ export function Loader({ images }: { images: string[] }) {
       setOn(false);
       return;
     }
-    return runLoader(el, images, () => setOn(false));
+    window.clearTimeout(pendingRelease);
+    const stop = runLoader(el, images, () => setOn(false));
+    return () => {
+      stop();
+      pendingRelease = window.setTimeout(releasePage, 0);
+    };
   }, [images]);
   if (!on) return null;
   return (

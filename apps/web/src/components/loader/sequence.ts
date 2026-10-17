@@ -12,7 +12,6 @@ const METER = { duration: 300, easing: 'ease-out', drop: 10 };
 const HEADER_FADE = { delay: 200, duration: 600 };
 const HEADER_TARGET = '[data-brand] svg';
 const HEADER_REST = '[data-brand] > span, [data-menu], [data-controls]';
-const SEEN_KEY = 'zk-intro';
 
 type Parts = {
   mark: SVGSVGElement;
@@ -65,12 +64,9 @@ const holdHeader = (target: Element | null): void => {
     el.animate([{ opacity: 0 }, hidden, { opacity: 1 }], { duration: total });
 };
 
-const markSeen = (): void => {
-  try {
-    sessionStorage.setItem(SEEN_KEY, '1');
-  } catch {
-    // storage blocked: the loader shows again next time, which is harmless
-  }
+/** Releases the page: the loader overlay hides and the hero build plays. The head script already marked it seen. */
+export const releasePage = (): void => {
+  document.documentElement.classList.remove('loading');
 };
 
 type Box = { left: number; top: number; width: number; height: number };
@@ -87,13 +83,14 @@ const flightTo = (from: Box, to: Box): string => {
 /**
  * Runs the loading screen on its server-rendered overlay: counts real progress, locks the halves, flies the mark
  * onto the header's, releases the page (removes html.loading) and calls `done`, which removes the overlay. A
- * pointer or key press skips straight to the lock and the fly. Returns a cleanup that stops everything.
+ * pointer or key press skips straight to the lock and the fly. Returns a cleanup that stops everything; releasing
+ * the page when the loader goes away early is the caller's (Loader) job.
  */
 export function runLoader(root: HTMLElement, images: string[], done: () => void): () => void {
   const html = document.documentElement;
   const parts = partsOf(root);
   if (!parts) {
-    html.classList.remove('loading');
+    releasePage();
     done();
     return () => undefined;
   }
@@ -119,15 +116,9 @@ export function runLoader(root: HTMLElement, images: string[], done: () => void)
     count.textContent = countOf(shown);
     bar.style.transform = `scaleX(${shown})`;
   };
-  const release = (): void => {
-    html.classList.remove('loading');
-    markSeen();
-  };
 
   /** Stops everything this run started; the overlay is hidden from then on (it leaves the DOM with `done`). */
   const stop = (): void => {
-    // stopped mid-fly (the page is leaving, or the fly ended): the page is released all the same
-    if (phase === 'fly') release();
     cancelAnimationFrame(raf);
     for (const timer of timers) window.clearTimeout(timer);
     for (const animation of animations) animation.cancel();
@@ -201,7 +192,7 @@ export function runLoader(root: HTMLElement, images: string[], done: () => void)
     fadeOverlay();
     const { flight, reaim } = launch(target);
     later(() => {
-      release();
+      releasePage();
       reaim();
     }, RELEASE_MS);
     flight.finished.then(finish, () => undefined);

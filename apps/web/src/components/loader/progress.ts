@@ -26,12 +26,14 @@ export type LoadState = {
 export const targetOf = ({ loaded, total, sinceStart, pageTime }: LoadState): number => {
   if (pageTime >= GIVE_UP_MS) return 1;
   const share = total > 0 ? loaded / total : 1;
-  return Math.min(1, share, sinceStart / MIN_MS);
+  // the first frame can be stamped a little before the loader started
+  return Math.max(0, Math.min(1, share, sinceStart / MIN_MS));
 };
 
 /** Moves the shown value toward the target over `dt` ms at the same pace at any frame rate. */
 export const stepShown = (shown: number, target: number, dt: number): number => {
-  const next = shown + (target - shown) * (1 - (1 - EASE) ** (dt / FRAME_MS));
+  // a frame stamped before the last one (the first rAF time can precede performance.now()) does not move it
+  const next = shown + (target - shown) * (1 - (1 - EASE) ** (Math.max(0, dt) / FRAME_MS));
   return target === 1 && next > SNAP ? 1 : next;
 };
 
