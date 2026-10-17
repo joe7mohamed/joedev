@@ -42,6 +42,17 @@ test('the hero title and rotating word hold their first state', async ({ page })
   expect(await heroState(page)).toEqual(before);
 });
 
+test('the hero underline is drawn in full at once', async ({ page }) => {
+  await page.goto('/en?freeze=1');
+  await gotoScene(page, 'hero', 0);
+  const widths = await page.evaluate(() => ({
+    gold: (document.querySelector('[data-gold]') as HTMLElement).getBoundingClientRect().width,
+    slot: (document.querySelector('#hero [data-slot]') as HTMLElement).getBoundingClientRect().width,
+  }));
+  expect(widths.slot).toBeGreaterThan(0);
+  expect(Math.abs(widths.gold - widths.slot)).toBeLessThan(1);
+});
+
 test('the about ring rests on its first stage', async ({ page }) => {
   await page.goto('/en?freeze=1');
   await gotoScene(page, 'about', 0.5);

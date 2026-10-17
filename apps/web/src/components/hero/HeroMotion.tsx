@@ -1,6 +1,7 @@
 'use client';
 
 import { type ReactNode, useEffect, useRef } from 'react';
+import { frozen } from '@/lib/e2e';
 import { engine, type SceneFrame } from '@/motion/engine';
 import { pinnedRect, registerSlot } from '@/motion/gold';
 import { whenLoaded } from '@/motion/loaded';
@@ -63,23 +64,29 @@ const paint = ({ root, h1 }: Parts, g: Geometry, progress: number): void => {
 
 type Zoom = { apply(f: SceneFrame): void; remeasure(): void };
 
-/** Draws the underline in, DRAW_AT after the build's origin; reads 1 at once when motion is reduced. */
+/**
+ * Draws the underline in, DRAW_AT after the build's origin; reads 1 at once when motion is reduced. With E2E
+ * `?freeze=1` it reads 1 from the start, so a screenshot never catches it part-drawn, but keeps its timeline: each of
+ * its frames re-measures the slot while the headline is still building.
+ */
 const startDrawIn = (): { drawn(): number; stop(): void } => {
-  let drawn = window.matchMedia(MOTION_OK).matches ? 0 : 1;
+  const moving = window.matchMedia(MOTION_OK).matches;
+  const still = frozen();
+  let drawn = moving && !still ? 0 : 1;
   let raf = 0;
   let origin = 0;
   const draw = (now: number): void => {
-    drawn = inOut(clamp((now - origin - DRAW_AT) / DRAW_MS));
+    const t = clamp((now - origin - DRAW_AT) / DRAW_MS);
+    drawn = still ? 1 : inOut(t);
     engine.invalidate();
-    raf = drawn < 1 ? requestAnimationFrame(draw) : 0;
+    raf = t < 1 ? requestAnimationFrame(draw) : 0;
   };
-  const stopWaiting =
-    drawn < 1
-      ? whenLoaded((at) => {
-          origin = at;
-          raf = requestAnimationFrame(draw);
-        })
-      : () => undefined;
+  const stopWaiting = moving
+    ? whenLoaded((at) => {
+        origin = at;
+        raf = requestAnimationFrame(draw);
+      })
+    : () => undefined;
   return {
     drawn: () => drawn,
     stop: () => {
