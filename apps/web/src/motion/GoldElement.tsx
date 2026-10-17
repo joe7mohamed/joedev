@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { engine, type SceneId } from './engine';
 import { readSlot, resolveGold } from './gold';
 import './gold.css';
@@ -14,7 +14,8 @@ const ORDER: SceneId[] = ['hero', 'work', 'process', 'about', 'contact'];
 export function GoldElement() {
   const layer = useRef<HTMLDivElement>(null);
   const node = useRef<HTMLDivElement>(null);
-  useEffect(() => {
+  // before paint, like every engine subscriber (useSceneFrame)
+  useLayoutEffect(() => {
     // every value is written only when the shape changed, so a frame that moves nothing restyles nothing
     let written = '';
     const root = document.documentElement;

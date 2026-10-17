@@ -1,12 +1,12 @@
 'use client';
 
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useLayoutEffect, useState } from 'react';
 import { registerSlot } from '@/motion/gold';
 import { useSceneFrame } from '@/motion/useSceneFrame';
 
 /** The gold element's last job: the whole layer, square and solid, so the screen turns gold (spec 5.0). */
 function useFlood(): void {
-  useEffect(
+  useLayoutEffect(
     () =>
       registerSlot('contact', (_frame, layer) => ({
         x: 0,
@@ -52,7 +52,7 @@ function useSceneState(): void {
     if (state) root.dataset.contactScene = state;
     else delete root.dataset.contactScene;
   });
-  useEffect(
+  useLayoutEffect(
     () => () => {
       delete document.documentElement.dataset.contactScene;
     },

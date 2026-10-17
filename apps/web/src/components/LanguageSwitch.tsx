@@ -2,7 +2,7 @@
 
 import type { Locale } from '@zakydev/shared';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { homePath } from '@/lib/home-path';
 import { MOTION_OK } from '@/motion/useMedia';
 
@@ -41,7 +41,10 @@ const goTo = (id: string, fraction: number): void => {
  */
 export function LanguageSwitch({ locale, label }: { locale: Locale; label: string }) {
   const other: Locale = locale === 'en' ? 'ar' : 'en';
-  useEffect(() => {
+  const href = homePath(other);
+  // before paint: on the pinned page the place is restored when the engine has measured (`zk:enhanced`, sent from
+  // EngineProvider's layout effect, still before paint), so the first painted frame of the new page is already there
+  useLayoutEffect(() => {
     let saved: string | null = null;
     try {
       saved = sessionStorage.getItem(KEY);
@@ -51,13 +54,16 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
     }
     if (!saved) return;
     const [id = '', fraction = ''] = saved.split(':');
-    // wait one frame so the layout (the tall enhanced one, or the stacked one) and the fonts are measured first
-    const restore = (): void => {
-      requestAnimationFrame(() => goTo(id, Number(fraction)));
+    const restore = (): void => goTo(id, Number(fraction));
+    // the stacked page's height depends on the text: it is put in place now, before paint, and again once the fonts
+    // have arrived and been laid out (one frame later), in case they changed the height
+    const restoreStacked = (): void => {
+      requestAnimationFrame(restore);
     };
-    if (document.documentElement.classList.contains('enhanced')) restore();
-    else if (!window.matchMedia(MOTION_OK).matches) document.fonts.ready.then(restore).catch(restore);
-    else document.addEventListener('zk:enhanced', restore, { once: true });
+    if (!window.matchMedia(MOTION_OK).matches) {
+      restore();
+      document.fonts.ready.then(restoreStacked).catch(restoreStacked);
+    } else document.addEventListener('zk:enhanced', restore, { once: true });
     return () => document.removeEventListener('zk:enhanced', restore);
   }, []);
   const remember = (): void => {
@@ -71,7 +77,7 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
   };
   return (
     <Link
-      href={homePath(other)}
+      href={href}
       // the place is restored above; scrolling to the top first would only flash the hero
       scroll={false}
       // a prefetch would apply the other page's font preload here, and English never downloads Amiri

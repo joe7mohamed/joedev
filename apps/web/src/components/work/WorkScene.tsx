@@ -1,7 +1,14 @@
 'use client';
 
 import type { HomeContent } from '@zakydev/shared';
-import { type ReactNode, type RefObject, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  type ReactNode,
+  type RefObject,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { fixedRect, registerSlot } from '@/motion/gold';
 import { currentFirst, stepAt } from '@/motion/math';
 import { useHiddenItems } from '@/motion/useHiddenItems';
@@ -65,7 +72,7 @@ function useWorkStep(count: number, root: RefObject<HTMLDivElement | null>): Ste
  * frame does not move inside the pinned scene, so it is measured once per layout (fixedRect), not every frame.
  */
 function useWorkSlot(slot: RefObject<HTMLDivElement | null>): void {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!slot.current) return;
     const rect = fixedRect(slot.current);
     return registerSlot('work', (f, layer) => ({

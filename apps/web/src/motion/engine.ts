@@ -251,10 +251,22 @@ export const engine = {
   },
   subscribe(listener: Listener): () => void {
     listeners.add(listener);
+    // a listener added while the page runs (a remounted island) gets the current frame now, not one frame later
+    if (running && frames.size > 0 && !held()) listener(frames, { y: lastY, velocity });
     onScroll();
     return () => listeners.delete(listener);
   },
   invalidate: onScroll,
+  /**
+   * Runs one frame now instead of at the next animation frame. Called right after `start` from a layout effect, so
+   * the first frame the browser paints already has every scene's state (no frame without it after a soft switch).
+   */
+  sync(): void {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    dirty = true;
+    tick();
+  },
   /** Measures the scenes again (pin or flow, geometry) after content changed size without a resize. */
   refit: onResize,
   /** Scrolls so that the scene's body equals the fraction; a scene that flows is reached at its top. */

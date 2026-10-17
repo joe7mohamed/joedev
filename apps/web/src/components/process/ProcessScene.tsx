@@ -1,7 +1,7 @@
 'use client';
 
 import type { HomeContent } from '@zakydev/shared';
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
+import { type ReactNode, type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { SceneFrame } from '@/motion/engine';
 import { pinnedRect, registerSlot } from '@/motion/gold';
 import { clamp, currentFirst, stepAt, stepDraw } from '@/motion/math';
@@ -78,7 +78,7 @@ function useProcessStep(count: number, box: RefObject<HTMLDivElement | null>, en
  * it and the step text has not faded in yet, so the line is all there is on screen (spec 6.4, never a blank screen).
  */
 function useRailSlot(slot: RefObject<HTMLDivElement | null>, count: number): void {
-  useEffect(
+  useLayoutEffect(
     () =>
       registerSlot('process', (f, layer) => {
         const rail = pinnedRect(slot.current as HTMLElement, f.sticky, layer);

@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useLayoutEffect } from 'react';
 import { engine, type SceneId } from './engine';
 
 const IDS: SceneId[] = ['hero', 'work', 'process', 'about', 'contact'];
@@ -10,9 +10,14 @@ const isEnhanced = (): boolean => document.documentElement.classList.contains('e
 /**
  * Turns enhanced mode on after hydration and off whenever the visitor asks for reduced motion. The pinned layout
  * (`pinned`, already set before first paint by the head script) follows the same switch.
+ *
+ * It runs before paint (a layout effect, after every scene and island below it has registered in theirs): the engine
+ * measures, `zk:enhanced` lets the language switch put the reader back in place, and one synchronous frame writes
+ * every scene's state. So after a soft language switch the first painted frame of the new page already shows the
+ * right scene and step, never a blank or unstarted one.
  */
 export function EngineProvider({ children }: { children: ReactNode }) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     let enabledBefore = false;
     const fromHash = (): void => {
@@ -28,10 +33,12 @@ export function EngineProvider({ children }: { children: ReactNode }) {
         return;
       }
       engine.start();
-      if (enabledBefore) return;
-      enabledBefore = true;
-      document.dispatchEvent(new Event('zk:enhanced'));
-      requestAnimationFrame(fromHash);
+      if (!enabledBefore) {
+        enabledBefore = true;
+        document.dispatchEvent(new Event('zk:enhanced'));
+        requestAnimationFrame(fromHash);
+      }
+      engine.sync();
     };
     // keyboard focus must never land on a scene that is faded out; a scene that flows is left alone
     const onFocus = (event: FocusEvent): void => {

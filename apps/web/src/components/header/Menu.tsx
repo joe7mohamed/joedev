@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { currentScene, sceneState } from '@/motion/current';
 import { engine, type SceneFrame, type SceneId } from '@/motion/engine';
 import type { MenuId } from './menu-icons';
@@ -80,7 +80,7 @@ export function Menu({ items, label }: MenuProps) {
     placeLater.current();
   }, [current]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = nav.current;
     const header = el?.closest('header');
     if (!el || !header) return;

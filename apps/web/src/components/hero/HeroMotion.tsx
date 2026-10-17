@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
 import { frozen } from '@/lib/e2e';
 import { engine, type SceneFrame } from '@/motion/engine';
 import { pinnedRect, registerSlot } from '@/motion/gold';
@@ -178,7 +178,7 @@ export function HeroMotion({
   const fine = useMedia(FINE_POINTER);
   useSceneFrame('hero', (f) => frameRef.current(f));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const parts = partsOf(root.current);
     if (!parts) return;
     const zoom = createZoom(parts, (now) => {

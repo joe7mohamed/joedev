@@ -1,6 +1,6 @@
 'use client';
 
-import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';
+import { type CSSProperties, type ReactNode, useLayoutEffect, useRef } from 'react';
 import { engine, type SceneId } from './engine';
 
 export function Scene({
@@ -18,7 +18,8 @@ export function Scene({
 }) {
   const section = useRef<HTMLElement>(null);
   const sticky = useRef<HTMLDivElement>(null);
-  useEffect(() => {
+  // before paint, so the engine's first synchronous frame (EngineProvider) already includes this scene
+  useLayoutEffect(() => {
     if (!section.current || !sticky.current) return;
     return engine.register(id, section.current, sticky.current);
   }, [id]);

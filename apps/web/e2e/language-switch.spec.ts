@@ -160,3 +160,107 @@ test('the browser back and forward buttons move between the languages in place t
     await page.evaluate(() => (window as unknown as { zkSameDocument?: boolean }).zkSameDocument === true),
   ).toBe(true);
 });
+
+/** What one painted frame shows: the headline's language, the scene in view, its progress and what it displays. */
+type Shown = {
+  lang: string;
+  scene: string;
+  p: number;
+  count: string;
+  step: number;
+  fade: number;
+  zoom: number;
+};
+
+/** Samples every animation frame from now on (the sampler lives on window, so it survives a soft navigation). */
+const startSampling = (page: Page) =>
+  page.evaluate(() => {
+    const read = (): Shown => {
+      const h1 = document.querySelector('h1');
+      const middle = window.innerHeight / 2;
+      const section = [...document.querySelectorAll<HTMLElement>('[data-scene][data-state="active"]')].find(
+        (s) => {
+          const box = s.getBoundingClientRect();
+          return box.top <= middle && box.bottom > middle;
+        },
+      );
+      const fade = section?.querySelector<HTMLElement>(':scope > [data-sticky] > [data-fade]');
+      const count = document.querySelector('#process [data-count] b')?.textContent ?? '';
+      // the step the counter names: its text must be on screen, not fading in
+      const step = document.querySelector<HTMLElement>(
+        `#process [data-item][data-index="${Number(count) - 1}"]`,
+      );
+      return {
+        lang: !h1 ? 'none' : /[؀-ۿ]/.test(h1.textContent ?? '') ? 'ar' : 'en',
+        scene: section?.id ?? 'none',
+        p: Number(section?.style.getPropertyValue('--p') || Number.NaN),
+        count,
+        step: step ? Number(getComputedStyle(step).opacity) : 0,
+        fade: fade ? Number(getComputedStyle(fade).opacity) : 0,
+        zoom: Number(h1?.style.getPropertyValue('--zs') || 1),
+      };
+    };
+    const w = window as unknown as { zkShown: Shown[]; zkStop: boolean; zkRead: () => Shown };
+    w.zkShown = [];
+    w.zkStop = false;
+    w.zkRead = read;
+    const loop = (): void => {
+      w.zkShown.push(read());
+      if (!w.zkStop) requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  });
+
+for (const [from, to] of [
+  ['en', 'ar'],
+  ['ar', 'en'],
+] as const) {
+  for (const [scene, fraction] of [
+    ['process', 0.7],
+    // far enough into the zoom that the headline is several times its size
+    ['hero', 0.7],
+  ] as const) {
+    test(`every frame of the switch ${from} → ${to} shows the ${scene} scene where it was, never blank`, async ({
+      page,
+    }) => {
+      await page.goto(from === 'en' ? '/' : '/ar');
+      await page.evaluate(() => document.fonts.ready.then(() => undefined));
+      await gotoScene(page, scene, fraction);
+      await startSampling(page);
+      const before = await page.evaluate(() => (window as unknown as { zkRead: () => Shown }).zkRead());
+      expect(before.scene).toBe(scene);
+      if (scene === 'process') expect(before.count).toBe('04');
+      if (scene === 'hero') expect(before.zoom).toBeGreaterThan(1.5);
+      await page.locator(`header a[hreflang="${to}"]`).click();
+      await page.waitForURL(ADDRESS[to]);
+      // until the new page has been on screen for a second
+      await page.waitForFunction(
+        (lang) =>
+          (window as unknown as { zkShown: Shown[] }).zkShown.filter((s) => s.lang === lang).length > 60,
+        to,
+      );
+      const shown = await page.evaluate(() => {
+        const w = window as unknown as { zkShown: Shown[]; zkStop: boolean };
+        w.zkStop = true;
+        return w.zkShown;
+      });
+      expect(
+        shown.filter((s) => s.lang === 'none'),
+        'frames without a page',
+      ).toEqual([]);
+      const wrong = shown
+        .map((s, frame) => ({ frame, ...s }))
+        .filter((s) => s.lang === to)
+        .filter(
+          (s) =>
+            s.scene !== before.scene ||
+            !(Math.abs(s.p - before.p) < 0.02) ||
+            s.count !== before.count ||
+            Math.abs(s.step - before.step) > 0.05 ||
+            Math.abs(s.fade - before.fade) > 0.05 ||
+            Math.abs(s.zoom - before.zoom) > 0.05 * before.zoom,
+        );
+      expect(wrong, `before the switch: ${JSON.stringify(before)}`).toEqual([]);
+    });
+  }
+}

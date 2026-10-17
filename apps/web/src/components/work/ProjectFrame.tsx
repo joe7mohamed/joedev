@@ -1,6 +1,6 @@
 'use client';
 
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { engine, type SceneFrame } from '@/motion/engine';
 import { smooth, stepAt } from '@/motion/math';
@@ -36,7 +36,7 @@ function usePaint(
   count: number,
 ): boolean {
   const [near, setNear] = useState(false);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!target) return;
     return engine.subscribe((frames, scroll) => {
       const work = frames.get('work');
@@ -83,7 +83,7 @@ function usePointerTilt(target: HTMLElement | null): void {
 export function ProjectFrame({ projects, images, current, previous }: FrameProps) {
   const [target, setTarget] = useState<HTMLElement | null>(null);
   const shots = useRef<HTMLDivElement>(null);
-  useEffect(() => setTarget(document.getElementById('gold-content')), []);
+  useLayoutEffect(() => setTarget(document.getElementById('gold-content')), []);
   const near = usePaint(target, shots, projects.length);
   usePointerTilt(target);
   const shown = projects[current];

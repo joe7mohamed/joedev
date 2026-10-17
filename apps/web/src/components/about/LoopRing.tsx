@@ -1,6 +1,14 @@
 'use client';
 
-import { type CSSProperties, type ReactNode, type RefObject, useEffect, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { frozen } from '@/lib/e2e';
 import { fixedRect, registerSlot } from '@/motion/gold';
 import { loopAt } from '@/motion/math';
@@ -94,7 +102,7 @@ function useLoop(
  * inside the pinned scene, so it is measured once per layout (fixedRect), not every frame.
  */
 function useRingSlot(slot: RefObject<HTMLDivElement | null>): void {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!slot.current) return;
     const rect = fixedRect(slot.current);
     return registerSlot('about', (f, layer) => ({ ...rect(f, layer), radius: 0, fill: 0, round: 1 }));
