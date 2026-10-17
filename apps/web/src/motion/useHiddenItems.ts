@@ -38,22 +38,26 @@ export function useHiddenItems(
   const layout = useRef(-1);
   const refocus = useRef(-1);
 
+  /** The height kept as the cell's minimum, in px (null: none). Compared as a number: the style rounds it. */
+  const reserved = useRef<number | null>(null);
   /** Keeps the cell as tall as the tallest item; true when that changed. */
   const reserve = (): boolean => {
     const el = container.current;
     if (!el) return false;
-    let height = '';
+    let height: number | null = null;
     if (live) {
       el.setAttribute('data-measuring', '');
       // fractional heights: a rounded one would move the scene by part of a pixel
       const heights = [...el.querySelectorAll<HTMLElement>(ITEM)].map(
         (item) => item.getBoundingClientRect().height,
       );
-      height = `${Math.max(0, ...heights)}px`;
+      height = Math.max(0, ...heights);
       el.removeAttribute('data-measuring');
     }
-    if (el.style.minHeight === height) return false;
-    el.style.minHeight = height;
+    const last = reserved.current;
+    if (height === last || (height !== null && last !== null && Math.abs(height - last) < 0.01)) return false;
+    reserved.current = height;
+    el.style.minHeight = height === null ? '' : `${height}px`;
     return true;
   };
 
