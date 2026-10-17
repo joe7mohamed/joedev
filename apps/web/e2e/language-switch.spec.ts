@@ -264,3 +264,30 @@ for (const [from, to] of [
     });
   }
 }
+
+test('a modified click on the switch is left to the browser: a new tab, and this page stays as it is', async ({
+  page,
+  context,
+}) => {
+  await page.goto('/');
+  const opened = context.waitForEvent('page');
+  await page.locator('header a[hreflang="ar"]').click({ modifiers: ['ControlOrMeta'] });
+  const tab = await opened;
+  await tab.waitForLoadState();
+  await expect(tab).toHaveURL(ADDRESS.ar);
+  await expect(page).toHaveURL(ADDRESS.en);
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+test('the switch never prefetches the other page, not on view, hover or focus', async ({ page }) => {
+  const fetched: string[] = [];
+  page.on('request', (r) => {
+    if (new URL(r.url()).pathname === '/ar') fetched.push(r.url());
+  });
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  await page.locator('header a[hreflang="ar"]').hover();
+  await page.locator('header a[hreflang="ar"]').focus();
+  await page.waitForTimeout(500);
+  expect(fetched).toEqual([]);
+});

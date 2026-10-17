@@ -1,8 +1,8 @@
 'use client';
 
 import type { Locale } from '@zakydev/shared';
-import Link from 'next/link';
-import { useLayoutEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { type MouseEvent, useLayoutEffect } from 'react';
 import { homePath } from '@/lib/home-path';
 import { MOTION_OK } from '@/motion/useMedia';
 
@@ -34,13 +34,26 @@ const goTo = (id: string, fraction: number): void => {
   });
 };
 
+/** A click the browser should handle itself: another button, or a modifier asking for a new tab or window. */
+const handledByBrowser = (event: MouseEvent<HTMLAnchorElement>): boolean =>
+  event.defaultPrevented ||
+  event.button !== 0 ||
+  event.metaKey ||
+  event.ctrlKey ||
+  event.shiftKey ||
+  event.altKey ||
+  (event.currentTarget.target !== '' && event.currentTarget.target !== '_self');
+
 /**
- * Links to the same place in the other language: the section in view and how far through it. It is a client-side
- * navigation: both languages share the one root layout, `[locale]`, so the document stays and the new page mounts in
- * it (KeepRootState carries <html>'s state over). Without script it is a plain link and the page opens at the top.
+ * Links to the same place in the other language: the section in view and how far through it. A plain primary click
+ * is a client-side navigation (router.push): both languages share the one root layout, `[locale]`, so the document
+ * stays and the new page mounts in it (KeepRootState carries <html>'s state over). Any other click, and every click
+ * without script, is the plain link. It never prefetches: a prefetched other page would apply its font preload here,
+ * and English never downloads Amiri. `next/link` would add its prefetch machinery only to turn it off.
  */
 export function LanguageSwitch({ locale, label }: { locale: Locale; label: string }) {
   const other: Locale = locale === 'en' ? 'ar' : 'en';
+  const router = useRouter();
   const href = homePath(other);
   // before paint: on the pinned page the place is restored when the engine has measured (`zk:enhanced`, sent from
   // EngineProvider's layout effect, still before paint), so the first painted frame of the new page is already there
@@ -75,20 +88,23 @@ export function LanguageSwitch({ locale, label }: { locale: Locale; label: strin
       // storage unavailable: the other language opens at the top
     }
   };
+  const onClick = (event: MouseEvent<HTMLAnchorElement>): void => {
+    remember();
+    if (handledByBrowser(event)) return;
+    event.preventDefault();
+    // the browser's scroll stays (the place is restored above); scrolling to the top first would only flash the hero
+    router.push(href, { scroll: false });
+  };
   return (
-    <Link
+    <a
       href={href}
-      // the place is restored above; scrolling to the top first would only flash the hero
-      scroll={false}
-      // a prefetch would apply the other page's font preload here, and English never downloads Amiri
-      prefetch={false}
       hrefLang={other}
       lang={locale === 'ar' ? 'en' : undefined}
       aria-label={label}
-      onClick={remember}
+      onClick={onClick}
       className="grid size-11 place-items-center rounded-full border border-hair font-semibold"
     >
       {other === 'ar' ? 'ع' : 'EN'}
-    </Link>
+    </a>
   );
 }
