@@ -67,3 +67,22 @@ test('/en has no Amiri preload and never downloads Amiri; /ar has the Amiri prel
   const arAmiri = (await facesOf(page)).filter((f) => f.family === 'Amiri').map((f) => f.url);
   expect(arPreloads.filter((href) => arAmiri.includes(href))).toHaveLength(1);
 });
+
+// The preload and the stylesheet must share one download: a preload the font fetch cannot reuse (another URL, or no
+// `crossorigin`) would download the face twice.
+for (const path of ['/en', '/ar'] as const) {
+  test(`${path} downloads its headline face exactly once`, async ({ page }) => {
+    const requests = new Map<string, number>();
+    page.on('request', (request) => requests.set(request.url(), (requests.get(request.url()) ?? 0) + 1));
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    const [href] = await page
+      .locator('head link[rel="preload"][as="font"]')
+      .evaluateAll((links) => links.map((l) => (l as HTMLLinkElement).href));
+    expect(href).toBeDefined();
+    expect(requests.get(href as string)).toBe(1);
+    // and every other font file was fetched once too
+    const twice = [...requests].filter(([url, n]) => url.endsWith('.woff2') && n > 1);
+    expect(twice).toEqual([]);
+  });
+}

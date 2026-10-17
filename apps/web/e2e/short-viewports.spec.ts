@@ -144,3 +144,24 @@ for (const path of ['/en', '/ar']) {
     });
   }
 }
+
+// The phone headline is sized by both axes (hero.css): the width term on portrait phones, the height term on the
+// widest phone layout when it is short, and the clamp floor on landscape phones, where every scene flows anyway.
+const HEADLINE_SIZES = [
+  { width: 390, height: 844, mobile: true, en: 46.8, ar: 48.36 },
+  { width: 412, height: 839, mobile: true, en: 49.44, ar: 51.09 },
+  { width: 860, height: 700, mobile: false, en: 84, ar: 77.5 },
+  { width: 844, height: 390, mobile: true, en: 36, ar: 40 },
+];
+for (const path of ['/en', '/ar'] as const) {
+  for (const size of HEADLINE_SIZES) {
+    test(`the phone headline size at ${size.width}x${size.height} on ${path}`, async ({ browser }) => {
+      const page = await open(browser, size, path);
+      const px = await page
+        .locator('#hero h1')
+        .evaluate((h1) => Number.parseFloat(getComputedStyle(h1).fontSize));
+      expect(px).toBeCloseTo(path === '/en' ? size.en : size.ar, 1);
+      await page.context().close();
+    });
+  }
+}
