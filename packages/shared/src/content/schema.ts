@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+// No JIT: zod probes for it with `Function("")`, which the site's Content-Security-Policy (no 'unsafe-eval') reports
+// as a violation wherever this module runs in the browser.
+z.config({ jitless: true });
+
 export const text = z.union([
   z.string().min(1),
   z.object({ text: z.string().min(1), unconfirmed: z.literal(true) }),
@@ -124,5 +128,7 @@ export const homeContentSchema = z.object({
     footer: z.string().min(1),
   }),
   seo: z.object({ title: z.string().min(1), description: z.string().min(1) }),
+  /** The confirmed name, brand and domain (structured data, sharing image, manifest); the same in every locale. */
+  site: z.object({ name: z.string().min(1), brand: z.string().min(1), domain: z.string().min(1) }),
 });
 export type HomeContent = z.infer<typeof homeContentSchema>;

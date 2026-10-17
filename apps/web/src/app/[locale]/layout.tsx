@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { body, bodyAr, display, displayAr, mono } from '@/lib/fonts';
+import { siteUrl } from '@/lib/site';
 import { themeScript } from '@/lib/theme-script';
 import '../globals.css';
 import './home.css';
@@ -20,8 +21,9 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!isLocale(locale)) return {};
   const { seo } = getHome(locale);
+  // the page adds the sharing card (Open Graph, Twitter): page.tsx
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://zakydev.com'),
+    metadataBase: new URL(siteUrl),
     title: seo.title,
     description: seo.description,
     alternates: { canonical: `/${locale}`, languages: { en: '/en', ar: '/ar', 'x-default': '/en' } },

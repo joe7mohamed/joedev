@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import { getHome, home, homeContentSchema, plain, unconfirmedPaths } from './index';
 
 describe('home content', () => {
@@ -63,6 +64,14 @@ describe('home content', () => {
     for (const l of ['en', 'ar'] as const) {
       expect(home[l].contact.githubLabel).toBe('GitHub');
       expect(home[l].contact.linkedinLabel).toBe('LinkedIn');
+    }
+  });
+  it('never compiles its parsers with eval (the site sends a CSP without unsafe-eval)', () => {
+    expect(z.config().jitless).toBe(true);
+  });
+  it('names the person, the brand and the domain the same way in both locales', () => {
+    for (const l of ['en', 'ar'] as const) {
+      expect(home[l].site).toEqual({ name: 'Youssef Zaky', brand: 'ZakyDev', domain: 'zakydev.com' });
     }
   });
   it('rejects diagram labels that do not fit their drawing', () => {

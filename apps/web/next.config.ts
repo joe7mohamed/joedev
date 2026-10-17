@@ -1,6 +1,26 @@
 import type { NextConfig } from 'next';
 
+/*
+ * Static pages, no user-supplied content, no third-party scripts. Scripts need 'unsafe-inline': nonces force dynamic
+ * rendering, and the inline RSC payload scripts of static App Router pages (self.__next_f.push) change per build and
+ * cannot be hashed. Adding any hash would make browsers ignore 'unsafe-inline' and break those scripts.
+ * Reasoning and the revisit condition: docs/DEPLOY.md, "Content-Security-Policy".
+ */
+const csp = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
 const security = [
+  { key: 'Content-Security-Policy', value: csp },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
@@ -12,6 +32,8 @@ const security = [
 
 const config: NextConfig = {
   transpilePackages: ['@zakydev/shared'],
+  // the sharing image's renderers load their own wasm and native binary from disk, so Node resolves them unbundled
+  serverExternalPackages: ['satori', '@resvg/resvg-js'],
   poweredByHeader: false,
   // always defined, so Next inlines it as a literal even when unset and the test-only code it guards
   // (src/lib/e2e.ts) folds away in production builds

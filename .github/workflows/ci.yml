@@ -27,6 +27,8 @@ jobs:
       - run: npm audit signatures
       # the lockfile must keep the Linux binaries Velocity needs (guards against a damaged lockfile)
       - run: grep -q '"node_modules/@next/swc-linux-x64-gnu"' package-lock.json
+      # and the resvg binary the build renders the sharing images with (app/[locale]/opengraph-image.tsx)
+      - run: grep -q '"node_modules/@resvg/resvg-js-linux-x64-gnu"' package-lock.json
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test

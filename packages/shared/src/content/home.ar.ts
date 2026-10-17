@@ -161,4 +161,5 @@ export const homeAr: HomeContent = {
     title: 'يوسف زكي — مهندس برمجيات | ZakyDev',
     description: 'مهندس برمجيات في البحرين. أصمّم تطبيقات الويب وأبنيها وأطلقها، من البداية إلى النهاية.',
   },
+  site: { name: 'Youssef Zaky', brand: 'ZakyDev', domain: 'zakydev.com' },
 };

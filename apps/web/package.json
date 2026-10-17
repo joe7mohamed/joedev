@@ -11,10 +11,12 @@
   "license": "UNLICENSED",
   "type": "module",
   "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
     "@zakydev/shared": "*",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "satori": "0.56.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

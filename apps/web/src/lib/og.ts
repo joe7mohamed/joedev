@@ -1,0 +1,40 @@
+import { getHome, LOCALES, type Locale } from '@zakydev/shared';
+import type { Metadata } from 'next';
+
+/** The sharing card (app/[locale]/opengraph-image.tsx). */
+export const OG_SIZE = { width: 1200, height: 630 } as const;
+export const OG_TYPE = 'image/png';
+
+/** Where Next serves app/[locale]/opengraph-image.tsx. */
+const ogImagePath = (locale: Locale): string => `/${locale}/opengraph-image`;
+
+/** Open Graph wants language_TERRITORY. */
+const OG_LOCALE: Record<Locale, string> = { en: 'en_US', ar: 'ar_BH' };
+
+/**
+ * The home page's sharing metadata. The card is listed here, not left to Next, so its alt text is in the page's
+ * language (a module-level `alt` in opengraph-image.tsx is one string for every locale). Next only adds the file's
+ * own entry when the page lists no images.
+ */
+export const sharingMetadata = (locale: Locale): Metadata => {
+  const { seo, site, hero } = getHome(locale);
+  // the card shows the headline and nothing else to read, so the headline is its alt text
+  const alt = hero.headline
+    .flat()
+    .map((w) => w.t)
+    .join(' ');
+  const card = { url: ogImagePath(locale), ...OG_SIZE, type: OG_TYPE, alt };
+  return {
+    openGraph: {
+      type: 'website',
+      url: `/${locale}`,
+      siteName: site.brand,
+      title: seo.title,
+      description: seo.description,
+      locale: OG_LOCALE[locale],
+      alternateLocale: LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
+      images: [card],
+    },
+    twitter: { card: 'summary_large_image', title: seo.title, description: seo.description, images: [card] },
+  };
+};

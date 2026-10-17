@@ -6,6 +6,7 @@
       "**",
       "!docs/prototype",
       "!apps/web/public",
+      "!apps/web/src/app/icon.svg",
       "!.claude",
       "!**/dist",
       "!**/.next",

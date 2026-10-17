@@ -161,4 +161,5 @@ export const homeEn: HomeContent = {
     title: 'Youssef Zaky — Software engineer | ZakyDev',
     description: 'Software engineer in Bahrain. I design, build and launch web apps, start to finish.',
   },
+  site: { name: 'Youssef Zaky', brand: 'ZakyDev', domain: 'zakydev.com' },
 };
