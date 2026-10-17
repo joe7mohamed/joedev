@@ -1,25 +1,19 @@
 # Phase 1 sign-off pack (2026-10-17)
 
-Branch `rebuild/zakydev`, head after the final-review fix wave: `153a0e6`. Phase 1 Tasks 1–13 are done, reviewed task by task, and passed a final whole-branch review plus one fix wave and a clean re-review. CI runs lint, typecheck, unit tests, the build, the full e2e suite (386 tests), the route-JS budget, and visual snapshots in the Playwright image.
+Branch `rebuild/zakydev`, head after the final-review fix wave: `153a0e6`. Phase 1 Tasks 1–13 are done, reviewed task by task, and passed a final whole-branch review plus one fix wave and a clean re-review. CI runs lint, typecheck, unit tests, the build, the full e2e suite (386 tests), the route-JS budget, and visual snapshots in the Playwright image. The owner's decisions of 2026-10-17 (section 1) were then built on the same branch.
 
 What is left needs the owner: the decisions below, the copy confirmation, then deployment (Phase 0 Task 7, steps in `docs/DEPLOY.md`) and the merge to `main` (Phase 1 Task 14).
 
 ## 1. Decisions for the owner
 
-1. **LCP on a first visit (gate ≤ 2.0 s, measured ≈ 3.2 s).**
-   - The loader (spec 5.1) waits for real fonts and the three screenshots, with a 0.9 s floor. The hero then builds in from opacity 0.
-   - LCP is therefore render delay by design. It is ≈ 3.2–3.5 s even on repeat visits, where there is no loader, because the hero build-in itself delays it.
-   - The same fade makes Lighthouse accessibility read 0.96 on `/en` in some runs: axe samples letters mid-fade.
-   - Options:
-     - (a) Keep the design and accept the number. Gate LCP on the hero's final state instead.
-     - (b) Build the hero in by transform only, so the headline is painted at once. This is a motion change.
-     - (c) Paint the hero under the loader so the metric counts it early. Nothing visible changes, but the metric no longer describes what a visitor sees.
-     - (d) Shorten or drop the loader.
-   - The Lighthouse CI step is kept on the local branch `hold/lhci-ci` until this is decided.
-2. **Arabic font preload.** Preloading makes `/ar` repeat-visit FCP 2.7 s → 1.6 s, but LCP gets about 0.9 s worse. `next/font` cannot preload per route. It is not shipped; decide this together with item 1.
-3. **Route-JS budget.** 149,898 of 150,000 bytes gzip, so the headroom is 102 bytes. The next client feature needs a cut first, or a new budget.
-4. **Sizes that still use the flowing fallback.** Phones about 414–430 × 832–836 px and windows about 860 × 700 still let one scene scroll normally instead of pinning. The page reads well there and nothing goes blank. Every common phone and laptop height tested (360×640, 390×664, 1280×632, 1366×657, 1536×730, 1440×900, 390×844) pins all scenes.
-5. **Two small differences from the prototype, accepted:**
+The owner decided these on 2026-10-17.
+
+1. **Load speed: the hero slides in without the fade.** The headline, the sentence and the rows around them are painted at full opacity from the first paint. They still build in: the headline rises and tips into place with the prototype's timing, the rows slide up, and the title types in. Lighthouse now sees the largest text at the first paint, and accessibility reads 1 on both pages. Lighthouse's simulated LCP is still about 3.3–3.5 s, because it also waits for the fonts and scripts the page asks for before that paint. So the Lighthouse CI step stays parked on `hold/lhci-ci` until every gate passes.
+2. **Arabic font preload: left off.** One side effect is now visible. The Arabic headline is shown while its font loads, so on `/ar` desktop the font swap moves it, and the layout-shift check reads 0.05–0.10 there (the limit is 0.05). Preloading the Arabic display font brings it back under 0.03. This needs a new look; see the owner-round report.
+3. **Route-JS budget: 170 kB gzip.** Both pages load 149,898 bytes, so about 20 kB is left (spec line 32, `check-bundle.mjs`, `docs/DEPLOY.md`).
+4. **Large phones: fixed.** Phones about 414–430 × 832–836, a window about 860 × 700 and the 768 × 1024 tablet now pin every scene, in both languages. The tested sizes that pinned before measure the same as before.
+5. **Secrets.** MongoDB is no longer used, and the old root `.env` has been deleted. It was never tracked in git, and nothing in the repository reads it.
+6. **Two small differences from the prototype, accepted:**
    - the loader's `%` is a literal sign;
    - in Arabic, the loader bar fills from the right, like the header progress bar.
 
@@ -49,7 +43,7 @@ These strings are wrapped in `u()`. A build with `REQUIRE_CONFIRMED=1` fails unt
 Also from spec 12:
 - one line per project (the hardest problem and what you did), for later case studies;
 - a native read-through of all the Arabic copy;
-- rotate the leaked MongoDB Atlas credentials, and delete the untracked root `.env`;
+- the leaked MongoDB Atlas credentials and the untracked root `.env`: done, MongoDB is no longer used and the `.env` is deleted (item 1.5);
 - optional: claim the npm org `zakydev`.
 
 ## 3. Known small items left on purpose
