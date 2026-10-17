@@ -9,3 +9,14 @@
  * was readable the whole time, builds and stays.
  */
 export const themeScript = `(function(){var d=document.documentElement,s=null;try{s=localStorage.getItem('zk-theme');}catch(e){}var t=s;if(t!=='light'&&t!=='dark'){try{t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}catch(e){t='dark';}}d.dataset.theme=t;try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){d.classList.add('intro');var v=true;try{v=!!sessionStorage.getItem('zk-intro');}catch(e){}if(!v){d.classList.add('loading');try{sessionStorage.setItem('zk-intro','1');}catch(e){}setTimeout(function(){d.classList.remove('loading')},6000);}}}catch(e){}})();`;
+
+/**
+ * Also before first paint, when motion is allowed: `pinned` puts the page in its pinned scene layout at once, so the
+ * app taking over (`enhanced`, EngineProvider) moves nothing on screen (no layout shift). It is layout only: every
+ * scene's content stays readable until the app runs. If the app has not taken over after 6 s (the bundle failed), the
+ * page goes back to the stacked layout that works without script. No script or reduced motion: stacked throughout.
+ */
+export const pinScript = `(function(){var d=document.documentElement;try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){d.classList.add('pinned');setTimeout(function(){if(!d.classList.contains('enhanced'))d.classList.remove('pinned')},6000);}}catch(e){}})();`;
+
+/** The one inline <head> script of the home pages. */
+export const headScript = themeScript + pinScript;

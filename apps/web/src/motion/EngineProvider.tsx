@@ -7,7 +7,10 @@ const IDS: SceneId[] = ['hero', 'work', 'process', 'about', 'contact'];
 const isSceneId = (id: string): id is SceneId => (IDS as string[]).includes(id);
 const isEnhanced = (): boolean => document.documentElement.classList.contains('enhanced');
 
-/** Turns enhanced mode on after hydration and off whenever the visitor asks for reduced motion. */
+/**
+ * Turns enhanced mode on after hydration and off whenever the visitor asks for reduced motion. The pinned layout
+ * (`pinned`, already set before first paint by the head script) follows the same switch.
+ */
 export function EngineProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -19,6 +22,7 @@ export function EngineProvider({ children }: { children: ReactNode }) {
     const apply = (): void => {
       const on = !query.matches;
       document.documentElement.classList.toggle('enhanced', on);
+      document.documentElement.classList.toggle('pinned', on);
       if (!on) {
         engine.stop();
         return;
@@ -59,7 +63,7 @@ export function EngineProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('focusin', onFocus);
       document.removeEventListener('click', onClick);
       engine.stop();
-      document.documentElement.classList.remove('enhanced');
+      document.documentElement.classList.remove('enhanced', 'pinned');
     };
   }, []);
   return <>{children}</>;

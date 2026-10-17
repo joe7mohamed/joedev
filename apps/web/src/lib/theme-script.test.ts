@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { themeScript } from './theme-script';
+import { headScript, pinScript, themeScript } from './theme-script';
 
 type Env = {
   stored?: string | null;
@@ -9,8 +9,11 @@ type Env = {
   storageThrows?: boolean;
 };
 
-/** Runs the head script against a fake page and returns what it left on <html> and the timers it set. */
-const run = ({ stored = null, light = false, motion = true, seen = false, storageThrows = false }: Env) => {
+/** Runs a head script against a fake page and returns what it left on <html> and the timers it set. */
+const run = (
+  { stored = null, light = false, motion = true, seen = false, storageThrows = false }: Env,
+  script = themeScript,
+) => {
   const classes = new Set<string>();
   const html = {
     dataset: {} as Record<string, string>,
@@ -35,7 +38,7 @@ const run = ({ stored = null, light = false, motion = true, seen = false, storag
   const matchMedia = (query: string) => ({
     matches: query.includes('color-scheme: light') ? light : query.includes('no-preference') ? motion : false,
   });
-  new Function('document', 'localStorage', 'sessionStorage', 'matchMedia', 'setTimeout', themeScript)(
+  new Function('document', 'localStorage', 'sessionStorage', 'matchMedia', 'setTimeout', script)(
     { documentElement: html },
     storage(stored),
     storage(seen ? '1' : null),
@@ -92,5 +95,37 @@ describe('head script', () => {
     expect(classes.has('intro')).toBe(true);
     expect(html.dataset.theme).toBe('dark');
     expect(timers).toEqual([]);
+  });
+});
+
+describe('pinned layout script', () => {
+  it('pins the layout before first paint when motion is allowed', () => {
+    const { classes } = run({}, pinScript);
+    expect(classes.has('pinned')).toBe(true);
+    expect(classes.has('enhanced')).toBe(false);
+  });
+
+  it('keeps the page stacked with reduced motion', () => {
+    const { classes, timers } = run({ motion: false }, pinScript);
+    expect(classes.has('pinned')).toBe(false);
+    expect(timers).toEqual([]);
+  });
+
+  it('unpins after 6 s if the app never takes over', () => {
+    const { classes, timers } = run({}, pinScript);
+    expect(timers.map((t) => t.ms)).toEqual([6000]);
+    for (const timer of timers) timer.run();
+    expect(classes.has('pinned')).toBe(false);
+  });
+
+  it('stays pinned once the app has taken over', () => {
+    const { classes, timers } = run({}, pinScript);
+    classes.add('enhanced');
+    for (const timer of timers) timer.run();
+    expect(classes.has('pinned')).toBe(true);
+  });
+
+  it('runs after the theme script in the one <head> script', () => {
+    expect(headScript).toBe(themeScript + pinScript);
   });
 });
