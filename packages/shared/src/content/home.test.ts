@@ -76,12 +76,14 @@ describe('home content', () => {
       latinName: 'Youssef Zaky',
       brand: 'ZakyDev',
       domain: 'zakydev.com',
+      city: 'Manama',
     });
     expect(home.ar.site).toEqual({
       name: 'يوسف زكي',
       latinName: 'Youssef Zaky',
       brand: 'ZakyDev',
       domain: 'zakydev.com',
+      city: 'المنامة',
     });
   });
   it('rejects diagram labels that do not fit their drawing', () => {
@@ -106,6 +108,10 @@ describe('home content', () => {
     expect(unconfirmedPaths(sample).length).toBeGreaterThan(0);
     expect(() => requireConfirmed('en', sample)).toThrow(/unconfirmed/i);
     expect(getHome('en').hero.place).toBeDefined();
+  });
+  it('titles each page with the approved search title (copy round 2026-10-17)', () => {
+    expect(home.en.seo.title).toBe('Youssef Zaky — Software Engineer in Bahrain | ZakyDev');
+    expect(home.ar.seo.title).toBe('يوسف زكي — مهندس برمجيات ومطوّر مواقع في البحرين | ZakyDev');
   });
   it('has no unconfirmed text left in either locale (owner sign-off 2026-10-17)', () => {
     for (const l of ['en', 'ar'] as const) {

@@ -32,6 +32,10 @@ for (const [locale, { path, url }] of Object.entries(HOME)) {
     expect(await attribute(page, 'meta[property="og:url"]', 'content')).toBe(url);
     const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}');
     expect(ld.url).toBe(url);
+    expect(ld.inLanguage).toBe(locale);
+    // the person's own address is the site's root, the same on both pages; their image is this page's card
+    expect(ld.mainEntity.url).toBe(HOME.en.url);
+    expect(ld.mainEntity.image).toBe(await attribute(page, 'meta[property="og:image"]', 'content'));
   });
 
   test(`${path} lists English at / and Arabic at /ar, with / as the default`, async ({ page }) => {

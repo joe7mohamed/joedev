@@ -158,8 +158,15 @@ export const homeAr: HomeContent = {
     footer: 'ZakyDev · يوسف زكي · البحرين',
   },
   seo: {
-    title: 'يوسف زكي — مهندس برمجيات | ZakyDev',
-    description: 'مهندس برمجيات في البحرين. أصمّم تطبيقات الويب وأبنيها وأطلقها، من البداية إلى النهاية.',
+    title: 'يوسف زكي — مهندس برمجيات ومطوّر مواقع في البحرين | ZakyDev',
+    description:
+      'مهندس برمجيات في البحرين. أصمّم وأبني وأطلق مواقع وتطبيقات ويب بالعربية والإنجليزية: أسواق إلكترونية وأدوات ذكاء اصطناعي وألعاب جماعية، من الفكرة حتى الإطلاق.',
   },
-  site: { name: 'يوسف زكي', latinName: 'Youssef Zaky', brand: 'ZakyDev', domain: 'zakydev.com' },
+  site: {
+    name: 'يوسف زكي',
+    latinName: 'Youssef Zaky',
+    brand: 'ZakyDev',
+    domain: 'zakydev.com',
+    city: 'المنامة',
+  },
 };

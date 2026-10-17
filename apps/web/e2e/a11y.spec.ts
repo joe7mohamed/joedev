@@ -24,13 +24,34 @@ for (const path of ['/', '/ar']) {
 
 test('metadata, alternates and structured data are present', async ({ page }) => {
   await page.goto('/ar');
-  await expect(page).toHaveTitle('يوسف زكي — مهندس برمجيات | ZakyDev');
+  await expect(page).toHaveTitle('يوسف زكي — مهندس برمجيات ومطوّر مواقع في البحرين | ZakyDev');
   await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveCount(1);
   await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveCount(1);
   await expect(page.locator('meta[property="og:image"]')).toHaveCount(1);
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
   const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}');
-  expect(ld['@type']).toBe('Person');
-  expect(ld.email).toBe('mailto:youssef@zakydev.com');
+  // a ProfilePage whose main entity is the person (copy and SEO round 2026-10-17)
+  expect(ld['@context']).toBe('https://schema.org');
+  expect(ld['@type']).toBe('ProfilePage');
+  expect(ld.inLanguage).toBe('ar');
+  const person = ld.mainEntity;
+  expect(person['@type']).toBe('Person');
+  expect(person.email).toBe('mailto:youssef@zakydev.com');
+  expect(person.name).toBe('يوسف زكي');
+  expect(person.alternateName).toEqual(['Youssef Zaky', 'ZakyDev']);
+  expect(person.jobTitle).toBe('مهندس برمجيات');
+  expect(person.address).toEqual({
+    '@type': 'PostalAddress',
+    addressLocality: 'المنامة',
+    addressCountry: 'BH',
+  });
+  expect(person.knowsLanguage).toEqual(['ar', 'en']);
+  expect(person.knowsAbout).toContain('Next.js');
+  expect(new Set(person.knowsAbout).size).toBe(person.knowsAbout.length);
+  expect(person.sameAs).toEqual([
+    'https://github.com/joe7mohamed',
+    'https://linkedin.com/in/youssef7mohamed',
+  ]);
 });
 
 test('sitemap and robots are served', async ({ request }) => {

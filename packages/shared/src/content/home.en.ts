@@ -158,8 +158,15 @@ export const homeEn: HomeContent = {
     footer: 'ZakyDev · Youssef Zaky · Bahrain',
   },
   seo: {
-    title: 'Youssef Zaky — Software engineer | ZakyDev',
-    description: 'Software engineer in Bahrain. I design, build and launch web apps, start to finish.',
+    title: 'Youssef Zaky — Software Engineer in Bahrain | ZakyDev',
+    description:
+      'Software engineer in Bahrain. I design, build and launch web apps in Arabic and English — marketplaces, AI tools and real-time games, start to finish.',
   },
-  site: { name: 'Youssef Zaky', latinName: 'Youssef Zaky', brand: 'ZakyDev', domain: 'zakydev.com' },
+  site: {
+    name: 'Youssef Zaky',
+    latinName: 'Youssef Zaky',
+    brand: 'ZakyDev',
+    domain: 'zakydev.com',
+    city: 'Manama',
+  },
 };

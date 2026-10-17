@@ -14,7 +14,6 @@ import { Process } from '@/components/process/Process';
 import { shotUrls } from '@/components/work/screenshot';
 import { Work } from '@/components/work/Work';
 import { sharingMetadata } from '@/lib/og';
-import { homeUrl } from '@/lib/site';
 import { EngineProvider } from '@/motion/EngineProvider';
 import { GoldElement } from '@/motion/GoldElement';
 import { Scene } from '@/motion/Scene';
@@ -58,7 +57,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       <Loader images={shotUrls(c.projects.map((p) => p.image))}>
         <LoaderArt />
       </Loader>
-      <JsonLd content={c} url={homeUrl(locale)} />
+      <JsonLd content={c} locale={locale} />
     </EngineProvider>
   );
 }
