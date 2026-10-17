@@ -1,6 +1,6 @@
 /* The two display faces, self-hosted (docs/VERSIONS.md, "Self-hosted display faces"). They are declared here, not
    with next/font, so each page can preload its own one (display.ts, the locale layout): next/font preloads a face on
-   every route or on none. A face downloads only where some text uses it, so /en never fetches Amiri.
+   every route or on none. A face downloads only where some text uses it, so the English page (/) never fetches Amiri.
    The fallbacks carry each face's metrics (the values next/font computed for them), so the swap moves little even
    without the preload; fallbacks.css has the body and mono ones. */
 @font-face {

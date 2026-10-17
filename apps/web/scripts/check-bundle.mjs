@@ -10,6 +10,8 @@ import { gzipSync } from 'node:zlib';
 /** 170 kB, counted in thousands of bytes (the stricter reading). */
 export const LIMIT_BYTES = 170_000;
 const ROUTES = ['en', 'ar'];
+/** The address each prerendered page is served at (owner decision 2026-10-17: English at /, through the proxy). */
+export const addressOf = (route) => (route === 'en' ? '/' : `/${route}`);
 const STATIC = '/_next/static/';
 /**
  * Libraries that must never reach a home-page script, each by a string only its runtime contains. zod and the
@@ -65,12 +67,13 @@ const main = () => {
   let failed = false;
   for (const route of ROUTES) {
     const result = measure(readFileSync(join(app, 'server', 'app', `${route}.html`), 'utf8'), read);
-    console.log(`/${route}: ${kB(result.total)} gzip of ${kB(LIMIT_BYTES)}`);
+    const page = `${addressOf(route)} (${route}.html)`;
+    console.log(`${page}: ${kB(result.total)} gzip of ${kB(LIMIT_BYTES)}`);
     for (const { path, gzip } of result.scripts) console.log(`  ${kB(gzip).padStart(9)}  ${path}`);
     for (const { path, name } of result.forbidden) console.error(`  ${name} found in ${path}`);
-    if (result.empty) console.error(`/${route} lists no /_next/static scripts: nothing was measured`);
+    if (result.empty) console.error(`${page} lists no /_next/static scripts: nothing was measured`);
     if (result.over)
-      console.error(`/${route} is over the route-JS budget by ${kB(result.total - LIMIT_BYTES)}`);
+      console.error(`${page} is over the route-JS budget by ${kB(result.total - LIMIT_BYTES)}`);
     failed ||= result.over || result.empty || result.forbidden.length > 0;
   }
   if (failed) process.exitCode = 1;

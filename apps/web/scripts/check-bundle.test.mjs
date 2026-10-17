@@ -1,6 +1,6 @@
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { LIMIT_BYTES, measure, scriptsOf } from './check-bundle.mjs';
+import { addressOf, LIMIT_BYTES, measure, scriptsOf } from './check-bundle.mjs';
 
 const html = [
   '<!DOCTYPE html><html><head>',
@@ -57,5 +57,12 @@ describe('measure', () => {
     const result = measure(html, (path) => Buffer.from(zod[path]));
     expect(result.forbidden).toEqual([{ path: 'chunks/a.js', name: 'zod' }]);
     expect(measure(html, read).forbidden).toEqual([]);
+  });
+});
+
+describe('report labels', () => {
+  it('names each page by the address it is served at: English at /, Arabic at /ar', () => {
+    expect(addressOf('en')).toBe('/');
+    expect(addressOf('ar')).toBe('/ar');
   });
 });
