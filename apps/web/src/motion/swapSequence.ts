@@ -4,10 +4,10 @@ const EASE = 'cubic-bezier(.2,.8,.2,1)';
 /**
  * The prototype fades the word while it turns edge-on. Here the text stays at full opacity, so a contrast check never
  * catches it half transparent; a clip that closes toward the middle line hides it instead. Open, the clip leaves room
- * for the underline, descenders and the halo.
+ * for the underline, descenders and the halo; its sides stay half an em out, past the halo's reach on any word.
  */
-const OPEN = 'inset(-40% -8% -40% -8%)';
-const SHUT = 'inset(50% -8% 50% -8%)';
+const OPEN = 'inset(-40% -0.5em)';
+const SHUT = 'inset(50% -0.5em)';
 
 type Playback = { finished: Promise<unknown>; cancel(): void };
 export type Animatable = {

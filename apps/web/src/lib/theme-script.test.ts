@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { headScript, pinScript, themeScript } from './theme-script';
+import { headScript, pinScript, SAFETY_MS, themeScript } from './theme-script';
 
 type Env = {
   stored?: string | null;
@@ -123,6 +123,14 @@ describe('pinned layout script', () => {
     classes.add('enhanced');
     for (const timer of timers) timer.run();
     expect(classes.has('pinned')).toBe(true);
+  });
+
+  it('shares one safety timeout with the loader', () => {
+    expect(SAFETY_MS).toBe(6000);
+    expect(run({}).timers.map((t) => t.ms)).toEqual([SAFETY_MS]);
+    expect(run({}, pinScript).timers.map((t) => t.ms)).toEqual([SAFETY_MS]);
+    expect(themeScript.match(/\b6000\b/g)).toHaveLength(1);
+    expect(pinScript.match(/\b6000\b/g)).toHaveLength(1);
   });
 
   it('runs after the theme script in the one <head> script', () => {

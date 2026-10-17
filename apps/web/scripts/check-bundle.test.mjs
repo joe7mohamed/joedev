@@ -40,6 +40,13 @@ describe('measure', () => {
     expect(result.over).toBe(false);
   });
 
+  it('fails when the page lists no scripts at all (the markup changed and nothing was measured)', () => {
+    const result = measure('<!DOCTYPE html><html><head></head><body></body></html>', read);
+    expect(result.scripts).toEqual([]);
+    expect(result.empty).toBe(true);
+    expect(measure(html, read).empty).toBe(false);
+  });
+
   it('fails above the limit', () => {
     expect(measure(html, read, 10).over).toBe(true);
     expect(LIMIT_BYTES).toBe(150_000);

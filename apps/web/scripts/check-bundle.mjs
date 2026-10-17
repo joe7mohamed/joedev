@@ -19,7 +19,8 @@ const FORBIDDEN = [{ name: 'zod', marker: '$ZodType' }];
 
 /**
  * The `/_next/static/` paths of the scripts the HTML loads, once each, in order. `noModule` scripts (the legacy
- * polyfills) are left out: every browser that runs modules skips them without fetching. The dynamically imported
+ * polyfills) are left out: every browser that runs modules skips them without fetching (controller ruling, Task 13b
+ * fix round 1, progress.md: browsers at the spec floor never fetch or run them). The dynamically imported
  * background chunk is not in the HTML, so it is not counted either. Inline scripts have no `src` and are skipped.
  */
 export const scriptsOf = (html) => {
@@ -34,7 +35,10 @@ export const scriptsOf = (html) => {
   return found;
 };
 
-/** Gzip sizes of a page's scripts, their total, whether it is over `limit`, and any forbidden library found. */
+/**
+ * Gzip sizes of a page's scripts, their total, whether it is over `limit`, whether it found none at all (then the
+ * markup changed and nothing was measured, which must fail too), and any forbidden library found.
+ */
 export const measure = (html, read, limit = LIMIT_BYTES) => {
   const scripts = scriptsOf(html).map((path) => {
     const body = read(path);
@@ -48,6 +52,7 @@ export const measure = (html, read, limit = LIMIT_BYTES) => {
     scripts: scripts.map(({ path, gzip }) => ({ path, gzip })),
     total,
     over: total > limit,
+    empty: scripts.length === 0,
     forbidden,
   };
 };
@@ -63,9 +68,10 @@ const main = () => {
     console.log(`/${route}: ${kB(result.total)} gzip of ${kB(LIMIT_BYTES)}`);
     for (const { path, gzip } of result.scripts) console.log(`  ${kB(gzip).padStart(9)}  ${path}`);
     for (const { path, name } of result.forbidden) console.error(`  ${name} found in ${path}`);
+    if (result.empty) console.error(`/${route} lists no /_next/static scripts: nothing was measured`);
     if (result.over)
       console.error(`/${route} is over the route-JS budget by ${kB(result.total - LIMIT_BYTES)}`);
-    failed ||= result.over || result.forbidden.length > 0;
+    failed ||= result.over || result.empty || result.forbidden.length > 0;
   }
   if (failed) process.exitCode = 1;
 };

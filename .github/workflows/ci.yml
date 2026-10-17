@@ -69,7 +69,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: npx playwright test --grep @visual
+      - run: npx playwright test --grep @visual --update-snapshots=none
         working-directory: apps/web
       - uses: actions/upload-artifact@v7
         if: ${{ failure() }}

@@ -8,7 +8,13 @@
  * removes `loading` after 6 s, so even if no app script ever runs the overlay goes and the page underneath, which
  * was readable the whole time, builds and stays.
  */
-export const themeScript = `(function(){var d=document.documentElement,s=null;try{s=localStorage.getItem('zk-theme');}catch(e){}var t=s;if(t!=='light'&&t!=='dark'){try{t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}catch(e){t='dark';}}d.dataset.theme=t;try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){d.classList.add('intro');var v=true;try{v=!!sessionStorage.getItem('zk-intro');}catch(e){}if(!v){d.classList.add('loading');try{sessionStorage.setItem('zk-intro','1');}catch(e){}setTimeout(function(){d.classList.remove('loading')},6000);}}}catch(e){}})();`;
+/**
+ * How long the head scripts wait for the app before they give up on it: the loading screen goes, and the pinned
+ * layout returns to the stacked one. One value, so both safety nets fire together.
+ */
+export const SAFETY_MS = 6000;
+
+export const themeScript = `(function(){var d=document.documentElement,s=null;try{s=localStorage.getItem('zk-theme');}catch(e){}var t=s;if(t!=='light'&&t!=='dark'){try{t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}catch(e){t='dark';}}d.dataset.theme=t;try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){d.classList.add('intro');var v=true;try{v=!!sessionStorage.getItem('zk-intro');}catch(e){}if(!v){d.classList.add('loading');try{sessionStorage.setItem('zk-intro','1');}catch(e){}setTimeout(function(){d.classList.remove('loading')},${SAFETY_MS});}}}catch(e){}})();`;
 
 /**
  * Also before first paint, when motion is allowed: `pinned` puts the page in its pinned scene layout at once, so the
@@ -16,7 +22,7 @@ export const themeScript = `(function(){var d=document.documentElement,s=null;tr
  * scene's content stays readable until the app runs. If the app has not taken over after 6 s (the bundle failed), the
  * page goes back to the stacked layout that works without script. No script or reduced motion: stacked throughout.
  */
-export const pinScript = `(function(){var d=document.documentElement;try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){d.classList.add('pinned');setTimeout(function(){if(!d.classList.contains('enhanced'))d.classList.remove('pinned')},6000);}}catch(e){}})();`;
+export const pinScript = `(function(){var d=document.documentElement;try{if(matchMedia('(prefers-reduced-motion: no-preference)').matches){d.classList.add('pinned');setTimeout(function(){if(!d.classList.contains('enhanced'))d.classList.remove('pinned')},${SAFETY_MS});}}catch(e){}})();`;
 
 /** The one inline <head> script of the home pages. */
 export const headScript = themeScript + pinScript;
