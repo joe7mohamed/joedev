@@ -138,4 +138,9 @@ Mobile, /en and /ar; gates 90 / 100 / 100 / 100; record scores, TTFB and server 
 ### 8. Sign-off and merge (you decide)
 - Confirm or change every `u()` string (Claude gives the list).
 - Claude sets `REQUIRE_CONFIRMED=1` in Velocity env, redeploys, opens the PR to `main` only on your word; then switch branch to `main`, auto-deploy on.
-- Owner housekeeping: rotate the old MongoDB credentials and delete the untracked root `.env`; optionally claim the npm org `zakydev`.
+- Owner housekeeping: done for MongoDB (no longer used) and the old root `.env` (deleted); optionally claim the npm org `zakydev`.
+
+## LCP after launch
+
+Lighthouse's LCP, locally and in CI, is a lab simulation on a throttled connection. After launch, real-visitor LCP (the
+field data in Search Console, Core Web Vitals) is the real LCP test.
