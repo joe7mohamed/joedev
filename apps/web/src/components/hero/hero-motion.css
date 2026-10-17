@@ -174,7 +174,7 @@ html.enhanced [data-step]:nth-child(3)::before {
 }
 
 /* The scroll cue, centred at the bottom of the scene; not on phones. It shows from first paint with the rest of
-   the row (html.intro), so its fade-in never starts over when the app takes over. */
+   the row (html.intro), so its slide-in never starts over when the app takes over. */
 html:is(.intro, .enhanced) [data-cue] {
   position: absolute;
   inset: auto 0 22px;
