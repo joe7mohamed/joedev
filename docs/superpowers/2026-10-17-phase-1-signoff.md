@@ -1,6 +1,6 @@
 # Phase 1 sign-off pack (2026-10-17)
 
-Branch `rebuild/zakydev`, head after the final-review fix wave: `153a0e6`. Phase 1 Tasks 1–13 are done, reviewed task by task, and passed a final whole-branch review plus one fix wave and a clean re-review. CI runs lint, typecheck, unit tests, the build, the full e2e suite (386 tests), the route-JS budget, and visual snapshots in the Playwright image. The owner's decisions of 2026-10-17 (section 1) were then built on the same branch.
+Branch `rebuild/zakydev`, head after the final-review fix wave: `153a0e6`. Phase 1 Tasks 1–13 are done, reviewed task by task, and passed a final whole-branch review plus one fix wave and a clean re-review. CI runs lint, typecheck, unit tests, the build, the full e2e suite (480 tests, 128 skipped by design), the route-JS budget, Lighthouse CI and visual snapshots in the Playwright image. The owner's decisions of 2026-10-17 (section 1) were then built on the same branch.
 
 What is left needs the owner: the decisions below, the copy confirmation, then deployment (Phase 0 Task 7, steps in `docs/DEPLOY.md`) and the merge to `main` (Phase 1 Task 14).
 
@@ -8,12 +8,13 @@ What is left needs the owner: the decisions below, the copy confirmation, then d
 
 The owner decided these on 2026-10-17.
 
-1. **Load speed: the hero slides in without the fade.** The headline, the sentence and the rows around them are painted at full opacity from the first paint. They still build in, with the softer start the owner approved: the headline rises a third of a line and tips into place with the prototype's timing, the rows slide up, and the title types in. Lighthouse now sees the largest text at the first paint, and accessibility reads 1 on both pages. Lighthouse's simulated LCP is still about 3.1–4.3 s, because it also counts the fonts and scripts the page asks for before that paint. After launch, real-visitor LCP (the field data in Search Console) is the real LCP test.
-2. **Arabic font: self-hosted, preloaded on `/ar` only.** The two display faces (Fraunces, Amiri) are now files in the repository, built from the upstream releases (`docs/VERSIONS.md`). Each page preloads only its headline's face: Fraunces on `/en`, Amiri on `/ar`. `/en` never downloads Amiri. The body and mono faces load without preload, over size-matched fallbacks. The `/ar` font-swap shift is gone: 0.015–0.021 on desktop, where it was 0.05–0.10. The Lighthouse CI step stays parked: on `/ar` the performance score is 0.80–0.87 in the lab, below 0.9, because Lighthouse counts the Amiri and Arabic body font downloads before the first paint (see the owner-round report, round 2). `/en` passes every gate except LCP.
-3. **Route-JS budget: 170 kB gzip.** Both pages load 149,898 bytes, so about 20 kB is left (spec line 32, `check-bundle.mjs`, `docs/DEPLOY.md`).
-4. **Large phones: fixed.** Phones about 414–430 × 832–836, a window about 860 × 700 and the 768 × 1024 tablet now pin every scene, in both languages. The tested sizes that pinned before measure the same as before.
-5. **Secrets: still open.** MongoDB is no longer used, and the untracked root `.env` is deleted. Deleting the `.env` does not revoke anything: the MongoDB Atlas password is in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10). **Still to do (owner):** delete the `joedb` database user, or the whole project, in MongoDB Atlas. Only that revokes the password. Spec 12 item 4 stays open until you confirm it.
-6. **Two small differences from the prototype, accepted:**
+1. **Load speed: the hero slides in without the fade.** The headline, the sentence and the rows around them are painted at full opacity from the first paint. They still build in, with the softer start the owner approved: the headline rises a third of a line into place with the prototype's timing (the English letters also tip up; the Arabic words do not, as in the prototype), the rows slide up, and the title types in. Lighthouse now sees the largest text at the first paint, and accessibility reads 1 on both pages. Lighthouse's simulated LCP is still about 2.6–4.0 s, because it also counts the fonts and scripts the page asks for before that paint. After launch, real-visitor LCP (the field data in Search Console) is the real LCP test.
+2. **Fonts: self-hosted, each page preloads its own headline face, slimmed.** The two display faces (Fraunces, Amiri) are files in the repository, built from the upstream releases (`docs/VERSIONS.md`). Each page preloads only its headline's face: Fraunces on `/en`, Amiri on `/ar`, and `/en` never downloads Amiri. The body and mono faces load without preload, over size-matched fallbacks. The `/ar` font-swap shift is gone (0.015–0.021 on desktop, it was 0.05–0.10). Both display faces now carry only what their page sets in them (Amiri 132 → 87 kB, Fraunces 125 → 80 kB), with no visible change, checked pixel for pixel. All three Arabic body weights are used, so they stay.
+3. **Lighthouse CI: back on.** Every gate fails the build at its threshold, except two that only warn, by owner decision: LCP on both pages (lab medians about 2.9–3.5 s) and the `/ar` performance score (lab medians 0.92 first visit, 0.89 repeat visit). The other gates pass on the medians: `/en` performance 0.94–0.95, accessibility, best practices and SEO 1, CLS ≤ 0.014, TBT under 60 ms.
+4. **Route-JS budget: 170 kB gzip.** Both pages load 149,898 bytes, so about 20 kB is left (spec line 32, `check-bundle.mjs`, `docs/DEPLOY.md`).
+5. **Large phones: fixed.** Phones about 414–430 × 832–836, a window about 860 × 700 and the 768 × 1024 tablet now pin every scene, in both languages. The tested sizes that pinned before measure the same as before.
+6. **Secrets: still open.** MongoDB is no longer used, and the untracked root `.env` is deleted. Deleting the `.env` does not revoke anything: the MongoDB Atlas password is in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10). **Still to do (owner):** delete the `joedb` database user, or the whole project, in MongoDB Atlas. Only that revokes the password. Spec 12 item 4 stays open until you confirm it.
+7. **Two small differences from the prototype, accepted:**
    - the loader's `%` is a literal sign;
    - in Arabic, the loader bar fills from the right, like the header progress bar.
 
@@ -43,7 +44,7 @@ These strings are wrapped in `u()`. A build with `REQUIRE_CONFIRMED=1` fails unt
 Also from spec 12:
 - one line per project (the hardest problem and what you did), for later case studies;
 - a native read-through of all the Arabic copy;
-- **open:** delete the `joedb` database user (or the whole project) in MongoDB Atlas. The password is in the public history (888cc10), and deleting the local `.env` does not revoke it (item 1.5);
+- **open:** delete the `joedb` database user (or the whole project) in MongoDB Atlas. The password is in the public history (888cc10), and deleting the local `.env` does not revoke it (item 1.6);
 - optional: claim the npm org `zakydev`.
 
 ## 3. Known small items left on purpose
@@ -134,7 +135,7 @@ Every decision taken on the owner's behalf during Phase 1, in order, with what i
 **SEO, CSP, budgets, tests (Task 13)**
 31. All OG, JSON-LD and metadata text comes from shared content. The OG image is built with satori and resvg from local fonts. Cost if wrong: none.
 32. The CSP is exactly the spec string. `'unsafe-eval'` is allowed only in development. zod runs jitless, so production needs no eval. Cost if wrong: none.
-33. The Lighthouse CI step is parked on `hold/lhci-ci`, so CI stays green while LCP is your decision. No threshold was lowered. Cost if wrong: none; the commit is kept.
+33. The Lighthouse CI step was parked on `hold/lhci-ci` while LCP was your decision. It is back (decision 3): no threshold was lowered, and only LCP and `/ar` performance warn. Cost if wrong: none.
 34. The pinned layout is applied before first paint, with a safety timer, which removed the hydration layout shift. Cost if wrong: a shift only when the bundle fails.
 35. The engine writes nothing while the loader shows. The text halo is limited to text over the background. Cost if wrong: none.
 36. The rotating-word flip uses a clip, not a fade, so its text is never half-transparent. Cost if wrong: the flip reads slightly differently from the prototype.
