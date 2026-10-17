@@ -7,7 +7,7 @@ import { type Rgb, rgbOf } from './drift';
  * Under the words, the luminance stays within `uGuard` of the page colour, so text keeps AA (spec 5.8); the cap is
  * applied in linear light, where luminance is exact.
  */
-export const FRAGMENT = `#ifdef GL_FRAGMENT_PRECISION_HIGH
+const FRAGMENT = `#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
 precision mediump float;
@@ -73,7 +73,7 @@ const TRIANGLE = new Float32Array([-1, -1, 3, -1, -1, 3]);
  * Page colour, the second colour of the prototype's other modes (unused here), dark gold, ridge colour
  * (prototype app.js `PAL`).
  */
-export const PALETTE = {
+const PALETTE = {
   dark: [0x0f0e0c, 0x17130c, 0x3a2b0c, 0xd4af37],
   light: [0xfaf9f6, 0xf3eee1, 0xe9d9a6, 0x8a6d1f],
 } as const;

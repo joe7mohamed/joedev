@@ -18,7 +18,7 @@ type FrameProps = { projects: Project[]; current: number; previous: number };
  * the end of the hero's handoff, stay while work's body plays, fade over the first half of work's tail, and are
  * gone in every other scene, so nothing shows inside the ring or the contact flood.
  */
-export const shotOpacity = (hero: SceneFrame | undefined, work: SceneFrame, scrollY: number): number => {
+const shotOpacity = (hero: SceneFrame | undefined, work: SceneFrame, scrollY: number): number => {
   if (scrollY + 1 < work.top) return hero ? smooth((hero.out - 0.6) / 0.4) : 0;
   return 1 - smooth(work.out / 0.5);
 };

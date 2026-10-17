@@ -65,17 +65,9 @@ export const icons = {
     </>,
   ),
   // prototype app.js 248 CODE
-  Code: make(
-    <>
-      <path d="M7 6l-4 4 4 4M13 6l4 4-4 4M11.5 4l-3 12" />
-    </>,
-  ),
+  Code: make(<path d="M7 6l-4 4 4 4M13 6l4 4-4 4M11.5 4l-3 12" />),
   // prototype app.js 249 PEN
-  Pen: make(
-    <>
-      <path d="M4 16l1-4 9-9 3 3-9 9zM12.5 4.5l3 3" />
-    </>,
-  ),
+  Pen: make(<path d="M4 16l1-4 9-9 3 3-9 9zM12.5 4.5l3 3" />),
   // prototype app.js 250 ROCKET
   Rocket: make(
     <>
@@ -84,11 +76,7 @@ export const icons = {
     </>,
   ),
   // prototype app.js 258 LOOP_ICONS[0]
-  Bulb: make(
-    <>
-      <path d="M10 2.800a5 5 0 0 0-3 9v2.200h6v-2.200a5 5 0 0 0-3-9zM8 17h4M10 9v5" />
-    </>,
-  ),
+  Bulb: make(<path d="M10 2.800a5 5 0 0 0-3 9v2.200h6v-2.200a5 5 0 0 0-3-9zM8 17h4M10 9v5" />),
   // prototype app.js 261 LOOP_ICONS[3]
   Database: make(
     <>
@@ -106,15 +94,7 @@ export const icons = {
   // prototype app.js 278 (process station tick)
   Tick: make(<path d="M5.5 10.4l3 3 6-6.6" />),
   // prototype app.js 265 LOOP_ICONS[6]
-  Pulse: make(
-    <>
-      <path d="M2 10h4l2-5 3.500 10 2-5H18" />
-    </>,
-  ),
+  Pulse: make(<path d="M2 10h4l2-5 3.500 10 2-5H18" />),
   // prototype app.js none: not in prototype app.js (arrow up-right, authored for the visit/CTA links)
-  Arrow: make(
-    <>
-      <path d="M6 14L14 6M7.5 6H14v6.5" />
-    </>,
-  ),
+  Arrow: make(<path d="M6 14L14 6M7.5 6H14v6.5" />),
 };
