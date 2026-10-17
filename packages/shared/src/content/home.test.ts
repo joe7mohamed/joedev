@@ -58,7 +58,9 @@ describe('home content', () => {
     (broken.nav as Record<string, unknown>).work = '';
     expect(() => homeContentSchema.parse(broken)).toThrow();
     const brokenStep = structuredClone(home.ar);
-    brokenStep.process.steps[0].tools = [''];
+    const firstStep = brokenStep.process.steps[0];
+    if (!firstStep) throw new Error('expected a first process step');
+    firstStep.tools = [''];
     expect(() => homeContentSchema.parse(brokenStep)).toThrow();
   });
   it('lists unconfirmed text and can refuse it', () => {
