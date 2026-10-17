@@ -193,9 +193,12 @@ three-step strip on the start side and the two buttons on the end side, then a c
 scroll cue. Phone: everything centred in one column; availability on its own line.
 
 Motion:
-- Headline builds on load: English by letter (rise 115%, rotateX −85° → 0, 0.95 s, 28 ms
+- Headline builds on load: English by letter (rise 30%, rotateX −45° → 0, 0.95 s, 28 ms
   stagger) while weight runs 220 → 560 and `SOFT` 100 → 0 over 1.7 s; Arabic by word
-  (0.1 s stagger, no rotation). Then the gold line draws under the zoom word (0.9 s).
+  (rise 30%, 0.1 s stagger, no rotation). Then the gold line draws under the zoom word (0.9 s).
+  Owner decision 2026-10-17: the build never fades from invisible; every part of the hero is
+  painted at full opacity from the first paint, and the start is softer than the prototype's
+  (rise 115%, rotateX −85°, with a fade), whose edge-on letters read as garbled without the fade.
 - Title: brackets slide in from ±18 px, the title types (48–88 ms per character), holds
   3 s, deletes (26 ms per character), types the other title, loops. Reserve the width of the
   longer title so neighbours never move.

@@ -100,3 +100,32 @@ for (const path of ['/en', '/ar']) {
     expect(paint.faint).toEqual([]);
   });
 }
+
+// Spec 5.3 and the prototype (`rotationX: ar ? 0 : -85`): Arabic builds word by word with a rise only, never a tip.
+test('the Arabic headline words rise without rotating while they build', async ({ page }) => {
+  await page.goto('/ar');
+  const frames = await page.evaluate(() => {
+    const words = [...document.querySelectorAll<HTMLElement>('#hero [data-headline="words"] [data-word]')];
+    const builds = words.flatMap((w) => w.getAnimations().filter((a) => a instanceof CSSAnimation));
+    for (const a of builds) a.pause();
+    // the first frame (every word still before its delay, at the start of the rise) and one mid-build
+    return [0, 400].map((at) => {
+      for (const a of builds) a.currentTime = at;
+      return words.map((w) => {
+        const m = new DOMMatrix(getComputedStyle(w).transform);
+        return { m22: m.m22, m23: m.m23, m32: m.m32, m33: m.m33, m12: m.m12, m21: m.m21, y: m.m42 };
+      });
+    });
+  });
+  const [first, mid] = frames as [Matrices, Matrices];
+  expect(first.length).toBeGreaterThan(0);
+  // the build is under way: every word starts below its place
+  expect(first.every((m) => m.y > 0)).toBe(true);
+  for (const m of [...first, ...mid]) {
+    expect(m.m22).toBeCloseTo(1, 5);
+    expect(m.m33).toBeCloseTo(1, 5);
+    for (const v of [m.m23, m.m32, m.m12, m.m21]) expect(v).toBeCloseTo(0, 5);
+  }
+});
+
+type Matrices = { m22: number; m23: number; m32: number; m33: number; m12: number; m21: number; y: number }[];

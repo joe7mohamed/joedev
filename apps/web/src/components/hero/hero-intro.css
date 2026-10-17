@@ -3,12 +3,11 @@
    it) and never restarts when the app adds html.enhanced. Every animation fills backwards only: it ends at the element's resting, visible style even if no
    app script ever runs (spec 6.5). Scroll-driven styles and loops stay in hero-motion.css.
    Owner decision 2026-10-17: nothing in the build fades from invisible. Every part is painted at full opacity from the
-   first paint (so the largest contentful paint is not held back) and builds by moving: the headline rises and tips
-   up into place, the rows around it slide in, the title types in by a clip. */
+   first paint (so the largest contentful paint is not held back) and builds by moving: the headline rises into place
+   (the English letters also tip up), the rows around it slide in, the title types in by a clip. */
 @media (prefers-reduced-motion: no-preference) {
-  /* Arabic rises word by word and tips up into place, like the English letters; it is never split into letters. */
+  /* Arabic rises word by word, without rotation (spec 5.3); it is never split into letters. */
   html.intro [data-headline="words"] [data-word] {
-    transform-origin: 50% 100%;
     animation: hero-word 0.95s cubic-bezier(0.215, 0.61, 0.355, 1) backwards;
     animation-delay: calc(150ms + var(--i, 0) * 100ms);
   }
@@ -70,9 +69,10 @@
   }
 }
 
-/* The prototype's rise and tip (a line low, edge-on) needed its fade: at full opacity those slivers read as garbled
-   text over the sentence below. So the parts start a third of a line low and tipped back halfway: the headline reads
-   from the first paint and settles into place with the prototype's timing and stagger. */
+/* The prototype's rise (a line low, English letters also edge-on) needed its fade: at full opacity those parts read as
+   garbled text over the sentence below. So, by owner decision 2026-10-17 (spec 5.3), they start a third of a line low,
+   the English letters tipped back halfway and the Arabic words not tipped at all: the headline reads from the first
+   paint and settles into place with the prototype's timing and stagger. */
 @keyframes hero-letter {
   from {
     transform: perspective(700px) translateY(30%) rotateX(-45deg);
@@ -80,7 +80,7 @@
 }
 @keyframes hero-word {
   from {
-    transform: perspective(700px) translateY(30%) rotateX(-45deg);
+    transform: translateY(30%);
   }
 }
 @keyframes hero-weight {
