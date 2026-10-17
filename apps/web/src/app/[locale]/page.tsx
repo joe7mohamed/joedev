@@ -1,5 +1,6 @@
 import { getHome, isLocale } from '@zakydev/shared';
 import { notFound } from 'next/navigation';
+import { About } from '@/components/about/About';
 import { Header } from '@/components/header/Header';
 import { Hero } from '@/components/hero/Hero';
 import { Process } from '@/components/process/Process';
@@ -27,9 +28,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <Process content={c.process} />
         </Scene>
         <Scene id="about" length={2.15} tail={0.25}>
-          <div data-fade>
-            <h2 className="text-4xl">{c.about.heading}</h2>
-          </div>
+          <About content={c.about} />
         </Scene>
         <Scene id="contact" length={1.5} tail={0}>
           <div data-fade>

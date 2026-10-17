@@ -217,3 +217,71 @@ for (const path of ['/en', '/ar']) {
     expect(m.off).toBeLessThanOrEqual(0.5);
   });
 }
+
+for (const path of ['/en', '/ar']) {
+  test(`loop station icons are centred on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await gotoScene(page, 'about', 0.5);
+    const worst = await page.evaluate(() =>
+      Math.max(
+        ...[...document.querySelectorAll('#about [data-station] [data-node]')].map((node) => {
+          const a = node.getBoundingClientRect();
+          const b = (node.querySelector('svg') as SVGElement).getBoundingClientRect();
+          return Math.max(
+            Math.abs(a.left + a.width / 2 - b.left - b.width / 2),
+            Math.abs(a.top + a.height / 2 - b.top - b.height / 2),
+          );
+        }),
+      ),
+    );
+    expect(worst).toBeLessThanOrEqual(0.5);
+  });
+}
+
+test('loop arc is empty while the first stage is current', async ({ page }) => {
+  await page.goto('/ar');
+  await gotoScene(page, 'about', 0.5);
+  await expect
+    .poll(async () => page.locator('#about [data-station][data-current="true"]').getAttribute('data-index'), {
+      timeout: 20000,
+    })
+    .toBe('0');
+  const sweep = await page
+    .locator('#about [data-arc]')
+    .evaluate((el) => Number(getComputedStyle(el).getPropertyValue('--a')));
+  expect(sweep).toBe(0);
+});
+
+// The About ring is the gold element as a circle on its slot, with nothing of the project frame's float or tilt
+// (Task 7's face).
+for (const path of ['/en', '/ar']) {
+  test(`the about ring sits on its slot and neither floats nor tilts on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await gotoScene(page, 'about', 0.5);
+    const m = await page.evaluate(() => {
+      const gold = document.querySelector('[data-gold]') as HTMLElement;
+      const box = gold.getBoundingClientRect();
+      const face = (gold.querySelector('[data-gold-face]') as HTMLElement).getBoundingClientRect();
+      const slot = (document.querySelector('#about [data-slot]') as HTMLElement).getBoundingClientRect();
+      const off = (a: DOMRect, b: DOMRect) =>
+        Math.max(
+          Math.abs(a.left - b.left),
+          Math.abs(a.top - b.top),
+          Math.abs(a.width - b.width),
+          Math.abs(a.height - b.height),
+        );
+      return {
+        visible: getComputedStyle(gold).visibility === 'visible',
+        tilt: gold.hasAttribute('data-tilt'),
+        face: off(face, box),
+        slot: off(box, slot),
+        circle: Number.parseFloat(getComputedStyle(gold).borderRadius) >= box.width / 2 - 0.5,
+      };
+    });
+    expect(m.visible).toBe(true);
+    expect(m.tilt).toBe(false);
+    expect(m.face).toBeLessThanOrEqual(0.5);
+    expect(m.slot).toBeLessThanOrEqual(1);
+    expect(m.circle).toBe(true);
+  });
+}

@@ -135,6 +135,12 @@ export const homeAr: HomeContent = {
         body: u('League of Legends و Valorant و TFT. أقرأ الخريطة، أقرّر، وأتكيّف.'),
       },
     ],
+    sceneLabels: {
+      coordinates: '26.07°N 50.56°E',
+      healthcare: u('HEALTHCARE → CODE'),
+      circuit: 'BIC · SINCE 2019',
+      games: [u('LOL'), u('VALORANT'), u('TFT')],
+    },
     disclaimer: 'ZakyDev غير معتمد من Riot Games.',
   },
   contact: {

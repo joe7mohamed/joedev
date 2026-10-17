@@ -228,7 +228,14 @@ test('the visible scene receives clicks, not the section that follows it', async
 });
 
 test('content stays on screen next to a scene that flows', async ({ page }) => {
-  await largeText(page);
+  // The real About content (ring and four cards) no longer fits 820x360 at 200 % text, so spec 6.4 makes it flow
+  // there. The scenario is the same as before: a pinned About directly before a flowing Contact, now produced by
+  // making Contact taller than any screen instead of relying on About being small.
+  await page.goto('/ar');
+  await expect(page.locator('html')).toHaveClass(/enhanced/);
+  await page.addStyleTag({ content: '#contact [data-sticky] > [data-fade]{min-height:150svh}' });
+  await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+  await page.waitForTimeout(400);
   await expect(page.locator('#about')).not.toHaveAttribute('data-unpinned');
   await expect(page.locator('#contact')).toHaveAttribute('data-unpinned', 'true');
   const total = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
@@ -799,4 +806,43 @@ test('process stations are buttons and the drawing is finished at the end', asyn
     .first()
     .evaluate((el) => Number(getComputedStyle(el).getPropertyValue('--p4')));
   expect(p4).toBe(1);
+});
+
+test('about shows the loop, four facts and the Riot disclaimer', async ({ page }) => {
+  await page.goto('/en');
+  await gotoScene(page, 'about', 0.5);
+  const about = page.locator('#about');
+  await expect(about.getByRole('heading', { level: 2 })).toHaveText('One engineer, from A to Z.');
+  await expect(about.locator('[data-station]')).toHaveCount(7);
+  await expect(about.locator('[data-fact]')).toHaveCount(4);
+  await expect(about.getByText("ZakyDev isn't endorsed by Riot Games.")).toBeVisible();
+  await expect(about.locator('[data-stage-name]')).not.toHaveText('');
+});
+
+// Spec 5.10: the stacked page shows the ring with every station resting on the first stage, and finished cards.
+test('with reduced motion the about loop rests on the first stage', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/ar');
+  const about = page.locator('#about');
+  await expect(about.locator('[data-station]')).toHaveCount(7);
+  await expect(about.locator('[data-station][data-current="true"]')).toHaveAttribute('data-index', '0');
+  await expect(about.locator('[data-stage-name]')).toHaveText('الفكرة');
+  await expect(about.locator('[data-stage-tools]')).toHaveText('Brief · user flow');
+  await expect(about.locator('[data-fact]')).toHaveCount(4);
+  const running = await about.evaluate((el) => el.getAnimations({ subtree: true }).length);
+  expect(running).toBe(0);
+});
+
+// Latin runs on the Arabic page (tool names, drawing labels) are marked as English (Task 7 ruling).
+test('Latin text in the about scene is marked as English on the Arabic page', async ({ page }) => {
+  await page.goto('/ar');
+  await gotoScene(page, 'about', 0.5);
+  await expect(page.locator('#about [data-stage-tools]')).toHaveAttribute('lang', 'en');
+  const scenes = page.locator('#about [data-fact] svg');
+  await expect(scenes).toHaveCount(4);
+  for (const svg of await scenes.all()) {
+    await expect(svg).toHaveAttribute('lang', 'en');
+    await expect(svg).toHaveAttribute('aria-hidden', 'true');
+    expect(await svg.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+  }
 });

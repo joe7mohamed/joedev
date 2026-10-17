@@ -100,6 +100,13 @@ export const homeContentSchema = z.object({
         z.object({ id: z.enum(['place', 'job', 'marshal', 'games']), label: z.string().min(1), body: text }),
       )
       .length(4),
+    /** The words drawn inside the card scenes (prototype app.js FACT_ICONS); game names are text only (spec 5.6). */
+    sceneLabels: z.object({
+      coordinates: z.string().min(1),
+      healthcare: text,
+      circuit: z.string().min(1),
+      games: z.tuple([text, text, text]),
+    }),
     disclaimer: z.string().min(1),
   }),
   contact: z.object({

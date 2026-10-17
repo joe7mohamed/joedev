@@ -1,0 +1,181 @@
+/* The About card scenes (spec 5.6; prototype style.css `.fx` rules, v18–v19). The resting styles are each scene's
+   finished still (flag up, pin down, brackets drawn, lights on, board filled); the loops run only in enhanced mode
+   with motion allowed, and pause while the About scene is not active. The flag is the only non-palette colour. */
+
+[data-fx] {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+[data-fx] .fx-g {
+  fill: var(--gold);
+}
+[data-fx] .fx-h {
+  fill: var(--bg);
+}
+[data-fx] .fx-i {
+  fill: var(--ink);
+}
+[data-fx] .fx-h2 {
+  fill: var(--bg);
+  stroke: var(--ink);
+  stroke-width: 1.4;
+}
+[data-fx] .fx-base {
+  stroke: var(--gold);
+}
+[data-fx] .fx-l {
+  fill: none;
+  stroke: var(--hair);
+  stroke-width: 1.6;
+}
+[data-fx] .fx-thin {
+  stroke-width: 1;
+}
+[data-fx] :is(.fx-s, .fx-pole) {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+[data-fx] .fx-pole {
+  stroke: var(--ink);
+}
+[data-fx] .fx-staff {
+  stroke-width: 2.2;
+}
+[data-fx] .fx-scope {
+  stroke-width: 1.5;
+}
+[data-fx] :is(.fx-ring, .fx-wave, .fx-flag, .fx-hit) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+[data-fx] .fx-ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.2;
+}
+/* both flags wave from their pole */
+[data-fx] :is(.fx-wave, .fx-flag) {
+  transform-origin: 0 50%;
+}
+[data-fx] .fx-t {
+  fill: var(--muted);
+  font:
+    500 7.2px var(--face-mono),
+    ui-monospace,
+    monospace;
+  letter-spacing: 0.1em;
+}
+[data-fx] .fx-ecg {
+  stroke-dasharray: 0.28 1;
+  /* at rest the gold run sits on the beat */
+  stroke-dashoffset: -0.2;
+}
+[data-fx] .fx-code {
+  stroke-dasharray: 1 2;
+}
+[data-fx] .fx-lt {
+  fill: var(--gold);
+  stroke: var(--muted);
+  stroke-width: 1.2;
+}
+[data-fx] .fx-kerb {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-dasharray: 9 9;
+}
+[data-fx] .fx-car {
+  transform: translateX(8px);
+}
+[data-fx] .fx-spd {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0;
+}
+[data-fx] .fx-scout {
+  transform: translate(28px, -28px);
+}
+[data-fx] .fx-hex {
+  fill: var(--gold);
+  stroke: var(--gold);
+  stroke-width: 1.2;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.enhanced [data-fx] .fx-rip {
+    animation: fx-rip 2.4s ease-out infinite;
+  }
+  html.enhanced [data-fx] .fx-pin {
+    animation: fx-pin 2.4s cubic-bezier(0.3, 1.6, 0.5, 1) infinite;
+  }
+  html.enhanced [data-fx] .fx-rise {
+    animation: fx-rise 7s var(--ease) infinite;
+  }
+  html.enhanced [data-fx] .fx-wave {
+    animation: fx-wave 1.5s ease-in-out infinite;
+  }
+  html.enhanced [data-fx] .fx-ecg {
+    animation: fx-ecg 3.8s linear infinite;
+  }
+  html.enhanced [data-fx] .fx-code {
+    animation: fx-code 3.8s var(--ease) infinite;
+  }
+  html.enhanced [data-fx] .fx-lt1 {
+    animation: fx-lt1 5.4s infinite;
+  }
+  html.enhanced [data-fx] .fx-lt2 {
+    animation: fx-lt2 5.4s infinite;
+  }
+  html.enhanced [data-fx] .fx-lt3 {
+    animation: fx-lt3 5.4s infinite;
+  }
+  html.enhanced [data-fx] .fx-lt4 {
+    animation: fx-lt4 5.4s infinite;
+  }
+  html.enhanced [data-fx] .fx-lt5 {
+    animation: fx-lt5 5.4s infinite;
+  }
+  html.enhanced [data-fx] .fx-kerb {
+    animation: fx-kerb 5.4s linear infinite;
+  }
+  html.enhanced [data-fx] .fx-car {
+    animation: fx-car 5.4s infinite;
+  }
+  html.enhanced [data-fx] .fx-spd {
+    animation: fx-spd 5.4s infinite;
+  }
+  html.enhanced [data-fx] .fx-flag {
+    animation: fx-flag 0.9s ease-in-out infinite;
+  }
+  html.enhanced [data-fx] .fx-scout {
+    animation: fx-scout 3s linear infinite;
+  }
+  html.enhanced [data-fx] .fx-ping {
+    animation: fx-ping 3s infinite;
+  }
+  html.enhanced [data-fx] .fx-aim {
+    animation: fx-aim 2.6s cubic-bezier(0.7, 0, 0.2, 1) infinite;
+  }
+  html.enhanced [data-fx] .fx-hit {
+    animation: fx-hit 2.6s infinite;
+  }
+  html.enhanced [data-fx] .fx-hex {
+    animation: fx-hex 3.6s infinite;
+  }
+  html.enhanced [data-fx] .fx-rip.fx-later {
+    animation-delay: 1.2s;
+  }
+  html.enhanced [data-fx] .fx-hit.fx-later {
+    animation-delay: 1.3s;
+  }
+  /* paused loops keep their place and resume when the scene is back */
+  html.enhanced #about:not([data-state="active"]) [data-fx] * {
+    animation-play-state: paused;
+  }
+}

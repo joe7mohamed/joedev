@@ -1,0 +1,249 @@
+/* The card scenes' loops (prototype style.css `fxRip`, `fxPin`, `rise`, `wave`, `fxEcg`, `fxCode`, `lt1…lt5`,
+   `kerb`, `car2`, `spd`, `fxPing`, `fxAim2`, `fxHit`, `hex`; the marshal flag and the minimap dot replace the
+   prototype's SMIL animations with transforms, so they pause and stop like the rest). Bound in fact-scenes.css. */
+
+@keyframes fx-rip {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(4.6);
+    opacity: 0;
+  }
+}
+@keyframes fx-pin {
+  0% {
+    transform: translateY(-46px);
+  }
+  22%,
+  100% {
+    transform: none;
+  }
+}
+@keyframes fx-rise {
+  0% {
+    transform: translateY(34px);
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  22%,
+  92% {
+    transform: none;
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(34px);
+    opacity: 0;
+  }
+}
+@keyframes fx-wave {
+  0%,
+  100% {
+    transform: skewY(-3deg) scaleX(1);
+  }
+  50% {
+    transform: skewY(4deg) scaleX(0.95);
+  }
+}
+@keyframes fx-ecg {
+  from {
+    stroke-dashoffset: 0.28;
+  }
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+@keyframes fx-code {
+  0%,
+  35%,
+  100% {
+    stroke-dashoffset: 1.06;
+  }
+  60%,
+  90% {
+    stroke-dashoffset: 0;
+  }
+}
+/* the five lights come on 10% apart and all go out together */
+@keyframes fx-lt1 {
+  0%,
+  7%,
+  57%,
+  100% {
+    fill: transparent;
+  }
+  8%,
+  56% {
+    fill: var(--gold);
+  }
+}
+@keyframes fx-lt2 {
+  0%,
+  17%,
+  57%,
+  100% {
+    fill: transparent;
+  }
+  18%,
+  56% {
+    fill: var(--gold);
+  }
+}
+@keyframes fx-lt3 {
+  0%,
+  27%,
+  57%,
+  100% {
+    fill: transparent;
+  }
+  28%,
+  56% {
+    fill: var(--gold);
+  }
+}
+@keyframes fx-lt4 {
+  0%,
+  37%,
+  57%,
+  100% {
+    fill: transparent;
+  }
+  38%,
+  56% {
+    fill: var(--gold);
+  }
+}
+@keyframes fx-lt5 {
+  0%,
+  47%,
+  57%,
+  100% {
+    fill: transparent;
+  }
+  48%,
+  56% {
+    fill: var(--gold);
+  }
+}
+@keyframes fx-kerb {
+  0%,
+  57% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 216;
+  }
+}
+@keyframes fx-car {
+  0% {
+    transform: translateX(8px);
+    opacity: 0;
+  }
+  6%,
+  50% {
+    transform: translateX(8px);
+    opacity: 1;
+  }
+  53% {
+    transform: translateX(6px);
+  }
+  57% {
+    transform: translateX(8px);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.4);
+  }
+  86% {
+    transform: translateX(220px);
+    opacity: 1;
+  }
+  87%,
+  100% {
+    transform: translateX(220px);
+    opacity: 0;
+  }
+}
+@keyframes fx-spd {
+  0%,
+  58%,
+  100% {
+    opacity: 0;
+  }
+  64%,
+  86% {
+    opacity: 1;
+  }
+}
+/* the marshal flag ripples from its staff; a transform, so it also waves in Safari (no CSS `d` animation there) */
+@keyframes fx-flag {
+  0%,
+  100% {
+    transform: skewY(-5deg) scaleY(1);
+  }
+  50% {
+    transform: skewY(5deg) scaleY(0.92);
+  }
+}
+@keyframes fx-scout {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translate(28px, -28px);
+  }
+}
+@keyframes fx-ping {
+  0%,
+  40% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  45% {
+    opacity: 0.9;
+  }
+  75%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+@keyframes fx-aim {
+  0%,
+  18%,
+  82%,
+  100% {
+    transform: none;
+  }
+  38%,
+  62% {
+    transform: translate(20px, -24px);
+  }
+}
+@keyframes fx-hit {
+  0%,
+  36%,
+  60%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  44% {
+    transform: scale(2.2);
+    opacity: 1;
+  }
+}
+@keyframes fx-hex {
+  0%,
+  6%,
+  84%,
+  100% {
+    fill: transparent;
+    stroke: var(--muted);
+  }
+  14%,
+  72% {
+    fill: var(--gold);
+    stroke: var(--gold);
+  }
+}

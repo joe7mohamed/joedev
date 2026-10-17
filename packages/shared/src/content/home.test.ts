@@ -48,6 +48,17 @@ describe('home content', () => {
     }
     expect(home.en.projects[0]?.diagramLabels).toEqual(['NEXT.JS', 'NESTJS', 'MYSQL']);
   });
+  it('labels the about card drawings in both locales', () => {
+    for (const l of ['en', 'ar'] as const) {
+      const labels = home[l].about.sceneLabels;
+      expect(labels.coordinates).toBe('26.07°N 50.56°E');
+      expect(plain(labels.healthcare)).toBe('HEALTHCARE → CODE');
+      expect(labels.circuit).toBe('BIC · SINCE 2019');
+      expect(labels.games.map(plain)).toEqual(['LOL', 'VALORANT', 'TFT']);
+    }
+    expect(unconfirmedPaths(home.en)).toContain('about.sceneLabels.games[0]');
+    expect(unconfirmedPaths(home.ar)).toContain('about.sceneLabels.healthcare');
+  });
   it('rejects diagram labels that do not fit their drawing', () => {
     const broken = structuredClone(home.en) as unknown as { projects: { diagramLabels: string[] }[] };
     (broken.projects[2] as { diagramLabels: string[] }).diagramLabels = ['SERVER', 'EXTRA'];

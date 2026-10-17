@@ -135,6 +135,12 @@ export const homeEn: HomeContent = {
         body: u('League of Legends, Valorant and TFT. Read the map, make the call, adapt.'),
       },
     ],
+    sceneLabels: {
+      coordinates: '26.07°N 50.56°E',
+      healthcare: u('HEALTHCARE → CODE'),
+      circuit: 'BIC · SINCE 2019',
+      games: [u('LOL'), u('VALORANT'), u('TFT')],
+    },
     disclaimer: "ZakyDev isn't endorsed by Riot Games.",
   },
   contact: {

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { clamp, currentFirst, lerpRect, mix, range, sceneProgress, smooth, stepAt, stepDraw } from './math';
+import {
+  clamp,
+  currentFirst,
+  lerpRect,
+  loopAt,
+  mix,
+  range,
+  sceneProgress,
+  smooth,
+  stepAt,
+  stepDraw,
+} from './math';
 
 describe('math', () => {
   it('clamps', () => {
@@ -67,5 +78,19 @@ describe('math', () => {
       w: 20,
       h: 11,
     });
+  });
+  it('moves the A-to-Z loop one station per 2.3 s, travelling in the first half', () => {
+    // the first stage: the dot arrives from the last station, so the arc is still empty
+    expect(loopAt(0, 7)).toEqual({ index: 0, sweep: -1 / 7 });
+    expect(loopAt(0.575, 7).index).toBe(0);
+    expect(loopAt(0.575, 7).sweep).toBeCloseTo(-0.5 / 7, 5);
+    expect(loopAt(1.15, 7)).toEqual({ index: 0, sweep: 0 });
+    // the second stage: travel to the second station, then rest there
+    expect(loopAt(2.3, 7).index).toBe(1);
+    expect(loopAt(2.3, 7).sweep).toBeCloseTo(0, 5);
+    expect(loopAt(4, 7).sweep).toBeCloseTo(1 / 7, 5);
+    // the last stage rests at 6/7, then the loop starts again
+    expect(loopAt(2.3 * 6.9, 7).sweep).toBeCloseTo(6 / 7, 5);
+    expect(loopAt(2.3 * 7.9, 7)).toEqual({ index: 0, sweep: 0 });
   });
 });

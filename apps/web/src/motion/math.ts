@@ -50,3 +50,18 @@ export const currentFirst = (count: number, at: number): number[] => [
   at,
   ...Array.from({ length: count }, (_, i) => i).filter((i) => i !== at),
 ];
+
+/** The A-to-Z loop (spec 5.6): one station per 2.3 s; the dot travels in the first half and rests in the second. */
+const LOOP_STATION_SECONDS = 2.3;
+const LOOP_TRAVEL = 0.5;
+
+/**
+ * Where the loop is after `seconds`: the current station, and how far round the ring the dot is (`sweep`, in turns).
+ * The dot reaches station k at k / count, so it is still arriving at the first one (negative) while the arc behind
+ * it is empty.
+ */
+export const loopAt = (seconds: number, count: number): { index: number; sweep: number } => {
+  const t = seconds / LOOP_STATION_SECONDS;
+  const index = Math.floor(t) % count;
+  return { index, sweep: (index - 1 + smooth((t % 1) / LOOP_TRAVEL)) / count };
+};
