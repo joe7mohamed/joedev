@@ -253,10 +253,27 @@ html[lang="ar"] [data-loop] [data-stage-name] {
     font-size: 9.5px;
   }
 }
-/* short phones: a smaller ring still (about.css) */
+/* short phones: a smaller ring still (about.css), so its centre packs tighter: a smaller mark higher up, and the stage
+   name and tools in a narrower column that clears the stations around it */
 @media (max-width: 860px) and (max-height: 830px) {
   html.enhanced #about:not([data-unpinned]) [data-loop] {
     width: min(44vw, 18svh);
     margin: min(9vw, 3svh) auto min(6vw, 1.5svh);
+  }
+  html.enhanced #about:not([data-unpinned]) [data-loop-mark] {
+    top: 15%;
+    left: 40%;
+    width: 20%;
+  }
+  html.enhanced #about:not([data-unpinned]) [data-loop-centre] {
+    inset: 38% 14% auto;
+    gap: 2px;
+  }
+  html.enhanced #about:not([data-unpinned]) [data-stage-name] {
+    font-size: 17px;
+  }
+  html.enhanced #about:not([data-unpinned]) [data-stage-tools] {
+    font-size: 8.5px;
+    line-height: 1.3;
   }
 }

@@ -1,5 +1,5 @@
 import { type Browser, expect, type Page } from '@playwright/test';
-import { expectNoBlankScreen, test, untilBuilt } from './helpers';
+import { expectNoBlankScreen, gotoScene, test, untilBuilt } from './helpers';
 
 /**
  * Real phones and laptops are shorter than the reference sizes: iPhone Safari with its toolbars gives 640–745 px of
@@ -78,6 +78,41 @@ for (const path of ['/en', '/ar']) {
       expect(g.height).toBeLessThan(12);
       expect(g.top).toBeGreaterThanOrEqual(k.top + k.height * 0.75);
       expect(g.bottom).toBeLessThanOrEqual(k.bottom + 2);
+      await page.context().close();
+    });
+  }
+
+  // The ring is smallest on short phones: every stage's name and tools stay clear of the stations and the mark.
+  for (const viewport of SHORT.filter((v) => v.mobile)) {
+    test(`the about ring's centre never covers a station at ${sizeOf(viewport)} on ${path}`, async ({
+      browser,
+    }) => {
+      const page = await open(browser, viewport, path);
+      await gotoScene(page, 'about', 0.5);
+      const covered = await page.evaluate(() => {
+        const about = document.getElementById('about') as HTMLElement;
+        const names = [...about.querySelectorAll('[data-station] [data-station-name]')].map(
+          (n) => n.textContent ?? '',
+        );
+        const tools = [...about.querySelectorAll('[data-station] .sr-only')].map(
+          (n) => n.textContent?.trim() ?? '',
+        );
+        const name = about.querySelector('[data-stage-name] span') as HTMLElement;
+        const list = about.querySelector('[data-stage-tools]') as HTMLElement;
+        const hits = (a: DOMRect, b: DOMRect): boolean =>
+          a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+        const others = [...about.querySelectorAll('[data-node], [data-loop-mark]')].map((n) =>
+          n.getBoundingClientRect(),
+        );
+        // every stage in turn, as the loop shows them (it is frozen on the first one here)
+        return names.flatMap((stage, i) => {
+          name.textContent = stage;
+          list.textContent = tools[i] ?? '';
+          const text = [name.getBoundingClientRect(), list.getBoundingClientRect()];
+          return text.some((t) => others.some((o) => hits(t, o))) ? [stage] : [];
+        });
+      });
+      expect(covered).toEqual([]);
       await page.context().close();
     });
   }
