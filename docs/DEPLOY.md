@@ -67,14 +67,15 @@ Revisit when Next can hash its own inline scripts for static output. Then `'unsa
 ## Route-JS budget
 
 The scripts `/en` and `/ar` load (`<script src>` in the prerendered HTML, gzipped, without the `noModule` polyfills
-and without the background shader's chunk, which loads later) stay at or below 150 kB (spec line 32).
+and without the background shader's chunk, which loads later) stay at or below 170 kB (spec line 32; the owner raised it
+from 150 kB on 2026-10-17).
 `node apps/web/scripts/check-bundle.mjs` checks it after `npm run build`; CI runs it on the production build. To see
 what is in the scripts: `npx next analyze` in `apps/web`.
 
-Headroom: almost none. At the end of Phase 1 (final fix wave) both routes load 149,898 bytes of the 150,000, so about
-0.1 kB is left (149.0 kB before that wave, whose fixes took 0.9 kB). The next feature that adds client JavaScript
-must first make room elsewhere (move markup to the server, split a rarely used part into a chunk that loads later);
-the limit itself does not move.
+Headroom: about 20 kB. Both routes load 149,898 bytes of the 170,000, so 20,102 bytes are left. The limit was
+150 kB until 2026-10-17, when the final fix wave of Phase 1 had left only 0.1 kB; the owner raised it rather than split
+the route. A feature that adds client JavaScript should still say how much it adds; the limit itself does not move
+again without an owner decision.
 
 ## Deploy steps (owner + Claude)
 

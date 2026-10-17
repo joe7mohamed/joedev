@@ -29,7 +29,7 @@ The page succeeds when a first-time visitor on a mid-range phone can, without he
 
 Measurable gates (Lighthouse mobile preset against the deployed site, both locales):
 LCP ≤ 2.0 s · CLS ≤ 0.05 · INP ≤ 200 ms · Accessibility 100 · SEO 100 · Best Practices 100 ·
-Performance ≥ 90 · route JavaScript ≤ 150 kB gzip before the background shader chunk.
+Performance ≥ 90 · route JavaScript ≤ 170 kB gzip before the background shader chunk (owner decision 2026-10-17).
 
 ## 2. Scope
 

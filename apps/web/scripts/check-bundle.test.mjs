@@ -49,7 +49,7 @@ describe('measure', () => {
 
   it('fails above the limit', () => {
     expect(measure(html, read, 10).over).toBe(true);
-    expect(LIMIT_BYTES).toBe(150_000);
+    expect(LIMIT_BYTES).toBe(170_000);
   });
 
   it('names a forbidden library found in a route script', () => {

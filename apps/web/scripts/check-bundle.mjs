@@ -1,4 +1,4 @@
-// Route-JS budget (spec line 32): the scripts each home page loads, gzipped, must stay at or below 150 kB.
+// Route-JS budget (spec line 32): the scripts each home page loads, gzipped, must stay at or below 170 kB (owner decision 2026-10-17).
 // `next build` in Next 16 no longer reports First Load JS, so this reads the prerendered HTML instead.
 // Usage, after `npm run build`: node apps/web/scripts/check-bundle.mjs (exits 1 when over budget).
 // To find what to cut: `npx next analyze` in apps/web.
@@ -7,8 +7,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
-/** 150 kB, counted in thousands of bytes (the stricter reading). */
-export const LIMIT_BYTES = 150_000;
+/** 170 kB, counted in thousands of bytes (the stricter reading). */
+export const LIMIT_BYTES = 170_000;
 const ROUTES = ['en', 'ar'];
 const STATIC = '/_next/static/';
 /**
