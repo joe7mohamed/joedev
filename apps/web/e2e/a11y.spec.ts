@@ -45,6 +45,12 @@ test('the sitemap lists both locales with their alternates', async ({ request })
   expect(xml).toContain('hreflang="x-default"');
 });
 
+/** Width and height from a PNG's IHDR chunk. */
+const pngSize = (png: Buffer): { width: number; height: number } => ({
+  width: png.readUInt32BE(16),
+  height: png.readUInt32BE(20),
+});
+
 test('the manifest and the icon are linked and served', async ({ page, request }) => {
   await page.goto('/en');
   await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
@@ -56,10 +62,29 @@ test('the manifest and the icon are linked and served', async ({ page, request }
   }
 });
 
-/** Width and height from a PNG's IHDR chunk. */
-const pngSize = (png: Buffer): { width: number; height: number } => ({
-  width: png.readUInt32BE(16),
-  height: png.readUInt32BE(20),
+// Spec 6.7 "app icons": home screens (Android, iOS) need raster icons, and a maskable one keeps its mark in the safe
+// zone; iOS reads the apple-touch-icon.
+test('the manifest lists PNG app icons and the page links an apple-touch-icon', async ({ page, request }) => {
+  const manifest = await (await request.get('/manifest.webmanifest')).json();
+  const icons = manifest.icons as { src: string; sizes: string; type: string; purpose?: string }[];
+  for (const [sizes, purpose] of [
+    ['192x192', undefined],
+    ['512x512', undefined],
+    ['512x512', 'maskable'],
+  ] as const) {
+    const icon = icons.find((i) => i.type === 'image/png' && i.sizes === sizes && i.purpose === purpose);
+    expect(icon, `${sizes} ${purpose ?? 'any'}`).toBeDefined();
+    const response = await request.get(icon?.src ?? '');
+    expect(response.headers()['content-type']).toBe('image/png');
+    const [width, height] = sizes.split('x').map(Number);
+    expect(pngSize(await response.body())).toEqual({ width, height });
+  }
+  await page.goto('/en');
+  const touch = page.locator('link[rel="apple-touch-icon"]');
+  await expect(touch).toHaveCount(1);
+  const response = await request.get((await touch.getAttribute('href')) ?? '');
+  expect(response.headers()['content-type']).toBe('image/png');
+  expect(pngSize(await response.body())).toEqual({ width: 180, height: 180 });
 });
 
 for (const path of ['/en', '/ar']) {
