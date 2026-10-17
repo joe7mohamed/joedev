@@ -354,7 +354,13 @@ Node version pinned in `.nvmrc`.
   properties everywhere (`ms-*`, `pe-*`, `inset-s-*`, `inset-e-*`); no physical left/right except
   inside drawings that are deliberately not mirrored (all SVG scenes are forced LTR).
 - Fonts through `next/font` (self-hosted, `display: swap`, subsets; Arabic faces only in
-  the `ar` layout). No third-party font or script requests at runtime.
+  the `ar` layout). No third-party font or script requests at runtime. Exception (owner
+  decision 2026-10-17): the two display faces, Fraunces and Amiri, are self-hosted files
+  declared with plain `@font-face` (`apps/web/src/fonts/`, built from the upstream releases,
+  docs/VERSIONS.md), so each locale can preload its own headline face; `next/font` preloads
+  on every route or none. They are declared on every route, but a page downloads only the
+  faces its text uses: /en never fetches Amiri. The body and mono faces stay on `next/font`,
+  not preloaded, over the metric-matched fallbacks in `fonts/fallbacks.css`.
 - Icons: tool logos are Simple Icons SVGs (CC0) plus the devicon Playwright mark, stored in
   the repo and rendered as CSS masks so they take the theme colour. Interface icons are
   inline SVG components.
