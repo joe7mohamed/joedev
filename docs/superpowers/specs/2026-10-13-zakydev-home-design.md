@@ -531,5 +531,5 @@ units so mobile browser chrome cannot cause jumps. Test widths: 360, 390, 430, 7
    the gaming line; the five "You get" promises.
 2. One line per project: the hardest problem and what he did (for later case studies).
 3. A read-through of all Arabic copy by a native reader (the owner).
-4. Rotate the leaked MongoDB Atlas credentials.
+4. Rotate the leaked MongoDB Atlas credentials. **Done 2026-10-18:** the owner deleted the `joedb` Atlas user.
 5. Confirm the domain and hosting account are ready for Phase 0 deployment.

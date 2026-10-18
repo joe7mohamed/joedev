@@ -13,7 +13,7 @@ The owner decided these on 2026-10-17.
 3. **Lighthouse CI: back on.** Every gate fails the build at its threshold, except two that only warn, by owner decision: LCP on both pages (lab medians about 2.9–3.5 s) and the `/ar` performance score (lab medians 0.92 first visit, 0.89 repeat visit). The other gates pass on the medians: `/en` (now `/`) performance 0.94–0.95, accessibility, best practices and SEO 1, CLS ≤ 0.014, TBT under 60 ms.
 4. **Route-JS budget: 170 kB gzip.** Both pages load 150,717 bytes, so about 19 kB is left (spec line 32, `check-bundle.mjs`, `docs/DEPLOY.md`). It was 149,898 bytes before the URL round (item 8): the language switch now navigates with the router (819 bytes).
 5. **Large phones: fixed.** Phones about 414–430 × 832–836, a window about 860 × 700 and the 768 × 1024 tablet now pin every scene, in both languages. The tested sizes that pinned before measure the same as before.
-6. **Secrets: still open.** MongoDB is no longer used, and the untracked root `.env` is deleted. Deleting the `.env` does not revoke anything: the MongoDB Atlas password is in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10). **Still to do (owner):** delete the `joedb` database user, or the whole project, in MongoDB Atlas. Only that revokes the password. Spec 12 item 4 stays open until you confirm it.
+6. **Secrets: done (2026-10-18).** MongoDB is no longer used, the untracked root `.env` is deleted, and the owner deleted the `joedb` database user in MongoDB Atlas, so the password still visible in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10) no longer works. Spec 12 item 4 is closed.
 7. **Two small differences from the prototype, accepted:**
    - the loader's `%` is a literal sign;
    - in Arabic, the loader bar fills from the right, like the header progress bar.
@@ -33,7 +33,7 @@ Revised on 2026-10-17:
 Also from spec 12:
 - one line per project (the hardest problem and what you did), for later case studies;
 - a native read-through of all the Arabic copy;
-- **open:** delete the `joedb` database user (or the whole project) in MongoDB Atlas. The password is in the public history (888cc10), and deleting the local `.env` does not revoke it (item 1.6);
+- **done (2026-10-18):** the `joedb` database user was deleted in MongoDB Atlas, revoking the password that is in the public history (888cc10) (item 1.6);
 - optional: claim the npm org `zakydev`;
 - optional: add a portrait to include in the profile data (the structured data's Person `image`).
 
