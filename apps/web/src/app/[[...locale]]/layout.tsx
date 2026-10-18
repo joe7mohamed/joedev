@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, dirOf, getHome, isLocale, LOCALES } from '@zakydev/shared';
+import { DEFAULT_LOCALE, dirOf, getHome, LOCALES } from '@zakydev/shared';
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -6,14 +6,16 @@ import { preload } from 'react-dom';
 import { KeepRootState } from '@/components/KeepRootState';
 import { headlineFace } from '@/fonts/display';
 import { body, bodyAr, mono } from '@/lib/fonts';
-import { homePath } from '@/lib/home-path';
+import { homePath, localeOf, segmentsOf } from '@/lib/home-path';
 import { siteUrl } from '@/lib/site';
 import { headScript } from '@/lib/theme-script';
 import '../globals.css';
 import './home.css';
 
+// The two home pages: English at the root (no segment) and Arabic at /ar. Every other address, /en and /fr among
+// them, is no page: a 404 (global-not-found.tsx), or the /en redirect, which runs before routing.
 export const dynamicParams = false;
-export const generateStaticParams = () => LOCALES.map((locale) => ({ locale }));
+export const generateStaticParams = () => LOCALES.map((locale) => ({ locale: segmentsOf(locale) }));
 // `cover` lets the phone menu bar read the home-indicator inset (env(safe-area-inset-bottom)).
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
@@ -23,10 +25,10 @@ const RENDER_BLOCKING = { blocking: 'render' } as Record<string, string>;
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale?: string[] }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
-  if (!isLocale(locale)) return {};
+  const locale = localeOf((await params).locale);
+  if (!locale) return {};
   const { seo } = getHome(locale);
   // the page adds the sharing card (Open Graph, Twitter): page.tsx
   return {
@@ -45,10 +47,10 @@ export default async function LocaleLayout({
   params,
 }: {
   children: ReactNode;
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale?: string[] }>;
 }) {
-  const { locale } = await params;
-  if (!isLocale(locale)) notFound();
+  const locale = localeOf((await params).locale);
+  if (!locale) notFound();
   // the headline's display face, this locale's only (fonts/display.ts)
   preload(headlineFace[locale], { as: 'font', type: 'font/woff2', crossOrigin: '' });
   const fonts = [body.variable, mono.variable, ...(locale === 'ar' ? [bodyAr.variable] : [])].join(' ');

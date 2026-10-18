@@ -1,6 +1,7 @@
 // Route-JS budget (spec line 32): the scripts each home page loads, gzipped, must stay at or below 170 kB (owner decision 2026-10-17).
 // `next build` in Next 16 no longer reports First Load JS, so this reads the prerendered HTML instead.
-// Usage, after `npm run build`: node apps/web/scripts/check-bundle.mjs (exits 1 when over budget).
+// Usage, after `npm run build`: node apps/web/scripts/check-bundle.mjs (exits 1 when over budget);
+// after `npm run build:static`: node apps/web/scripts/check-bundle.mjs --static (the export Pages serves, out/).
 // To find what to cut: `npx next analyze` in apps/web.
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -10,8 +11,24 @@ import { gzipSync } from 'node:zlib';
 /** 170 kB, counted in thousands of bytes (the stricter reading). */
 export const LIMIT_BYTES = 170_000;
 const ROUTES = ['en', 'ar'];
-/** The address each prerendered page is served at (owner decision 2026-10-17: English at /, through the proxy). */
+/** The address each home page is served at (owner decision 2026-10-17): English at /, Arabic at /ar. */
 export const addressOf = (route) => (route === 'en' ? '/' : `/${route}`);
+/** The prerendered file of each page, the same name in both modes (app/[[...locale]]: the root route is index). */
+const fileOf = (route) => (route === 'en' ? 'index.html' : `${route}.html`);
+/** Where each mode keeps its home pages and its `/_next/static/` files. */
+const LAYOUT = {
+  server: { html: ['.next', 'server', 'app'], scripts: ['.next', 'static'] },
+  static: { html: ['out'], scripts: ['out', '_next', 'static'] },
+};
+
+/** The pages to measure in a build (`server`: .next, `static`: the export in out/) of the app at `app`. */
+export const buildOf = (mode, app) => ({
+  pages: ROUTES.map((route) => ({
+    address: addressOf(route),
+    file: join(app, ...LAYOUT[mode].html, fileOf(route)),
+  })),
+  scripts: join(app, ...LAYOUT[mode].scripts),
+});
 const STATIC = '/_next/static/';
 /**
  * Libraries that must never reach a home-page script, each by a string only its runtime contains. zod and the
@@ -62,12 +79,13 @@ export const measure = (html, read, limit = LIMIT_BYTES) => {
 const kB = (bytes) => `${(bytes / 1000).toFixed(1)} kB`;
 
 const main = () => {
-  const app = join(dirname(fileURLToPath(import.meta.url)), '..', '.next');
-  const read = (path) => readFileSync(join(app, 'static', path));
+  const mode = process.argv.includes('--static') ? 'static' : 'server';
+  const build = buildOf(mode, join(dirname(fileURLToPath(import.meta.url)), '..'));
+  const read = (path) => readFileSync(join(build.scripts, path));
   let failed = false;
-  for (const route of ROUTES) {
-    const result = measure(readFileSync(join(app, 'server', 'app', `${route}.html`), 'utf8'), read);
-    const page = `${addressOf(route)} (${route}.html)`;
+  for (const { address, file } of build.pages) {
+    const result = measure(readFileSync(file, 'utf8'), read);
+    const page = `${address} (${mode}: ${file.slice(file.lastIndexOf('/') + 1)})`;
     console.log(`${page}: ${kB(result.total)} gzip of ${kB(LIMIT_BYTES)}`);
     for (const { path, gzip } of result.scripts) console.log(`  ${kB(gzip).padStart(9)}  ${path}`);
     for (const { path, name } of result.forbidden) console.error(`  ${name} found in ${path}`);

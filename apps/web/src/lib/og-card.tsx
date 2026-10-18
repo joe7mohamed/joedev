@@ -1,14 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
-import { dirOf, getHome, isLocale, LOCALES, type Locale } from '@zakydev/shared';
+import { dirOf, getHome, type Locale } from '@zakydev/shared';
 import satori from 'satori';
 import { FULL } from '@/components/Mark';
-import { OG_SIZE, OG_TYPE } from '@/lib/og';
+import { OG_SIZE, OG_TYPE } from './og';
 
 /*
- * The sharing image, rendered at build time with satori + resvg instead of next/og: the satori inside Next 16.4 can
- * neither join Arabic letters nor lay out right to left. Fonts are committed TTFs (assets/og, OFL), read from disk.
+ * The sharing image of each home page, rendered at build time with satori + resvg instead of next/og: the satori
+ * inside Next 16.4 can neither join Arabic letters nor lay out right to left. Fonts are committed TTFs (assets/og,
+ * OFL), read from disk.
  */
 
 const PAD = 80;
@@ -33,16 +34,6 @@ const FONTS = [
   { name: 'Amiri', data: amiri, weight: 700, style: 'normal' },
   { name: 'Geist Mono', data: geistMono, weight: 400, style: 'normal' },
 ] as const;
-
-// Route handlers get no params from the layout, so without this the card would render on request, not at build time.
-export const generateStaticParams = () => LOCALES.map((locale) => ({ locale }));
-// and a locale it does not list is a 404, not an English card rendered on request
-export const dynamicParams = false;
-export const size = OG_SIZE;
-export const contentType = OG_TYPE;
-// Alt text is per locale, which a module-level `alt` cannot be, so the page lists this image itself
-// (lib/og.ts sharingMetadata). generateImageMetadata could carry it, but Next 16.4 then renders the card on request
-// instead of at build time: its generated generateStaticParams fills only the image id, never [locale].
 
 function Card({ locale }: { locale: Locale }) {
   const { hero, site } = getHome(locale);
@@ -112,9 +103,9 @@ function Card({ locale }: { locale: Locale }) {
   );
 }
 
-export default async function Image({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  const svg = await satori(<Card locale={isLocale(locale) ? locale : 'en'} />, {
+/** The sharing card of a home page as a PNG response (app/opengraph-image/route.ts, app/ar/opengraph-image/route.ts). */
+export async function renderCard(locale: Locale): Promise<Response> {
+  const svg = await satori(<Card locale={locale} />, {
     ...OG_SIZE,
     fonts: FONTS.map((f) => ({ ...f })),
   });

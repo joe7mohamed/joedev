@@ -46,7 +46,7 @@ const handledByBrowser = (event: MouseEvent<HTMLAnchorElement>): boolean =>
 
 /**
  * Links to the same place in the other language: the section in view and how far through it. A plain primary click
- * is a client-side navigation (router.push): both languages share the one root layout, `[locale]`, so the document
+ * is a client-side navigation (router.push): both languages share the one root layout, `[[...locale]]`, so the document
  * stays and the new page mounts in it (KeepRootState carries <html>'s state over). Any other click, and every click
  * without script, is the plain link. It never prefetches: a prefetched other page would apply its font preload here,
  * and English never downloads Amiri. `next/link` would add its prefetch machinery only to turn it off.

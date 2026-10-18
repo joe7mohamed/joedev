@@ -1,6 +1,6 @@
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { addressOf, LIMIT_BYTES, measure, scriptsOf } from './check-bundle.mjs';
+import { addressOf, buildOf, LIMIT_BYTES, measure, scriptsOf } from './check-bundle.mjs';
 
 const html = [
   '<!DOCTYPE html><html><head>',
@@ -64,5 +64,28 @@ describe('report labels', () => {
   it('names each page by the address it is served at: English at /, Arabic at /ar', () => {
     expect(addressOf('en')).toBe('/');
     expect(addressOf('ar')).toBe('/ar');
+  });
+});
+
+// Pages round: both home pages are real routes now (app/[[...locale]]), and the static export is checked too.
+describe('the builds checked', () => {
+  it('reads the server build: / prerendered as index.html, /ar as ar.html, the scripts under .next/static', () => {
+    expect(buildOf('server', '/app')).toEqual({
+      pages: [
+        { address: '/', file: '/app/.next/server/app/index.html' },
+        { address: '/ar', file: '/app/.next/server/app/ar.html' },
+      ],
+      scripts: '/app/.next/static',
+    });
+  });
+
+  it('reads the static export as Pages serves it: out/index.html, out/ar.html, the scripts under out/_next/static', () => {
+    expect(buildOf('static', '/app')).toEqual({
+      pages: [
+        { address: '/', file: '/app/out/index.html' },
+        { address: '/ar', file: '/app/out/ar.html' },
+      ],
+      scripts: '/app/out/_next/static',
+    });
   });
 });

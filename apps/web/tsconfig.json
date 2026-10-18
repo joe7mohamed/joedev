@@ -5,10 +5,19 @@
     "jsx": "react-jsx",
     "types": ["node"],
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["next-env.d.ts", "src", ".next/types/**/*.ts", "e2e", "playwright.config.ts"],
+  "include": [
+    "next-env.d.ts",
+    "src",
+    ".next/types/**/*.ts",
+    "e2e",
+    "e2e-static",
+    "playwright.config.ts",
+    "playwright.static.config.ts"
+  ],
   "exclude": ["node_modules"]
 }

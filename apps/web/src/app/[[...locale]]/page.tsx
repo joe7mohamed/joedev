@@ -1,4 +1,4 @@
-import { getHome, isLocale } from '@zakydev/shared';
+import { getHome } from '@zakydev/shared';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { About } from '@/components/about/About';
@@ -13,6 +13,7 @@ import { LoaderArt } from '@/components/loader/LoaderArt';
 import { Process } from '@/components/process/Process';
 import { shotUrls } from '@/components/work/screenshot';
 import { Work } from '@/components/work/Work';
+import { localeOf } from '@/lib/home-path';
 import { sharingMetadata } from '@/lib/og';
 import { EngineProvider } from '@/motion/EngineProvider';
 import { GoldElement } from '@/motion/GoldElement';
@@ -21,15 +22,15 @@ import { Scene } from '@/motion/Scene';
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale?: string[] }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
-  return isLocale(locale) ? sharingMetadata(locale) : {};
+  const locale = localeOf((await params).locale);
+  return locale ? sharingMetadata(locale) : {};
 }
 
-export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  if (!isLocale(locale)) notFound();
+export default async function Home({ params }: { params: Promise<{ locale?: string[] }> }) {
+  const locale = localeOf((await params).locale);
+  if (!locale) notFound();
   const c = getHome(locale, { requireConfirmed: process.env.REQUIRE_CONFIRMED === '1' });
   return (
     <EngineProvider>

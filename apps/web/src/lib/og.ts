@@ -2,12 +2,16 @@ import { getHome, LOCALES, type Locale } from '@zakydev/shared';
 import type { Metadata } from 'next';
 import { homePath } from './home-path';
 
-/** The sharing card (app/[locale]/opengraph-image.tsx). */
+/** The sharing card (lib/og-card.tsx). */
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const OG_TYPE = 'image/png';
 
-/** Where Next serves app/[locale]/opengraph-image.tsx: the internal route path, served directly (no redirect). */
-const ogImagePath = (locale: Locale): string => `/${locale}/opengraph-image`;
+/**
+ * Where each card is served, without a redirect: beside its page, so English at the root (app/opengraph-image/route.ts)
+ * and Arabic under /ar (app/ar/opengraph-image/route.ts).
+ */
+export const ogImagePath = (locale: Locale): string =>
+  `${homePath(locale) === '/' ? '' : homePath(locale)}/opengraph-image`;
 
 /** Open Graph wants language_TERRITORY. */
 const OG_LOCALE: Record<Locale, string> = { en: 'en_US', ar: 'ar_BH' };
