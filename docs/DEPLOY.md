@@ -1,23 +1,39 @@
 # Deploying
 
 Notes a deployment has to respect. The site is fully static: the two home pages, their sharing images, the sitemap,
-robots.txt, the manifest, the icon and the PNG app icons are all prerendered by `next build`.
+robots.txt, the manifest, the icon, the PNG app icons and the screenshots are all built ahead by `next build`.
 
-Routes (owner decision 2026-10-17), the same for every visitor:
+Hosting (owner decision 2026-10-18, Pages first): **Cloudflare Pages** serves the site for now, free, from a static
+export; Cloudways Velocity (`next start`) may come later. Both modes are built from the same routes and render the
+same HTML, and both are tested:
+
+| Mode | Build | Serves | Headers and redirects |
+| --- | --- | --- | --- |
+| static (Pages, current) | `npm run build:static` | the files in `apps/web/out/` | `out/_headers`, `out/_redirects` |
+| server (Velocity, later) | `npm run build` | `npm start` (`next start`) | `next.config.ts` `headers()`, `redirects()` |
+
+Both take their headers and redirects from one module, `apps/web/src/lib/http-headers.ts`; the static build writes the
+two Pages files from it (`apps/web/scripts/pages-files.mjs`), and a unit test checks both carry the same values. A
+static build also builds in `apps/web/.next`, so build again with `npm run build` before `npm start`.
+
+Routes (owner decisions 2026-10-17 and 2026-10-18), the same for every visitor and in both modes:
 
 | Path | Answer |
 | --- | --- |
-| `/` | 200, the English page (the prerendered `en` route, served through a rewrite) |
-| `/ar` | 200, the Arabic page |
-| `/en` | 308 → `/`, query string kept |
-| `/en/opengraph-image`, `/ar/opengraph-image` | 200, the sharing images (internal paths, no redirect) |
+| `/` | 200, the English page (the root route of `app/[[...locale]]`; static: `out/index.html`) |
+| `/ar` | 200, the Arabic page (static: `out/ar.html`, which Pages serves at `/ar`) |
+| `/en`, `/en/` | 308 → `/`, query string kept |
+| `/ar/` | a redirect to `/ar` (308 in both, under wrangler) |
+| `/opengraph-image`, `/ar/opengraph-image` | 200, `image/png`, the sharing images (no redirect) |
 | `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest`, `/icon.svg`, `/apple-icon`, `/app-icons/*` | 200 |
-| any other path, e.g. `/fr` | 404 |
-| `https://www.zakydev.com/*` | 308 → `https://zakydev.com/*` (`next.config.ts`) |
+| `/shots/*` | 200, the screenshots (AVIF and WebP) |
+| any other path, e.g. `/fr`, `/en/x`, `/ar/x` | 404, our own page (`app/global-not-found.tsx`; static: `out/404.html`) |
+| `https://www.zakydev.com/*` | 308 → `https://zakydev.com/*` (Pages: a Cloudflare Redirect Rule; server: `next.config.ts`) |
 
-Only `src/proxy.ts` runs per request, and only for `/` (the rewrite) and `/en` (the redirect). The answer no longer
-depends on the visitor's language, so `/` carries the normal static caching headers, with no `Vary: Accept-Language`
-and no `no-store`. Velocity runs `next start`, where the proxy runs at request time; the CDN does not cache the HTML.
+Nothing runs per request: there is no proxy and no middleware. Both home pages are prerendered routes of one optional
+catch-all root segment (`app/[[...locale]]`, English without a segment), so a client-side navigation to either finds
+a real payload in both modes (static: `out/index.txt`, `out/ar.txt`). The answer never depends on the visitor's
+language: no `Vary: Accept-Language`, no `no-store`.
 
 ## Build machine: network
 
@@ -33,11 +49,14 @@ reach Google Fonts, switch the faces to `next/font/local` with the font files co
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for metadata, sitemap, robots and structured data. Optional: without it the origin is `https://` + the confirmed domain in `packages/shared` (`site.domain`). |
 | `NEXT_PUBLIC_E2E` | Test builds only. Never set it for a deployment. |
 | `REQUIRE_CONFIRMED` | `1` makes the build fail while any copy still waits for the owner's confirmation. |
+| `STATIC_EXPORT` | Set by `npm run build:static` itself (`1`: the static export). Never set it by hand. |
 
 ## Sharing image and app icons
 
-`app/[locale]/opengraph-image.tsx` renders at build time with `satori` and `@resvg/resvg-js`, reading the fonts
-committed under `apps/web/assets/og/`. The build machine needs:
+The sharing cards (`app/opengraph-image/route.ts` for `/`, `app/ar/opengraph-image/route.ts` for `/ar`, both drawn
+by `src/lib/og-card.tsx`) render at build time with `satori` and `@resvg/resvg-js`, reading the fonts committed under
+`apps/web/assets/og/`. The static export writes them, and `/apple-icon`, as files without an extension, so
+`out/_headers` gives them `Content-Type: image/png`. The build machine needs:
 
 - the resvg native binary for its platform, installed from the lockfile's optional dependencies
   (`@resvg/resvg-js-linux-x64-gnu` on a glibc Linux x64 host); it has no install script;
@@ -47,9 +66,40 @@ The PNG app icons (`app/app-icons/[file]/route.ts`, `app/apple-icon.ts`, `src/li
 same way from `public/brand/zakydev-icon-gold.svg`. Nothing is fetched from the network at build time or at run time
 for the image or the icons.
 
+## Screenshots
+
+Neither mode runs Next's image server. Before every build, `apps/web/scripts/screenshots.mjs` encodes each
+`public/projects/<name>.jpg` into `public/shots/<name>-1280.avif` and `.webp` with `sharp` (a devDependency, the
+version Next installs), using the image server's own settings (AVIF quality 47, effort 3; WebP quality 75), so the
+files are byte for byte the ones it served. `public/shots/` is built, not committed. A custom `images.loader`
+(`src/lib/image-loader.ts`) maps next/image's `(src, width)` to the WebP; each screenshot is a `<picture>` with the
+AVIF first, and the hero zoom takes the AVIF through `image-set()` where it can choose by type, so every browser
+downloads one file per screenshot. The build machine needs sharp's platform binary from the lockfile's optional
+dependencies (`@img/sharp-linux-x64` on glibc Linux x64); it has no install script.
+
+| Screenshot | AVIF (bytes) | WebP (bytes) |
+| --- | --- | --- |
+| nuammer | 29,015 | 43,692 |
+| wazifi | 22,455 | 30,956 |
+| talmeeha | 5,646 | 9,390 |
+
+## Headers
+
+Every response, in both modes: the Content-Security-Policy below, `X-Content-Type-Options: nosniff`,
+`Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`,
+`X-Frame-Options: DENY` and `Strict-Transport-Security: max-age=31536000` (no `includeSubDomains` until the
+subdomains are audited for HTTPS, no `preload`). On Pages, `out/_headers` also:
+
+- sets `Cache-Control: public, max-age=0, must-revalidate` on everything (HTML revalidates with its ETag);
+- gives `/_next/static/*`, which holds every script, stylesheet and font, `public, max-age=31536000, immutable`
+  (its names change with their content);
+- drops the `Access-Control-Allow-Origin: *` Pages adds by default, which `next start` never sends.
+
+`next start` sets its own caching (`/_next/static` immutable, prerendered HTML `s-maxage=31536000`).
+
 ## Content-Security-Policy
 
-Sent on every response (`next.config.ts`):
+Sent on every response (`src/lib/http-headers.ts`, in both modes):
 
 ```
 default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline';
@@ -81,33 +131,155 @@ Revisit when Next can hash its own inline scripts for static output. Then `'unsa
 
 ## Route-JS budget
 
-The scripts `/` and `/ar` load (`<script src>` in the prerendered HTML (`en.html` and `ar.html`), gzipped, without the `noModule` polyfills
+The scripts `/` and `/ar` load (`<script src>` in the prerendered HTML, gzipped, without the `noModule` polyfills
 and without the background shader's chunk, which loads later) stay at or below 170 kB (spec line 32; the owner raised it
 from 150 kB on 2026-10-17).
-`node apps/web/scripts/check-bundle.mjs` checks it after `npm run build`; CI runs it on the production build. To see
-what is in the scripts: `npx next analyze` in `apps/web`.
+`node apps/web/scripts/check-bundle.mjs` checks the server build (`.next/server/app/index.html` and `ar.html`) after
+`npm run build`, and `node apps/web/scripts/check-bundle.mjs --static` the export (`out/index.html` and `out/ar.html`)
+after `npm run build:static`; CI runs both on production builds. To see what is in the scripts: `npx next analyze` in
+`apps/web`.
 
-Headroom: about 19 kB. Both routes load 150,717 bytes of the 170,000, so 19,283 bytes are left (the URL round added
-819 bytes: the language switch navigates with `useRouter().push`; `next/link` would have cost 3,616). The limit was
-150 kB until 2026-10-17, when the final fix wave of Phase 1 had left only 0.1 kB; the owner raised it rather than split
-the route. A feature that adds client JavaScript should still say how much it adds; the limit itself does not move
-again without an owner decision.
+Headroom: about 19 kB. The server build loads 150,872 bytes of the 170,000 on each page, the static export
+151,114 (its router chunk is built for an export). The Pages round added 155 bytes to the server build: the
+loading screen now loads each screenshot through a `<picture>`. Before it, 150,717 (the URL round added 819 bytes: the
+language switch navigates with `useRouter().push`; `next/link` would have cost 3,616). The limit was 150 kB until
+2026-10-17, when the final fix wave of Phase 1 had left only 0.1 kB; the owner raised it rather than split the route. A
+feature that adds client JavaScript should still say how much it adds; the limit itself does not move again without an
+owner decision.
 
 ## Deploy steps (owner + Claude)
 
 You click; Claude reads the results back and checks from outside. Never paste passwords or tokens into chat.
 
-### 0. Before you start (Claude)
+### Cloudflare Pages (current host)
+
+Owner decision 2026-10-18, Pages first. Pages builds the repository on every push to the production branch and serves
+`apps/web/out`. The domain's DNS zone is already on Cloudflare.
+
+#### 0. Before you start (Claude)
+- CI green on `rebuild/zakydev` at the commit being deployed, the `static` job included.
+- Next.js / React security releases newer than docs/VERSIONS.md checked; bump if one exists and has cleared min-release-age.
+
+#### 1. Save what is there (you)
+1. Cloudflare dashboard → zakydev.com → DNS → Records → **Export** (zone file). Keep the file; send Claude only the
+   record *names and types*.
+2. Tell Claude every subdomain you see (e.g. `mail.`, `calendar.`) so each can be checked for HTTPS before HSTS ever
+   widens.
+
+**Never touch the MX, TXT (SPF `v=spf1 … _spf.google.com`), DKIM (`google._domainkey`), DMARC (`_dmarc`) or
+`google-site-verification` records**, nor any other subdomain. Google Workspace mail depends on them.
+
+#### 2. Create the Pages project (you)
+1. Cloudflare dashboard (account home) → **Workers & Pages** → **Create** → **Pages** tab → **Connect to Git**
+   (shown as "Import an existing Git repository").
+2. GitHub → authorise Cloudflare for `joe7mohamed/joedev` only → select **joe7mohamed/joedev** → **Begin setup**.
+3. Set up builds and deployments:
+
+| Field | Value |
+| --- | --- |
+| Project name | `zakydev` (the preview address becomes `zakydev.pages.dev`) |
+| Production branch | `rebuild/zakydev` (switch to `main` after the merge: Settings → Builds & deployments) |
+| Framework preset | **None** |
+| Build command | `npm run build:static` |
+| Build output directory | `apps/web/out` |
+| Root directory (advanced) | empty: the repository root |
+
+4. Environment variables (advanced) → **Add variable**, for Production (and Preview):
+   - `NEXT_PUBLIC_SITE_URL` = `https://zakydev.com`
+   - `.nvmrc` already gives Node 24 (`24`). Only if the build log shows another Node major, add `NODE_VERSION` = `24`.
+   - Do **not** set `NEXT_PUBLIC_E2E`. Leave `REQUIRE_CONFIRMED` unset until sign-off.
+5. **Save and Deploy**.
+
+#### 3. First deploy on `zakydev.pages.dev` (you deploy, Claude reads)
+- Copy the build log to Claude (or the lines with the Node/npm versions and any error). Pages installs the packages
+  itself from `package-lock.json` (with the repository's `.npmrc`), then runs the build command.
+- The build downloads the body fonts: it needs outbound HTTPS to `fonts.googleapis.com` and `fonts.gstatic.com`
+  ("Build machine: network").
+- Known possible fix Claude will tell you to apply: npm older than 11.19 (the `devEngines` check fails) → add
+  `SKIP_DEPENDENCY_INSTALL` = `1` and set the build command to
+  `npm install -g npm@11.19.0 && npm ci && npm run build:static`.
+- Send Claude the `https://<hash>.zakydev.pages.dev` address of the deployment; Claude runs the checks of step 6
+  against it. Preview addresses carry `X-Robots-Tag: noindex` from Pages, so they are never indexed.
+
+#### 4. Connect the domain (you)
+1. Pages → the `zakydev` project → **Custom domains** → **Set up a custom domain** → `zakydev.com` → **Continue** →
+   **Activate domain**.
+2. Again for `www.zakydev.com`.
+3. Pages creates the DNS records itself (a CNAME to `zakydev.pages.dev` on `@` and on `www`). They are **proxied
+   (orange cloud)**, which is correct for Pages. **This is the opposite of the Velocity instruction (DNS only, grey
+   cloud): do not change them to grey.** If Pages reports an existing record on `@` or `www`, delete only that A,
+   AAAA or CNAME record and retry; never touch MX or TXT.
+4. Wait until both domains show **Active** (usually minutes; up to 24 h).
+
+#### 5. www → bare domain, and zone settings (you)
+1. zakydev.com → **Rules** → **Redirect Rules** → **Create rule**:
+
+| Field | Value |
+| --- | --- |
+| Rule name | `www to apex` |
+| If incoming requests match | **Custom filter expression** |
+| Field / Operator / Value | `Hostname` / `equals` / `www.zakydev.com` |
+| Then: URL redirect, Type | **Dynamic** |
+| Expression | `concat("https://zakydev.com", http.request.uri.path)` (the path of the request on the bare host) |
+| Status code | **308** |
+| Preserve query string | **On** |
+
+   Then **Deploy**. (The expression reads, as text, `https://zakydev.com${http.request.uri.path}`.)
+2. zakydev.com → **Scrape Shield** → **Email Address Obfuscation**: **Off**. It rewrites the email links in the HTML
+   and adds a script, which changes the page React hydrates.
+3. zakydev.com → **Speed** → **Optimization** → **Rocket Loader**: **Off** (it rewrites the page's scripts).
+4. Leave **SSL/TLS** → **Edge Certificates** → **HTTP Strict Transport Security** off: the site sends its own HSTS
+   header, and Cloudflare's would add `includeSubDomains` for Google Workspace's subdomains if switched on with it.
+   **Always Use HTTPS**: On.
+
+#### 6. Verify (Claude, from outside)
+curl checks, adapted for Pages (`HTTP/2`, `cf-ray` present):
+
+```
+curl -sI https://zakydev.com/ | head -n 1                                      # HTTP/2 200 (English, lang="en" dir="ltr")
+curl -sI https://zakydev.com/en | grep -iE '^(HTTP|location)'                  # HTTP/2 308, location: /
+curl -sI 'https://zakydev.com/en?utm=1' | grep -i '^location'                  # /?utm=1
+curl -sI https://zakydev.com/en/ | grep -iE '^(HTTP|location)'                 # HTTP/2 308, location: /
+curl -sI https://zakydev.com/ar | head -n 1                                    # HTTP/2 200 (Arabic, lang="ar" dir="rtl")
+curl -sI https://zakydev.com/fr | head -n 1                                    # HTTP/2 404 (our page, not the home page)
+curl -sI https://www.zakydev.com/ar | grep -iE '^(HTTP|location)'              # HTTP/2 308, location: https://zakydev.com/ar
+curl -sI 'https://www.zakydev.com/?utm=1' | grep -i '^location'                # https://zakydev.com/?utm=1
+curl -sI https://zakydev.com/ | grep -i 'strict-transport-security'            # max-age=31536000, no includeSubDomains, no preload
+curl -sI https://zakydev.com/ | grep -iE '^(content-security-policy|x-frame-options|permissions-policy|referrer-policy|x-content-type-options)'
+curl -sI https://zakydev.com/ | grep -iE '^(cache-control|vary|access-control)' # public, max-age=0, must-revalidate; no Accept-Language; no CORS
+curl -sI https://zakydev.com/opengraph-image | grep -iE '^(HTTP|content-type)'  # HTTP/2 200, image/png, no redirect
+curl -sI https://zakydev.com/ar/opengraph-image | grep -iE '^(HTTP|content-type)'
+curl -sI https://zakydev.com/shots/nuammer-1280.avif | grep -iE '^(HTTP|content-type)'  # 200, image/avif
+curl -s https://zakydev.com/ | grep -o '/_next/static/[^"]*\.woff2' | head -n 1 | xargs -I{} curl -sI https://zakydev.com{} | grep -i '^cache-control'  # public, max-age=31536000, immutable
+```
+
+Also: `dig MX zakydev.com` still Google, and the MX/TXT records unchanged against the export of step 1. Then you send a
+test email to youssef@zakydev.com from another account.
+
+#### 7. Lighthouse on the live site (Claude)
+Mobile, `/` and `/ar`; gates 90 / 100 / 100 / 100; record scores, TTFB and the Cloudflare colo (`cf-ray` suffix).
+
+#### 8. Sign-off and merge (you decide)
+- Claude sets `REQUIRE_CONFIRMED` = `1` in the Pages project's environment variables, retries the deployment, and opens
+  the PR to `main` only on your word; then switch the production branch to `main`.
+- Owner housekeeping: the `joedb` database user in MongoDB Atlas was deleted by the owner on 2026-10-18, so the password still visible in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10) no longer works. Optionally claim the npm org `zakydev`.
+
+### Later: Cloudways Velocity
+
+Kept for when the site moves to `next start` (owner decision 2026-10-16; Pages first since 2026-10-18). The server mode
+is tested in CI on every push (job `check`), so these steps stay valid.
+
+#### 0. Before you start (Claude)
 - CI green on `rebuild/zakydev` at the commit being deployed.
 - Next.js / React security releases newer than docs/VERSIONS.md checked; bump if one exists and has cleared min-release-age.
 
-### 1. Cloudflare: save what is there (you)
+#### 1. Cloudflare: save what is there (you)
 1. Cloudflare dashboard → zakydev.com → DNS → Records → **Export** (zone file). Keep the file; send Claude only the record *names and types* (no need to share values).
 2. Tell Claude every subdomain you see (e.g. `mail.`, `calendar.`) so each can be checked for HTTPS before HSTS ever widens.
 
 Never touch: **MX**, **TXT** (SPF `v=spf1 … _spf.google.com`, `_dmarc`, `google._domainkey`, `google-site-verification`), or any other subdomain.
 
-### 2. Velocity: create the app (you)
+#### 2. Velocity: create the app (you)
 Cloudways → Velocity → Launch application → GitHub → repo `joe7mohamed/joedev`.
 
 | Field | Value |
@@ -126,7 +298,7 @@ Environment variables (before the first deploy):
 - `NEXT_PUBLIC_SITE_URL` = `https://zakydev.com`
 - Do **not** set `NEXT_PUBLIC_E2E`. Leave `REQUIRE_CONFIRMED` unset until sign-off.
 
-### 3. First deploy on the temporary address (you deploy, Claude reads)
+#### 3. First deploy on the temporary address (you deploy, Claude reads)
 - Copy the build log to Claude (or the lines with Node/npm versions and any error).
 - The build downloads the fonts: it needs outbound HTTPS to `fonts.googleapis.com` and `fonts.gstatic.com` (see "Build machine: network").
 - Known possible fixes Claude will tell you to apply, one at a time:
@@ -134,18 +306,21 @@ Environment variables (before the first deploy):
   - `turbo: not found` → build command `npm ci --include=dev && npm run build`.
 - Watch Monitoring during the build; tell Claude the peak memory (Starter: 2 GB shared).
 - Send Claude the temporary `*.cloudwaysnodeapps.com` URL; Claude checks `/` (200), `/en` (308 → `/`), `/ar` (200), `/fr` (404).
+- Pages may be running on the domain by then: move the domain only after the Velocity app passes these checks, and
+  turn the Pages custom domains off (Pages → the project → Custom domains → remove) when the records change.
 
-### 4. Connect the domain (you)
+#### 4. Connect the domain (you)
 1. Velocity → Domain Management → add `zakydev.com` and `www.zakydev.com`.
 2. Velocity shows the records to create. **Copy them from the dashboard** (CNAME preferred; A records if the apex CNAME is refused).
-3. Cloudflare DNS: delete only existing **A / AAAA / CNAME** on `@` and `www` (if any), then add Velocity's records with **Proxy status: DNS only (grey cloud)**.
-4. Wait for Velocity to mark the domain Active (up to 24 h, it emails you).
+3. Cloudflare DNS: delete only existing **A / AAAA / CNAME** on `@` and `www` (if any; the Pages records among them), then add Velocity's records with **Proxy status: DNS only (grey cloud)**. This is the opposite of Pages, whose records are proxied (orange).
+4. Rules → Redirect Rules: turn off the `www to apex` rule from the Pages steps (`next.config.ts` redirects www itself).
+5. Wait for Velocity to mark the domain Active (up to 24 h, it emails you).
 
-### 5. CDN panel in Velocity (you)
+#### 5. CDN panel in Velocity (you)
 - Caching on; Image Optimization (Polish) **Off**; WAF / rate limiting / Browser Integrity Check at defaults.
 - After every deploy: **Purge**.
 
-### 6. Verify (Claude, from outside)
+#### 6. Verify (Claude, from outside)
 curl checks (owner decision 2026-10-17 on the routes):
 
 ```
@@ -157,15 +332,15 @@ curl -sI https://zakydev.com/fr | head -n 1                                # HTT
 curl -sI https://www.zakydev.com/ar | grep -iE '^(HTTP|location)'          # 308, location: https://zakydev.com/ar
 curl -sI https://zakydev.com/ | grep -i 'strict-transport-security'        # max-age=31536000, no includeSubDomains, no preload
 curl -sI https://zakydev.com/ | grep -iE '^vary'                           # no Accept-Language
-curl -sI https://zakydev.com/en/opengraph-image | head -n 1                # HTTP/2 200, no redirect
+curl -sI https://zakydev.com/opengraph-image | head -n 1                   # HTTP/2 200, no redirect
 ```
 
 Also: cf-cache-status not HIT for the HTML, and `dig MX` still Google. Then you send a test email to youssef@zakydev.com from another account.
 
-### 7. Lighthouse on the live site (Claude)
+#### 7. Lighthouse on the live site (Claude)
 Mobile, `/` and `/ar`; gates 90 / 100 / 100 / 100; record scores, TTFB and server location.
 
-### 8. Sign-off and merge (you decide)
+#### 8. Sign-off and merge (you decide)
 - Confirm or change every `u()` string (Claude gives the list).
 - Claude sets `REQUIRE_CONFIRMED=1` in Velocity env, redeploys, opens the PR to `main` only on your word; then switch branch to `main`, auto-deploy on.
 - Owner housekeeping: the `joedb` database user in MongoDB Atlas was deleted by the owner on 2026-10-18, so the password still visible in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10) no longer works. Optionally claim the npm org `zakydev`.

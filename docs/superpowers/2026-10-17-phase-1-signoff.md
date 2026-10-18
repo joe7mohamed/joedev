@@ -2,7 +2,7 @@
 
 Branch `rebuild/zakydev`, head after the final-review fix wave: `153a0e6`. Phase 1 Tasks 1–13 are done, reviewed task by task, and passed a final whole-branch review plus one fix wave and a clean re-review. CI runs lint, typecheck, unit tests, the build, the full e2e suite (524 tests after the URL round, 128 skipped by design), the route-JS budget, Lighthouse CI and visual snapshots in the Playwright image. The owner's decisions of 2026-10-17 (section 1) were then built on the same branch.
 
-What is left needs the owner: the decisions below, the copy confirmation, then deployment (Phase 0 Task 7, steps in `docs/DEPLOY.md`) and the merge to `main` (Phase 1 Task 14).
+What is left needs the owner: the decisions below, the copy confirmation, then deployment (Phase 0 Task 7, on Cloudflare Pages: owner decision 2026-10-18, Pages first; steps in `docs/DEPLOY.md`, "Cloudflare Pages (current host)") and the merge to `main` (Phase 1 Task 14).
 
 ## 1. Decisions for the owner
 
@@ -11,13 +11,15 @@ The owner decided these on 2026-10-17.
 1. **Load speed: the hero slides in without the fade.** The headline, the sentence and the rows around them are painted at full opacity from the first paint. They still build in, with the softer start the owner approved: the headline rises a third of a line into place with the prototype's timing (the English letters also tip up; the Arabic words do not, as in the prototype), the rows slide up, and the title types in. Lighthouse now sees the largest text at the first paint, and accessibility reads 1 on both pages. Lighthouse's simulated LCP is still about 2.6–4.0 s, because it also counts the fonts and scripts the page asks for before that paint. After launch, real-visitor LCP (the field data in Search Console) is the real LCP test.
 2. **Fonts: self-hosted, each page preloads its own headline face, slimmed.** The two display faces (Fraunces, Amiri) are files in the repository, built from the upstream releases (`docs/VERSIONS.md`). Each page preloads only its headline's face: Fraunces on `/en` (now `/`), Amiri on `/ar`, and `/en` (now `/`) never downloads Amiri. The body and mono faces load without preload, over size-matched fallbacks. The `/ar` font-swap shift is gone (0.015–0.021 on desktop, it was 0.05–0.10). Both display faces now carry only what their page sets in them (Amiri 132 → 87 kB, Fraunces 125 → 80 kB), with no visible change, checked pixel for pixel. All three Arabic body weights are used, so they stay.
 3. **Lighthouse CI: back on.** Every gate fails the build at its threshold, except two that only warn, by owner decision: LCP on both pages (lab medians about 2.9–3.5 s) and the `/ar` performance score (lab medians 0.92 first visit, 0.89 repeat visit). The other gates pass on the medians: `/en` (now `/`) performance 0.94–0.95, accessibility, best practices and SEO 1, CLS ≤ 0.014, TBT under 60 ms.
-4. **Route-JS budget: 170 kB gzip.** Both pages load 150,717 bytes, so about 19 kB is left (spec line 32, `check-bundle.mjs`, `docs/DEPLOY.md`). It was 149,898 bytes before the URL round (item 8): the language switch now navigates with the router (819 bytes).
+4. **Route-JS budget: 170 kB gzip.** Both pages load 150,872 bytes under `next start` and 151,114 bytes in the static export Pages serves, so about 19 kB is left (spec line 32, `check-bundle.mjs`, which now checks both, `docs/DEPLOY.md`). It was 150,717 bytes before the Pages round (item 9: the loading screen loads the screenshots through a `<picture>`, 155 bytes) and 149,898 bytes before the URL round (item 8): the language switch now navigates with the router (819 bytes).
 5. **Large phones: fixed.** Phones about 414–430 × 832–836, a window about 860 × 700 and the 768 × 1024 tablet now pin every scene, in both languages. The tested sizes that pinned before measure the same as before.
 6. **Secrets: done (2026-10-18).** MongoDB is no longer used, the untracked root `.env` is deleted, and the owner deleted the `joedb` database user in MongoDB Atlas, so the password still visible in the public git history (`DEPLOYMENT.md` on `main`, commit 888cc10) no longer works. Spec 12 item 4 is closed.
 7. **Two small differences from the prototype, accepted:**
    - the loader's `%` is a literal sign;
    - in Arabic, the loader bar fills from the right, like the header progress bar.
 8. **URLs: English at `/`, Arabic at `/ar`.** Every visitor gets the English page at the plain domain; `/` no longer redirects by the browser's language. `/en` is a permanent redirect (308) to `/`, query string kept. Canonical, hreflang (`x-default` → `/`), `og:url`, the structured data and the sitemap use `https://zakydev.com/` and `https://zakydev.com/ar`. The language switch is now an in-place, client-side navigation: no page reload, and every frame shows the reader's scene and step where they were (the theme too); without script it is still a plain link. Both pages stay prerendered. (`docs/DEPLOY.md` lists the routes and the outside curl checks.)
+
+9. **Hosting: Cloudflare Pages first (owner decision 2026-10-18, Pages first).** The site goes public on zakydev.com from a static export on Cloudflare Pages, free; Cloudways Velocity (`next start`) may come later, and both modes are built and tested in CI. Nothing changes for the visitor: the same routes, the same HTML, the same headers. To get there, both pages are real routes now (no proxy), the sharing cards moved to `/opengraph-image` and `/ar/opengraph-image`, and the screenshots are files built ahead, byte for byte the ones the image server sent, so no mode needs it. The owner's clicks (Pages project, custom domains with proxied records, the www Redirect Rule, two zone settings to turn off) are in `docs/DEPLOY.md`.
 
 ## 2. Copy: confirmed (spec 12)
 
@@ -144,3 +146,8 @@ Every decision taken on the owner's behalf during Phase 1, in order, with what i
    Cost if wrong: rework you can see in this review.
 42. No Git LFS for snapshots. Cost if wrong: about 13 MB more history per regeneration.
 43. The small residual items in section 3 are parked, not fixed now. Cost if wrong: small fixes later.
+
+**Pages round (2026-10-18)**
+44. The sharing cards are route handlers beside their pages, not the `opengraph-image` file convention: a root convention file would also have given the 404 page a card. Cost if wrong: none.
+45. The screenshots fall back to WebP in a `<picture>` (and through `image-set()` in the hero zoom) for browsers without AVIF; the loading screen loads them through a detached `<picture>`, so every browser downloads one file per screenshot. Cost if wrong: 155 bytes of route JS.
+46. The install scripts of `esbuild` and `workerd` (wrangler's) are denied; their binaries come as optional dependencies. Cost if wrong: none, the static suite runs on them.

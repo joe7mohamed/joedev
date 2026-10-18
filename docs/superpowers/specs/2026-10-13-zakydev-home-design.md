@@ -337,14 +337,17 @@ docs/           specs, plans, prototype
 install time and record them in `docs/VERSIONS.md`. Checked on 2026-10-16: Node 24 LTS,
 npm 11 workspaces, Turborepo 2, TypeScript 7, Next.js 16.4, React 19.3, Tailwind 4.3, zod 4, Biome 2.5,
 Vitest 5, Playwright 1.64; the Phase 0 plan's "Stack notes" list what changed from older
-versions. Locale routing is our own (`[locale]` segment + `proxy.ts`), no i18n library.
+versions. Locale routing is our own (one optional catch-all root segment, `[[...locale]]`, with no
+proxy: owner decision 2026-10-18, Pages first), no i18n library.
 Node version pinned in `.nvmrc`.
 
 ### 6.2 Web application
 
 - Routes (owner decision 2026-10-17): English at `/`, Arabic at `/ar`, the same for every
-  visitor (no `Accept-Language` redirect). Internally both stay `/[locale]` with `en` and `ar`;
-  the proxy serves `/` from the `en` route and redirects `/en` permanently (308) to `/`.
+  visitor (no `Accept-Language` redirect). Owner decision 2026-10-18, Pages first: both are
+  real routes of `app/[[...locale]]` (English without a segment), with no request-time rewrite,
+  so they work in a static export too; `/en` redirects permanently (308) to `/` through
+  `next.config.ts` `redirects()` on `next start` and `out/_redirects` on Pages.
   `<html lang dir>` set on the server. Both routes statically generated.
 - Every section is a **Server Component that renders the complete, readable content**.
   Motion is added by small Client Components ("islands") that receive serialised content.
@@ -367,8 +370,10 @@ Node version pinned in `.nvmrc`.
 - Icons: tool logos are Simple Icons SVGs (CC0) plus the devicon Playwright mark, stored in
   the repo and rendered as CSS masks so they take the theme colour. Interface icons are
   inline SVG components.
-- Images: the three screenshots via `next/image` (AVIF/WebP via `images.formats`, explicit
-  sizes, the first one `preload` because it is revealed by the hero zoom).
+- Images: the three screenshots via `next/image` attributes with a custom loader over files
+  encoded at build time (AVIF with a WebP fallback in a `<picture>`, the image server's own
+  settings; no image server in either deploy mode, owner decision 2026-10-18), explicit
+  sizes, the first one preloaded because it is revealed by the hero zoom.
 
 ### 6.3 Content model (`packages/shared`)
 
@@ -455,9 +460,13 @@ LinkedIn, email); `sitemap.xml`, `robots.txt`, web manifest, favicon and app ico
   `Referrer-Policy: strict-origin-when-cross-origin`, minimal `Permissions-Policy`,
   `X-Content-Type-Options: nosniff`.
 - External links use `rel="noopener"`. No third-party scripts, analytics or fonts in Phase 1.
-- Hosting (owner decision 2026-10-16): Cloudways Velocity, Starter plan, one Node app running
-  `next start` from the repo root (a second app for the API comes later). The domain stays on
-  Cloudflare DNS with the Velocity records set to DNS only; Google Workspace mail
+- Hosting (owner decision 2026-10-18, Pages first): Cloudflare Pages, free, serving the static
+  export (`npm run build:static`, `apps/web/out`, headers and redirects in `out/_headers` and
+  `out/_redirects`, generated from the module `next.config.ts` uses), on the Cloudflare DNS zone
+  with the Pages records proxied; `www` redirects through a Cloudflare Redirect Rule. Later
+  (owner decision 2026-10-16): Cloudways Velocity, Starter plan, one Node app running
+  `next start` from the repo root (a second app for the API comes later), with the Velocity
+  records set to DNS only. Both modes stay built and tested. Google Workspace mail
   (`youssef@zakydev.com`) records on the domain are never touched. HSTS is sent without
   `preload`; `www` redirects permanently to the bare domain. The deploy pipeline is proven in
   Phase 0 with a placeholder page.
