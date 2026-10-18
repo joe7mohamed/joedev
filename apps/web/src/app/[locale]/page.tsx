@@ -44,7 +44,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           <Work work={c.work} projects={c.projects} />
         </Scene>
         <Scene id="process" length={2.6} tail={0.3}>
-          <Process content={c.process} />
+          <Process content={c.process} locale={locale} />
         </Scene>
         <Scene id="about" length={2.15} tail={0.25}>
           <About content={c.about} locale={locale} />

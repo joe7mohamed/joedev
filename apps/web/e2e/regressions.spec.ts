@@ -143,7 +143,8 @@ test('LIVE badge reads left to right in Arabic', async ({ page }) => {
 });
 
 // Copy round 2026-10-17: the badge is in the page's language ("مباشر" on /ar); its word stays inside its pill, clear
-// of the dot, and Arabic is set in the Arabic body face, never the Latin mono one.
+// of the dot, and Arabic is set in the Arabic body face, never the Latin mono one. LIVE starts right after the dot,
+// as in the prototype; the Arabic word is centred in the room after the dot (review fix round 1).
 for (const path of ['/', '/ar']) {
   test(`the live badge's word fits inside its pill on ${path}`, async ({ page }) => {
     await page.goto(path);
@@ -159,6 +160,9 @@ for (const path of ['/', '/ar']) {
         lang: word.closest('[lang]')?.getAttribute('lang'),
         family: getComputedStyle(word).fontFamily,
         body: getComputedStyle(document.body).fontFamily,
+        x: word.getAttribute('x'),
+        anchor: getComputedStyle(word).textAnchor,
+        centre: w.x + w.width / 2,
         left: w.x - (d.x + d.width),
         right: p.x + p.width - (w.x + w.width),
         top: w.y - p.y,
@@ -173,6 +177,13 @@ for (const path of ['/', '/ar']) {
     expect(m.left).toBeGreaterThanOrEqual(4);
     expect(m.right).toBeGreaterThanOrEqual(8);
     expect(Math.min(m.top, m.bottom)).toBeGreaterThanOrEqual(0);
+    if (path === '/') {
+      expect(m.x).toBe('378');
+      expect(m.anchor).toBe('start');
+    } else {
+      expect(m.anchor).toBe('middle');
+      expect(Math.abs(m.centre - 397.5)).toBeLessThanOrEqual(1);
+    }
   });
 }
 

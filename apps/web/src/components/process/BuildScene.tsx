@@ -7,7 +7,18 @@ const LTR: CSSProperties = { direction: 'ltr' };
 type BuildSceneProps = {
   /** The badge text once the app is live (content, `process.live`), in the page's language. */
   live: string;
+  /** The page's language: the Arabic word is centred in its pill, LIVE starts after the dot (prototype). */
+  locale: string;
 };
+
+/**
+ * Where the badge's word sits in its pill (x 350–430, the dot at 367): LIVE starts after the dot as in the
+ * prototype; the Arabic word, of another width, is centred in the room after the dot (review fix round 1).
+ */
+const BADGE_WORD = {
+  start: { x: 378, textAnchor: 'start' },
+  centred: { x: 397.5, textAnchor: 'middle' },
+} as const;
 
 /**
  * One app being built over the five steps (spec 5.5), transcribed from the prototype (index.html lines 74–105).
@@ -15,7 +26,8 @@ type BuildSceneProps = {
  * rests at 1, so without the scene playing the drawing is finished. Never mirrored, also on the Arabic page.
  * Rendered on the server; ProcessScene writes `--p0…--p4` on it every frame while the scene plays.
  */
-export function BuildScene({ live }: BuildSceneProps) {
+export function BuildScene({ live, locale }: BuildSceneProps) {
+  const word = BADGE_WORD[locale === 'ar' ? 'centred' : 'start'];
   return (
     <svg viewBox="0 0 520 400" style={LTR} data-build aria-hidden="true" focusable="false">
       <g className="lift">
@@ -70,7 +82,7 @@ export function BuildScene({ live }: BuildSceneProps) {
         <g className="o4">
           <rect className="fg" x="350" y="33" width="80" height="30" rx="15" />
           <circle className="ld" cx="367" cy="48" r="4" />
-          <text className="lt" x="378" y="53">
+          <text className="lt" x={word.x} y="53" textAnchor={word.textAnchor}>
             {live}
           </text>
         </g>
