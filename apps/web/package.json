@@ -1,8 +1,8 @@
 {
   "name": "web",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/screenshots.mjs && next dev",
+    "build": "node scripts/screenshots.mjs && next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
     "e2e": "playwright test --grep-invert @visual",
@@ -28,6 +28,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@zakydev/config": "*",
+    "sharp": "0.35.5",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vite": "8.3.4",

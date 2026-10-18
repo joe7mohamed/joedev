@@ -49,6 +49,8 @@ desktop.ini
 .turbo/
 .next/
 out/
+# the screenshots encoded at build time (apps/web/scripts/screenshots.mjs)
+apps/web/public/shots/
 next-env.d.ts
 test-results/
 playwright-report/

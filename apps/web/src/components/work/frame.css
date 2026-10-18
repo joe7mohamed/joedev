@@ -41,6 +41,10 @@
   overflow: hidden;
   background: var(--bg);
 }
+/* a screenshot's <picture> takes no box: the <img> lays out as it would alone (ShotPicture.tsx) */
+[data-shots] picture {
+  display: contents;
+}
 [data-shots] img {
   position: absolute;
   inset: 0;

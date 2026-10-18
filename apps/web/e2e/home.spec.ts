@@ -1370,7 +1370,7 @@ test('the background draws nothing under the loading screen', async ({ browser }
   // a first visit, with the screenshots slow, so the loading screen stays for a while
   const context = await browser.newContext();
   await context.addInitScript(countDraws);
-  await context.route('**/_next/image**', async (route) => {
+  await context.route('**/shots/**', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
     await route.continue();
   });

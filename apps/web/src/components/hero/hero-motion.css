@@ -28,6 +28,12 @@ html.enhanced [data-headline] [data-key]::after {
   opacity: var(--img, 0);
   pointer-events: none;
 }
+/* the AVIF first where image-set() can choose by type; the same file the work frame's <picture> picks */
+@supports (background-image: image-set(url("x.avif") type("image/avif"))) {
+  html.enhanced [data-headline] [data-key]::after {
+    background-image: var(--zoom-set);
+  }
+}
 
 /* Everything around the headline leaves as the zoom starts. */
 html.enhanced [data-hero] [data-side] {

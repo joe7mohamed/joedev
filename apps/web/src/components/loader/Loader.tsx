@@ -1,6 +1,7 @@
 'use client';
 
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import type { ShotSources } from '@/lib/shot-files';
 import { releasePage, runLoader } from './sequence';
 import './loader.css';
 
@@ -18,7 +19,7 @@ let pendingRelease = 0;
  * It is decoration only: hidden from assistive technology, which reads the page underneath from the start.
  * `children` is the overlay's drawing and counter (LoaderArt), rendered on the server.
  */
-export function Loader({ images, children }: { images: string[]; children: ReactNode }) {
+export function Loader({ images, children }: { images: ShotSources[]; children: ReactNode }) {
   const [on, setOn] = useState(true);
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {

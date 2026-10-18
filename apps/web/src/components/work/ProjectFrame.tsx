@@ -7,6 +7,7 @@ import { smooth, stepAt } from '@/motion/math';
 import { FINE_POINTER, MOTION_OK, useMedia } from '@/motion/useMedia';
 import { addressOf } from './address';
 import type { Project } from './ProjectText';
+import { ShotPicture } from './ShotPicture';
 import type { Shot } from './screenshot';
 import './frame.css';
 
@@ -99,20 +100,20 @@ export function ProjectFrame({ projects, images, current, previous }: FrameProps
         </span>
       </div>
       <div ref={shots} data-shots>
-        {projects.map((p, i) =>
-          i === 0 || near ? (
-            // biome-ignore lint/performance/noImgElement: next/image's attributes, worked out on the server (screenshot.ts)
-            <img
+        {projects.map((p, i) => {
+          const shot = images[i];
+          return shot && (i === 0 || near) ? (
+            <ShotPicture
               key={p.id}
-              {...images[i]}
+              shot={shot}
               alt=""
               loading="eager"
               data-index={i}
               data-on={i === current || undefined}
               data-was={(i === previous && i !== current) || undefined}
             />
-          ) : null,
-        )}
+          ) : null;
+        })}
       </div>
     </>,
     target,

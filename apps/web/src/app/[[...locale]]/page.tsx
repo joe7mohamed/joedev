@@ -11,7 +11,7 @@ import { JsonLd } from '@/components/JsonLd';
 import { Loader } from '@/components/loader/Loader';
 import { LoaderArt } from '@/components/loader/LoaderArt';
 import { Process } from '@/components/process/Process';
-import { shotUrls } from '@/components/work/screenshot';
+import { shotSourcesOf } from '@/components/work/screenshot';
 import { Work } from '@/components/work/Work';
 import { localeOf } from '@/lib/home-path';
 import { sharingMetadata } from '@/lib/og';
@@ -55,7 +55,7 @@ export default async function Home({ params }: { params: Promise<{ locale?: stri
         </Scene>
       </main>
       <SiteFooter text={c.contact.footer} locale={locale} />
-      <Loader images={shotUrls(c.projects.map((p) => p.image))}>
+      <Loader images={shotSourcesOf(c.projects.map((p) => p.image))}>
         <LoaderArt />
       </Loader>
       <JsonLd content={c} locale={locale} />

@@ -1,7 +1,7 @@
 import type { HomeContent, Locale } from '@zakydev/shared';
 import { plain } from '@zakydev/shared/text';
 import { icons } from '@/components/icons';
-import { shotUrl } from '@/components/work/screenshot';
+import { shotSources, zoomFill } from '@/components/work/screenshot';
 import { Headline } from './Headline';
 import { HeroMotion } from './HeroMotion';
 import { RotatingWord } from './RotatingWord';
@@ -35,7 +35,11 @@ export function Hero({ content, projectImage, locale }: HeroProps) {
           <span>{plain(content.availability)}</span>
         </li>
       </ul>
-      <Headline lines={content.headline} byLetter={!rtl} image={projectImage ? shotUrl(projectImage) : ''} />
+      <Headline
+        lines={content.headline}
+        byLetter={!rtl}
+        zoom={projectImage ? zoomFill(shotSources(projectImage)) : null}
+      />
       <div data-side data-foot>
         <div data-pitch>
           <p data-lead>

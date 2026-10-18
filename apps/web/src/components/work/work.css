@@ -101,6 +101,9 @@ html[dir="rtl"]:not(.enhanced) [data-tools],
 html[dir="rtl"] #work[data-unpinned] [data-tools] {
   justify-content: flex-end;
 }
+[data-shot] picture {
+  display: contents;
+}
 [data-shot] img {
   display: block;
   width: 100%;

@@ -9,8 +9,8 @@ type HeadlineProps = {
   lines: Lines;
   /** English builds letter by letter; Arabic is never split into letters (spec 3.3). */
   byLetter: boolean;
-  /** The optimised URL of the first project's screenshot (work/screenshot.ts), which fills the zoom word's letters. */
-  image: string;
+  /** The first project's screenshot as the zoom word's fill (work/screenshot.ts zoomFill), or null without one. */
+  zoom: CSSProperties | null;
 };
 
 const indexed = (i: number): CSSProperties => ({ '--i': i }) as CSSProperties;
@@ -28,11 +28,8 @@ const place = (lines: Lines): Placed[][] => {
   );
 };
 
-function HeadWord({ word, index, firstLetter, byLetter, image }: Placed & Omit<HeadlineProps, 'lines'>) {
-  const style =
-    word.key && image
-      ? ({ ...indexed(index), '--zoom-shot': `url(${JSON.stringify(image)})` } as CSSProperties)
-      : indexed(index);
+function HeadWord({ word, index, firstLetter, byLetter, zoom }: Placed & Omit<HeadlineProps, 'lines'>) {
+  const style = word.key && zoom ? { ...indexed(index), ...zoom } : indexed(index);
   return (
     <span
       data-word
@@ -62,7 +59,7 @@ function HeadWord({ word, index, firstLetter, byLetter, image }: Placed & Omit<H
  * words and lines, so the heading's text still reads as one sentence; the visible parts are hidden from
  * assistive technology, which reads the full sentence from `aria-label`.
  */
-export function Headline({ lines, byLetter, image }: HeadlineProps) {
+export function Headline({ lines, byLetter, zoom }: HeadlineProps) {
   const sentence = lines.map((line) => line.map((w) => w.t).join(' ')).join(' ');
   return (
     <h1 aria-label={sentence} data-headline={byLetter ? 'letters' : 'words'}>
@@ -72,7 +69,7 @@ export function Headline({ lines, byLetter, image }: HeadlineProps) {
           {line.map((p, wi) => (
             <Fragment key={p.index}>
               {wi > 0 ? ' ' : null}
-              <HeadWord {...p} byLetter={byLetter} image={image} />
+              <HeadWord {...p} byLetter={byLetter} zoom={zoom} />
             </Fragment>
           ))}
         </span>

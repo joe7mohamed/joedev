@@ -1,3 +1,4 @@
+import { SHOT_TYPES, type ShotSources } from '@/lib/shot-files';
 import { countOf, stepShown, targetOf } from './progress';
 
 /** Prototype `landing()`: the halves lock, the mark waits, then flies onto the header's mark. */
@@ -30,19 +31,27 @@ const partsOf = (root: HTMLElement): Parts | null => {
   return mark && count && bar && meter ? { mark, halves, count, bar, meter } : null;
 };
 
-/** One job per screenshot, at the URL next/image loads it from, so the page later finds it in the cache. */
-const loadImage = (url: string): Promise<void> =>
+/**
+ * One job per screenshot, through a `<picture>` like the page's own (work/ShotPicture.tsx), so the browser picks the
+ * same file, AVIF or WebP, and the page later finds it in the cache. It is never added to the document.
+ */
+const loadImage = ({ avif, fallback }: ShotSources): Promise<void> =>
   new Promise((resolve) => {
+    const picture = document.createElement('picture');
+    const source = document.createElement('source');
+    source.type = SHOT_TYPES.avif;
+    source.srcset = avif;
     const image = new Image();
     image.onload = () => resolve();
     image.onerror = () => resolve();
-    image.src = url;
+    picture.append(source, image);
+    image.src = fallback;
   });
 
 const fontsReady = (): Promise<unknown> => document.fonts?.ready ?? Promise.resolve();
 
 /** Counts finished jobs; a failed job counts as finished, so the loader never waits on it. */
-const trackJobs = (images: string[]): { loaded(): number; total: number } => {
+const trackJobs = (images: ShotSources[]): { loaded(): number; total: number } => {
   const jobs = [fontsReady(), ...images.map(loadImage)];
   let loaded = 0;
   const count = (): void => {
@@ -86,7 +95,7 @@ const flightTo = (from: Box, to: Box): string => {
  * pointer or key press skips straight to the lock and the fly. Returns a cleanup that stops everything; releasing
  * the page when the loader goes away early is the caller's (Loader) job.
  */
-export function runLoader(root: HTMLElement, images: string[], done: () => void): () => void {
+export function runLoader(root: HTMLElement, images: ShotSources[], done: () => void): () => void {
   const html = document.documentElement;
   const parts = partsOf(root);
   if (!parts) {

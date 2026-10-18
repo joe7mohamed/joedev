@@ -1,6 +1,7 @@
 import type { HomeContent } from '@zakydev/shared';
 import type { ReactNode } from 'react';
 import { Swap } from '@/motion/Swap';
+import { ShotPicture } from './ShotPicture';
 import type { Shot } from './screenshot';
 
 export type Project = HomeContent['projects'][number];
@@ -28,8 +29,7 @@ type ProjectTextProps = {
  * `<noscript>` for the page without script, and on the client only once the page is known to be stacked.
  */
 function StackedShot({ shot, preload, stacked }: Pick<ProjectTextProps, 'shot' | 'preload' | 'stacked'>) {
-  // biome-ignore lint/performance/noImgElement: next/image's attributes, worked out on the server (screenshot.ts)
-  const image = <img {...shot} alt={shot.alt} />;
+  const image = <ShotPicture shot={shot} alt={shot.img.alt} />;
   return (
     <figure data-shot>
       {preload ? (
