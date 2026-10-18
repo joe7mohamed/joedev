@@ -26,7 +26,7 @@ The owner decided these on 2026-10-17.
 Revised on 2026-10-17:
 - **Arabic:** availability (أستقبل مشاريع جديدة), the visit link (زيارة الموقع), the Nuammer category, the rotating words, the Wazifi and Talmeeha captions, the Build, Test and Launch sentences, steps 2–5 "you get", the LIVE badge (now مباشر, set in the Arabic body face), two fact labels (مقيم في, وظيفتي), the day-job and marshal facts, the Riot disclaimer, the contact heading and sentence, and the footer (ZakyDev · يوسف زكي · البحرين). The Arabic page now names the person in Arabic (`site.name` يوسف زكي); a new `site.latinName` keeps the Latin form for what must stay Latin.
 - **English:** the Wazifi description ("CV" for "résumé"), steps 2, 4 and 5 "you get", and the Riot disclaimer ("isn't affiliated with or endorsed by").
-- **SEO:** new titles and descriptions in both languages. The structured data is now a `ProfilePage` whose main entity is the Person (name in the page's language, the Latin name and the brand as alternates, job title, email, address, languages, the tools from the projects and steps, the sharing card, GitHub and LinkedIn).
+- **SEO:** new titles and descriptions in both languages. The structured data is now a `ProfilePage` whose main entity is the Person (name in the page's language, the Latin name and the brand as alternates, job title, email, address, languages, the technologies named by the projects and steps (joined chips split; the practices and features the content marks as no technology left out), GitHub and LinkedIn). It has no image yet: the sharing card is text, and Google's ProfilePage expects a picture of the person.
 
 **City:** the structured data gives the address as Manama (المنامة), Bahrain, from a new shared key `site.city`. Manama appears in the structured data only; the page itself still says Bahrain.
 
@@ -34,7 +34,8 @@ Also from spec 12:
 - one line per project (the hardest problem and what you did), for later case studies;
 - a native read-through of all the Arabic copy;
 - **open:** delete the `joedb` database user (or the whole project) in MongoDB Atlas. The password is in the public history (888cc10), and deleting the local `.env` does not revoke it (item 1.6);
-- optional: claim the npm org `zakydev`.
+- optional: claim the npm org `zakydev`;
+- optional: add a portrait to include in the profile data (the structured data's Person `image`).
 
 ## 3. Known small items left on purpose
 
