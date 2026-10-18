@@ -48,9 +48,12 @@ desktop.ini
 
 .turbo/
 .next/
+# the static export (npm run build:static)
 out/
 # the screenshots encoded at build time (apps/web/scripts/screenshots.mjs)
 apps/web/public/shots/
+# wrangler pages dev's local state
+.wrangler/
 next-env.d.ts
 test-results/
 playwright-report/

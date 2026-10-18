@@ -2,6 +2,9 @@ import { getHome } from '@zakydev/shared';
 import type { MetadataRoute } from 'next';
 import { APP_ICONS, appIconPath, ICON_TYPE } from '@/lib/app-icon';
 
+// a static export (npm run build:static) writes it as a file only when it is marked static; it always was
+export const dynamic = 'force-static';
+
 /** The dark page colour (globals.css --bg). */
 const GROUND = '#0F0E0C';
 

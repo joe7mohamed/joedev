@@ -58,6 +58,38 @@ jobs:
             apps/web/playwright-report
             apps/web/test-results
             .lighthouseci
+  # The static mode Cloudflare Pages serves (owner decision 2026-10-18): the production export in apps/web/out/, its
+  # route JS, and the focused suite (apps/web/e2e-static/) against `wrangler pages dev`, which applies out/_headers and
+  # out/_redirects as Pages does. The full suite stays on `next start` (job `check`).
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # the binaries the static build and its server need: sharp encodes the screenshots
+      # (apps/web/scripts/screenshots.mjs), workerd runs `wrangler pages dev`
+      - run: grep -q '"node_modules/@img/sharp-linux-x64"' package-lock.json
+      - run: grep -q '"node_modules/@cloudflare/workerd-linux-64"' package-lock.json
+      # the build Pages runs, without the test switches
+      - run: npm run build:static
+      # route JS of out/index.html and out/ar.html at most 170 kB gzip, and no zod in it (spec line 32)
+      - run: node apps/web/scripts/check-bundle.mjs --static
+      - run: npm exec -w apps/web -- playwright install --with-deps chromium
+      - run: npm run e2e:static -w web
+        env:
+          WRANGLER_SEND_METRICS: "false"
+      - uses: actions/upload-artifact@v7
+        if: ${{ failure() }}
+        with:
+          name: static-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
   # Visual snapshots compare only inside the Playwright image of the installed @playwright/test version: font
   # rendering differs between systems. Baselines are made locally with `npm run e2e:visual -w web -- --update-snapshots`
   # in the same image and committed; this job never updates them.
