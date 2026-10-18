@@ -33,9 +33,10 @@ for (const [locale, { path, url }] of Object.entries(HOME)) {
     const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? '{}');
     expect(ld.url).toBe(url);
     expect(ld.inLanguage).toBe(locale);
-    // the person's own address is the site's root, the same on both pages; their image is this page's card
+    // the person's own address is the site's root, the same on both pages
     expect(ld.mainEntity.url).toBe(HOME.en.url);
-    expect(ld.mainEntity.image).toBe(await attribute(page, 'meta[property="og:image"]', 'content'));
+    // no image until there is a portrait: the sharing card is text, not a picture of the person (review, Minor 4)
+    expect(ld.mainEntity).not.toHaveProperty('image');
   });
 
   test(`${path} lists English at / and Arabic at /ar, with / as the default`, async ({ page }) => {

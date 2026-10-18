@@ -14,7 +14,6 @@ export interface PersonLd {
   address: { '@type': 'PostalAddress'; addressLocality: string; addressCountry: string };
   knowsLanguage: string[];
   knowsAbout: string[];
-  image: string;
   sameAs: string[];
   url: string;
 }
@@ -27,31 +26,25 @@ export interface ProfilePageLd {
   mainEntity: PersonLd;
 }
 
-/** Where the page and the person live: the page's canonical URL, the site's root and the page's sharing image. */
+/** Where the page and the person live: the page's canonical URL and the site's root. */
 export interface LdUrls {
   locale: Locale;
   pageUrl: string;
   siteUrl: string;
-  imageUrl: string;
 }
 
 /** How the content joins a technology and a detail of it in one tool chip ("PostgreSQL · RLS"). */
 const JOINER = ' · ';
-/**
- * Tool names in the content that are not technologies on their own: a practice ("Server-owned state") and a feature
- * of a technology already listed ("RLS", PostgreSQL's row-level security).
- */
-export const NOT_TECHNOLOGIES: ReadonlySet<string> = new Set(['Server-owned state', 'RLS']);
 
 /**
- * The technologies named by the projects and the process steps: joined chips split, practices and features left
- * out, each once, in the order they first appear.
+ * The technologies named by the projects and the process steps: joined chips split, the names the content marks
+ * as no technology (`nonTechnologies`) left out, each once, in the order they first appear.
  */
 export const knowsAbout = (content: HomeContent): string[] => [
   ...new Set(
     [...content.projects.flatMap((p) => p.tools), ...content.process.steps.flatMap((s) => s.tools)]
       .flatMap((tool) => tool.split(JOINER))
-      .filter((name) => !NOT_TECHNOLOGIES.has(name)),
+      .filter((name) => !content.nonTechnologies.includes(name)),
   ),
 ];
 
@@ -73,7 +66,7 @@ export const profilePageLd = (content: HomeContent, urls: LdUrls): ProfilePageLd
       address: { '@type': 'PostalAddress', addressLocality: site.city, addressCountry: COUNTRY },
       knowsLanguage: LANGUAGES,
       knowsAbout: knowsAbout(content),
-      image: urls.imageUrl,
+      // no `image` until there is a portrait: the sharing card is text, not a picture of the person
       sameAs: [content.contact.github, content.contact.linkedin],
       url: urls.siteUrl,
     },

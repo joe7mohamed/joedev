@@ -127,6 +127,11 @@ export const homeContentSchema = z.object({
   }),
   seo: z.object({ title: z.string().min(1), description: z.string().min(1) }),
   /**
+   * Tool names (a whole chip, or a part of a chip joined with " · ") that are not a technology of their own: a
+   * practice, or a feature of a technology already named. The structured data's knowsAbout leaves them out.
+   */
+  nonTechnologies: z.array(z.string().min(1)),
+  /**
    * The person and the site (structured data, sharing image, manifest). `name` is in the page's language;
    * `latinName`, `brand` and `domain` are the same in every locale, for whatever must stay Latin. `city` is used in
    * the structured data only (owner decision 2026-10-17).

@@ -1,7 +1,6 @@
 import { getHome, LOCALES, type Locale } from '@zakydev/shared';
 import type { Metadata } from 'next';
 import { homePath } from './home-path';
-import { siteUrl } from './site';
 
 /** The sharing card (app/[locale]/opengraph-image.tsx). */
 export const OG_SIZE = { width: 1200, height: 630 } as const;
@@ -9,8 +8,6 @@ export const OG_TYPE = 'image/png';
 
 /** Where Next serves app/[locale]/opengraph-image.tsx: the internal route path, served directly (no redirect). */
 const ogImagePath = (locale: Locale): string => `/${locale}/opengraph-image`;
-/** The sharing card's absolute address, as Next writes it in og:image (metadataBase is siteUrl). */
-export const ogImageUrl = (locale: Locale): string => `${siteUrl}${ogImagePath(locale)}`;
 
 /** Open Graph wants language_TERRITORY. */
 const OG_LOCALE: Record<Locale, string> = { en: 'en_US', ar: 'ar_BH' };

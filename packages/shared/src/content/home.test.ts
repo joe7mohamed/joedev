@@ -122,6 +122,16 @@ describe('home content', () => {
     expect(home.en.seo.title).toBe('Youssef Zaky — Software Engineer in Bahrain | ZakyDev');
     expect(home.ar.seo.title).toBe('يوسف زكي — مهندس برمجيات ومطوّر مواقع في البحرين | ZakyDev');
   });
+  it('marks the tool names that are no technology the same way in both locales, each one used by a chip', () => {
+    expect(home.en.nonTechnologies).toEqual(['Server-owned state', 'RLS']);
+    expect(home.ar.nonTechnologies).toEqual(home.en.nonTechnologies);
+    for (const l of ['en', 'ar'] as const) {
+      const names = [...home[l].projects, ...home[l].process.steps].flatMap((item) =>
+        item.tools.flatMap((tool) => tool.split(' · ')),
+      );
+      for (const name of home[l].nonTechnologies) expect(names, name).toContain(name);
+    }
+  });
   it('has no unconfirmed text left in either locale (owner sign-off 2026-10-17)', () => {
     for (const l of ['en', 'ar'] as const) {
       expect(unconfirmedPaths(home[l])).toEqual([]);

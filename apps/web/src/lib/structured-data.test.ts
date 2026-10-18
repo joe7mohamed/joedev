@@ -1,6 +1,6 @@
 import { getHome } from '@zakydev/shared';
 import { describe, expect, it } from 'vitest';
-import { knowsAbout, NOT_TECHNOLOGIES, profilePageLd, serializeLd } from './structured-data';
+import { knowsAbout, profilePageLd, serializeLd } from './structured-data';
 
 const TOOLS = [
   'Next.js',
@@ -25,7 +25,6 @@ describe('profilePageLd', () => {
         locale: 'en',
         pageUrl: 'https://zakydev.com',
         siteUrl: 'https://zakydev.com',
-        imageUrl: 'https://zakydev.com/en/opengraph-image',
       }),
     ).toEqual({
       '@context': 'https://schema.org',
@@ -41,7 +40,6 @@ describe('profilePageLd', () => {
         address: { '@type': 'PostalAddress', addressLocality: 'Manama', addressCountry: 'BH' },
         knowsLanguage: ['ar', 'en'],
         knowsAbout: TOOLS,
-        image: 'https://zakydev.com/en/opengraph-image',
         sameAs: ['https://github.com/joe7mohamed', 'https://linkedin.com/in/youssef7mohamed'],
         url: 'https://zakydev.com',
       },
@@ -53,7 +51,6 @@ describe('profilePageLd', () => {
       locale: 'ar',
       pageUrl: 'https://zakydev.com/ar',
       siteUrl: 'https://zakydev.com',
-      imageUrl: 'https://zakydev.com/ar/opengraph-image',
     });
     expect(ld.url).toBe('https://zakydev.com/ar');
     expect(ld.inLanguage).toBe('ar');
@@ -61,7 +58,8 @@ describe('profilePageLd', () => {
     expect(ld.mainEntity.alternateName).toEqual(['Youssef Zaky', 'ZakyDev']);
     expect(ld.mainEntity.jobTitle).toBe('مهندس برمجيات');
     expect(ld.mainEntity.address.addressLocality).toBe('المنامة');
-    expect(ld.mainEntity.image).toBe('https://zakydev.com/ar/opengraph-image');
+    // no image until there is a portrait: the sharing card is text, not a picture of the person (review, Minor 4)
+    expect(ld.mainEntity).not.toHaveProperty('image');
     // the person's own address is the site, the same on both pages
     expect(ld.mainEntity.url).toBe('https://zakydev.com');
   });
@@ -73,11 +71,11 @@ describe('knowsAbout', () => {
     expect(knowsAbout(getHome('ar'))).toEqual(TOOLS);
   });
 
-  it('names technologies only: joined entries are split, practices and features are left out', () => {
+  it('names technologies only: joined entries are split, what the content marks as no technology is left out', () => {
     for (const l of ['en', 'ar'] as const) {
       const list = knowsAbout(getHome(l));
       expect(list.filter((name) => name.includes(' · '))).toEqual([]);
-      expect(list.filter((name) => NOT_TECHNOLOGIES.has(name))).toEqual([]);
+      expect(list.filter((name) => getHome(l).nonTechnologies.includes(name))).toEqual([]);
       expect(new Set(list).size).toBe(list.length);
     }
     // the content does hold both kinds, so the filter is doing work

@@ -1,5 +1,4 @@
 import type { HomeContent, Locale } from '@zakydev/shared';
-import { ogImageUrl } from '@/lib/og';
 import { homeUrl, siteUrl } from '@/lib/site';
 import { profilePageLd, serializeLd } from '@/lib/structured-data';
 
@@ -8,12 +7,7 @@ import { profilePageLd, serializeLd } from '@/lib/structured-data';
  * JSON-LD is data, not script, so the CSP does not apply to it.
  */
 export function JsonLd({ content, locale }: { content: HomeContent; locale: Locale }) {
-  const ld = profilePageLd(content, {
-    locale,
-    pageUrl: homeUrl(locale),
-    siteUrl,
-    imageUrl: ogImageUrl(locale),
-  });
+  const ld = profilePageLd(content, { locale, pageUrl: homeUrl(locale), siteUrl });
   return (
     <script
       type="application/ld+json"

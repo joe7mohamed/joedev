@@ -157,6 +157,8 @@ export const homeEn: HomeContent = {
     linkedinLabel: 'LinkedIn',
     footer: 'ZakyDev · Youssef Zaky · Bahrain',
   },
+  // a practice, and PostgreSQL's row-level security (a feature of a technology already named)
+  nonTechnologies: ['Server-owned state', 'RLS'],
   seo: {
     title: 'Youssef Zaky — Software Engineer in Bahrain | ZakyDev',
     description:
