@@ -34,5 +34,9 @@ export const requireConfirmed = (locale: Locale, content: HomeContent): HomeCont
   return content;
 };
 
-export const getHome = (locale: Locale, opts: { requireConfirmed?: boolean } = {}): HomeContent =>
-  opts.requireConfirmed ? requireConfirmed(locale, home[locale]) : home[locale];
+/** `contents` is the content of every locale; only tests pass another one (an unconfirmed sample). */
+export const getHome = (
+  locale: Locale,
+  opts: { requireConfirmed?: boolean } = {},
+  contents: Record<Locale, HomeContent> = home,
+): HomeContent => (opts.requireConfirmed ? requireConfirmed(locale, contents[locale]) : contents[locale]);

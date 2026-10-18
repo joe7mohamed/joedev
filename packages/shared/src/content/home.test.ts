@@ -109,6 +109,15 @@ describe('home content', () => {
     expect(() => requireConfirmed('en', sample)).toThrow(/unconfirmed/i);
     expect(getHome('en').hero.place).toBeDefined();
   });
+  it('getHome refuses unconfirmed content when asked to, and only then', () => {
+    const sample = { ...home.ar, nav: { ...home.ar.nav, sections: u('الأقسام') } };
+    const contents = { en: home.en, ar: sample };
+    expect(() => getHome('ar', { requireConfirmed: true }, contents)).toThrow(
+      /Unconfirmed content in "ar": nav\.sections/,
+    );
+    expect(getHome('ar', {}, contents)).toBe(sample);
+    expect(getHome('en', { requireConfirmed: true }, contents)).toBe(home.en);
+  });
   it('titles each page with the approved search title (copy round 2026-10-17)', () => {
     expect(home.en.seo.title).toBe('Youssef Zaky — Software Engineer in Bahrain | ZakyDev');
     expect(home.ar.seo.title).toBe('يوسف زكي — مهندس برمجيات ومطوّر مواقع في البحرين | ZakyDev');
