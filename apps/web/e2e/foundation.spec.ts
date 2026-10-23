@@ -91,6 +91,16 @@ test('security headers are set, and HSTS has no includeSubDomains or preload', a
   expect(h['strict-transport-security']).toBe('max-age=31536000');
 });
 
+// Pins a known gap of the server mode, so the Velocity move does not rely on memory: Next does not apply headers() to
+// redirects() answers, so the 308s of next start carry no security headers (the static export's do, from _headers).
+// A redirect has no body and the next answer brings HSTS; at the Velocity move, NGINX or the CDN can add them.
+test('next start sends its /en redirect without the security headers (known gap)', async ({ request }) => {
+  const en = await request.get('/en', { maxRedirects: 0 });
+  expect(en.status()).toBe(308);
+  expect(en.headers()['content-security-policy']).toBeUndefined();
+  expect(en.headers()['strict-transport-security']).toBeUndefined();
+});
+
 test('www redirects permanently to the bare domain', async ({ request }) => {
   const response = await request.get('/en', { headers: { host: 'www.zakydev.com' }, maxRedirects: 0 });
   expect(response.status()).toBe(308);

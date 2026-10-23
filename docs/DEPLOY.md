@@ -30,6 +30,17 @@ Routes (owner decisions 2026-10-17 and 2026-10-18), the same for every visitor a
 | any other path, e.g. `/fr`, `/en/x`, `/ar/x` | 404, our own page (`app/global-not-found.tsx`; static: `out/404.html`) |
 | `https://www.zakydev.com/*` | 308 → `https://zakydev.com/*` (Pages: a Cloudflare Redirect Rule; server: `next.config.ts`) |
 
+A few odd forms of these paths answer differently in the two modes. None is a regression, and none is indexable: every
+page's canonical is `/` or `/ar`, and the 404 page carries `noindex`.
+
+| Path | server (`next start`) | static (Pages) |
+| --- | --- | --- |
+| `/index` | 200, the English page | 308 → `/` |
+| `/EN` | 308 → `/` (Next matches redirects without case) | 404 |
+| `/en.rsc` | 308 → `/` | 404 |
+| `/en/` | two hops: 308 → `/en`, then 308 → `/` | one hop: 308 → `/` |
+| `/404`, `/_not-found` | 404 | 200, our 404 page (`noindex`) |
+
 Nothing runs per request: there is no proxy and no middleware. Both home pages are prerendered routes of one optional
 catch-all root segment (`app/[[...locale]]`, English without a segment), so a client-side navigation to either finds
 a real payload in both modes (static: `out/index.txt`, `out/ar.txt`). The answer never depends on the visitor's
@@ -73,8 +84,10 @@ Neither mode runs Next's image server. Before every build, `apps/web/scripts/scr
 version Next installs), using the image server's own settings (AVIF quality 47, effort 3; WebP quality 75), so the
 files are byte for byte the ones it served. `public/shots/` is built, not committed. A custom `images.loader`
 (`src/lib/image-loader.ts`) maps next/image's `(src, width)` to the WebP; each screenshot is a `<picture>` with the
-AVIF first, and the hero zoom takes the AVIF through `image-set()` where it can choose by type, so every browser
-downloads one file per screenshot. The build machine needs sharp's platform binary from the lockfile's optional
+AVIF first, and the hero zoom takes the AVIF through `image-set()` where it can choose by type, so a current browser
+downloads one file per screenshot. A browser that decodes AVIF but cannot choose by type in `image-set()` (Chrome
+85–112, Safari 16) downloads the first screenshot twice: the AVIF for the frame and the WebP for the zoom. That is
+kept on purpose: making the zoom AVIF-only would break it in browsers without AVIF. The build machine needs sharp's platform binary from the lockfile's optional
 dependencies (`@img/sharp-linux-x64` on glibc Linux x64); it has no install script.
 
 | Screenshot | AVIF (bytes) | WebP (bytes) |
@@ -85,7 +98,7 @@ dependencies (`@img/sharp-linux-x64` on glibc Linux x64); it has no install scri
 
 ## Headers
 
-Every response, in both modes: the Content-Security-Policy below, `X-Content-Type-Options: nosniff`,
+Every response, in both modes, except the redirects of `next start` (below): the Content-Security-Policy below, `X-Content-Type-Options: nosniff`,
 `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`,
 `X-Frame-Options: DENY` and `Strict-Transport-Security: max-age=31536000` (no `includeSubDomains` until the
 subdomains are audited for HTTPS, no `preload`). On Pages, `out/_headers` also:
@@ -93,7 +106,14 @@ subdomains are audited for HTTPS, no `preload`). On Pages, `out/_headers` also:
 - sets `Cache-Control: public, max-age=0, must-revalidate` on everything (HTML revalidates with its ETag);
 - gives `/_next/static/*`, which holds every script, stylesheet and font, `public, max-age=31536000, immutable`
   (its names change with their content);
-- drops the `Access-Control-Allow-Origin: *` Pages adds by default, which `next start` never sends.
+- drops the `Access-Control-Allow-Origin: *` Pages adds by default, which `next start` never sends;
+- sends `X-Robots-Tag: noindex` on the project address `zakydev.pages.dev` only, so search engines keep to
+  zakydev.com (Pages marks only the hashed preview addresses `noindex` itself).
+
+On Pages the redirects (`/en`, `/en/`, `/ar/`) carry the security headers too. Under `next start` they do not: Next
+does not apply `headers()` to `redirects()` answers, so its 308s send only `location`. A redirect has no body and the
+next answer brings HSTS, so the cost is small; `e2e/foundation.spec.ts` pins this, and at the Velocity move NGINX or
+the CDN can add the headers.
 
 `next start` sets its own caching (`/_next/static` immutable, prerendered HTML `s-maxage=31536000`).
 
@@ -139,8 +159,9 @@ from 150 kB on 2026-10-17).
 after `npm run build:static`; CI runs both on production builds. To see what is in the scripts: `npx next analyze` in
 `apps/web`.
 
-Headroom: about 19 kB. The server build loads 150,872 bytes of the 170,000 on each page, the static export
-151,114 (its router chunk is built for an export). The Pages round added 155 bytes to the server build: the
+Headroom: about 19 kB. The server build loads 150,974 bytes of the 170,000 on each page, the static export
+151,211 (its router chunk is built for an export). Next.js 16.4.2 (2026-10-23, a security release) added about
+100 bytes to each; before it, 150,872 and 151,114. The Pages round added 155 bytes to the server build: the
 loading screen now loads each screenshot through a `<picture>`. Before it, 150,717 (the URL round added 819 bytes: the
 language switch navigates with `useRouter().push`; `next/link` would have cost 3,616). The limit was 150 kB until
 2026-10-17, when the final fix wave of Phase 1 had left only 0.1 kB; the owner raised it rather than split the route. A
@@ -186,7 +207,8 @@ Owner decision 2026-10-18, Pages first. Pages builds the repository on every pus
 
 4. Environment variables (advanced) → **Add variable**, for Production (and Preview):
    - `NEXT_PUBLIC_SITE_URL` = `https://zakydev.com`
-   - `.nvmrc` already gives Node 24 (`24`). Only if the build log shows another Node major, add `NODE_VERSION` = `24`.
+   - `NODE_VERSION` = `24.20.0`. `.nvmrc` says only `24`; the full version makes the build repeatable, and Node
+     24.20.0 bundles npm 11.19.0, which the repository's `devEngines` asks for.
    - Do **not** set `NEXT_PUBLIC_E2E`. Leave `REQUIRE_CONFIRMED` unset until sign-off.
 5. **Save and Deploy**.
 
@@ -199,7 +221,8 @@ Owner decision 2026-10-18, Pages first. Pages builds the repository on every pus
   `SKIP_DEPENDENCY_INSTALL` = `1` and set the build command to
   `npm install -g npm@11.19.0 && npm ci && npm run build:static`.
 - Send Claude the `https://<hash>.zakydev.pages.dev` address of the deployment; Claude runs the checks of step 6
-  against it. Preview addresses carry `X-Robots-Tag: noindex` from Pages, so they are never indexed.
+  against it. Preview addresses carry `X-Robots-Tag: noindex` from Pages, and `zakydev.pages.dev` carries it from
+  `out/_headers`, so neither is indexed.
 
 #### 4. Connect the domain (you)
 1. Pages → the `zakydev` project → **Custom domains** → **Set up a custom domain** → `zakydev.com` → **Continue** →
@@ -231,6 +254,12 @@ Owner decision 2026-10-18, Pages first. Pages builds the repository on every pus
 4. Leave **SSL/TLS** → **Edge Certificates** → **HTTP Strict Transport Security** off: the site sends its own HSTS
    header, and Cloudflare's would add `includeSubDomains` for Google Workspace's subdomains if switched on with it.
    **Always Use HTTPS**: On.
+5. No Cloudflare scripts in the pages. Each of these injects a third-party script, which breaks the rule of no
+   third-party requests and raises a CSP violation on every page:
+   - Account home → **Analytics & Logs** → **Web Analytics**: zakydev.com is **not** listed (or its automatic setup is
+     off).
+   - Pages → the `zakydev` project → **Metrics** → **Web Analytics**: **Off**.
+   - zakydev.com → **Security** → **Bots**: **Bot Fight Mode** off, and **JavaScript detections** off.
 
 #### 6. Verify (Claude, from outside)
 curl checks, adapted for Pages (`HTTP/2`, `cf-ray` present):
@@ -251,6 +280,19 @@ curl -sI https://zakydev.com/opengraph-image | grep -iE '^(HTTP|content-type)'  
 curl -sI https://zakydev.com/ar/opengraph-image | grep -iE '^(HTTP|content-type)'
 curl -sI https://zakydev.com/shots/nuammer-1280.avif | grep -iE '^(HTTP|content-type)'  # 200, image/avif
 curl -s https://zakydev.com/ | grep -o '/_next/static/[^"]*\.woff2' | head -n 1 | xargs -I{} curl -sI https://zakydev.com{} | grep -i '^cache-control'  # public, max-age=31536000, immutable
+curl -sI https://zakydev.com/ | grep -ciE '^(x-content-type-options|referrer-policy|content-security-policy):'  # 3: each sent once, not doubled with Pages' own
+curl -s https://zakydev.com/ | grep -cE 'cloudflareinsights|cdn-cgi|email-decode|rocket-loader'   # 0: nothing injected (step 5)
+curl -s https://zakydev.com/ar | grep -cE 'cloudflareinsights|cdn-cgi|email-decode|rocket-loader' # 0
+curl -sI https://zakydev.pages.dev/ | grep -i '^x-robots-tag'                    # noindex
+curl -sI https://zakydev.com/ | grep -ci '^x-robots-tag'                        # 0: the domain itself is indexable
+```
+
+Then the static suite, against Pages itself instead of a local wrangler. It covers what only Pages can show: the query
+on the 308s, the extensionless `Content-Type`, the `/ar/` slash, the soft language switch fetching its segment files,
+and one value per header:
+
+```
+cd apps/web && STATIC_BASE_URL=https://<hash>.zakydev.pages.dev npx playwright test --config playwright.static.config.ts
 ```
 
 Also: `dig MX zakydev.com` still Google, and the MX/TXT records unchanged against the export of step 1. Then you send a

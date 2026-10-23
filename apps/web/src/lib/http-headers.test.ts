@@ -3,6 +3,7 @@ import { contentSecurityPolicy } from './csp';
 import {
   HOME_REDIRECTS,
   IMMUTABLE,
+  PAGES_DEV_ORIGIN,
   pagesHeaders,
   pagesRedirects,
   REVALIDATE,
@@ -84,6 +85,12 @@ describe('pagesHeaders', () => {
   it('types the build-time PNGs Next exports without a file extension', () => {
     for (const path of ['/opengraph-image', '/ar/opengraph-image', '/apple-icon'])
       expect(rule(path)?.set.get('Content-Type'), path).toBe('image/png');
+  });
+
+  it('keeps the project address zakydev.pages.dev out of search engines, and only that host', () => {
+    expect(rule(`${PAGES_DEV_ORIGIN}/*`)?.set.get('X-Robots-Tag')).toBe('noindex');
+    expect(PAGES_DEV_ORIGIN).toBe('https://zakydev.pages.dev');
+    expect(rule('/*')?.set.has('X-Robots-Tag')).toBe(false);
   });
 
   it('stays within the Pages limits: 100 rules, 2,000 characters a line', () => {
