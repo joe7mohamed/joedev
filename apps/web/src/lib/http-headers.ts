@@ -50,10 +50,12 @@ export const REVALIDATE = 'public, max-age=0, must-revalidate';
 /** Next exports these build-time PNG routes as files without an extension, so Pages cannot guess their type. */
 const EXTENSIONLESS_PNGS = ['/opengraph-image', '/ar/opengraph-image', '/apple-icon'];
 /**
- * The Pages project's own address (project `zakydev`, docs/DEPLOY.md). Pages marks only the hashed previews
- * noindex, so this rule keeps search engines on zakydev.com; a rule with a full URL matches that host only.
+ * The Pages addresses (docs/DEPLOY.md): the project's own `<project>.pages.dev` and each deployment's
+ * `<hash or branch>.<project>.pages.dev`, production deployments included, which Pages does not mark noindex itself.
+ * Full-URL rules match those hosts only (a placeholder never crosses a dot), so zakydev.com stays indexable, and
+ * `:project` keeps them right if Pages gives the project a suffixed subdomain.
  */
-export const PAGES_DEV_ORIGIN = 'https://zakydev.pages.dev';
+export const PAGES_DEV_HOSTS = ['https://:project.pages.dev/*', 'https://:version.:project.pages.dev/*'];
 
 const block = (path: string, lines: string[]): string => [path, ...lines.map((l) => `  ${l}`)].join('\n');
 
@@ -71,7 +73,7 @@ export const pagesHeaders = (nodeEnv: string | undefined): string =>
     ]),
     block('/_next/static/*', ['! Cache-Control', `Cache-Control: ${IMMUTABLE}`]),
     ...EXTENSIONLESS_PNGS.map((path) => block(path, ['Content-Type: image/png'])),
-    block(`${PAGES_DEV_ORIGIN}/*`, ['X-Robots-Tag: noindex']),
+    ...PAGES_DEV_HOSTS.map((host) => block(host, ['X-Robots-Tag: noindex'])),
   ].join('\n\n')}\n`;
 
 /** out/_redirects: each redirect, with and without its trailing slash, as a 308. */

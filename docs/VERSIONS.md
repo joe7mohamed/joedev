@@ -133,7 +133,7 @@ When `@playwright/test` is upgraded, change the image tag in `apps/web/package.j
 | Package | Installed | Where |
 | --- | --- | --- |
 | wrangler | 4.151.0 | devDependency of `apps/web`, pinned exactly: serves `apps/web/out` for the static suite (`playwright.static.config.ts`, `wrangler pages dev`) as Pages does. Published 2026-10-14; 4.151.1 (2026-10-16) was too new for min-release-age. It brings workerd 1.20261012.1, miniflare 5.20261012.0-beta and esbuild 0.28.2 |
-| sharp | 0.35.5 | devDependency of `apps/web`: encodes the screenshots at build time (`apps/web/scripts/screenshots.mjs`). The same version Next 16.4.0 installs as its optional dependency (`^0.35.4`), deduplicated, so the files equal the image server's byte for byte. Its platform binaries (`@img/sharp-<platform>`) are optional dependencies with no install script |
+| sharp | 0.35.5 | devDependency of `apps/web`: encodes the screenshots at build time (`apps/web/scripts/screenshots.mjs`). The same version Next 16.4.2 installs as its optional dependency (`^0.35.5`; 16.4.0 asked for `^0.35.4`), deduplicated, so the files equal the image server's byte for byte. Its platform binaries (`@img/sharp-<platform>`) are optional dependencies with no install script |
 
 Install scripts: `esbuild` and `workerd` each have a `postinstall` (`node install.js`) that only checks for, or
 downloads, the platform binary their optional dependencies (`@esbuild/linux-x64`, `@cloudflare/workerd-linux-64`)

@@ -87,8 +87,10 @@ files are byte for byte the ones it served. `public/shots/` is built, not commit
 AVIF first, and the hero zoom takes the AVIF through `image-set()` where it can choose by type, so a current browser
 downloads one file per screenshot. A browser that decodes AVIF but cannot choose by type in `image-set()` (Chrome
 85–112, Safari 16) downloads the first screenshot twice: the AVIF for the frame and the WebP for the zoom. That is
-kept on purpose: making the zoom AVIF-only would break it in browsers without AVIF. The build machine needs sharp's platform binary from the lockfile's optional
-dependencies (`@img/sharp-linux-x64` on glibc Linux x64); it has no install script.
+kept on purpose: making the zoom AVIF-only would break it in browsers without AVIF.
+
+The build machine needs sharp's platform binary from the lockfile's optional dependencies (`@img/sharp-linux-x64` on
+glibc Linux x64); it has no install script.
 
 | Screenshot | AVIF (bytes) | WebP (bytes) |
 | --- | --- | --- |
@@ -98,17 +100,19 @@ dependencies (`@img/sharp-linux-x64` on glibc Linux x64); it has no install scri
 
 ## Headers
 
-Every response, in both modes, except the redirects of `next start` (below): the Content-Security-Policy below, `X-Content-Type-Options: nosniff`,
-`Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`,
-`X-Frame-Options: DENY` and `Strict-Transport-Security: max-age=31536000` (no `includeSubDomains` until the
-subdomains are audited for HTTPS, no `preload`). On Pages, `out/_headers` also:
+Every response, in both modes, except the redirects of `next start` (below): the Content-Security-Policy below,
+`X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+`Permissions-Policy: camera=(), microphone=(), geolocation=()`, `X-Frame-Options: DENY` and
+`Strict-Transport-Security: max-age=31536000` (no `includeSubDomains` until the subdomains are audited for HTTPS, no
+`preload`). On Pages, `out/_headers` also:
 
 - sets `Cache-Control: public, max-age=0, must-revalidate` on everything (HTML revalidates with its ETag);
 - gives `/_next/static/*`, which holds every script, stylesheet and font, `public, max-age=31536000, immutable`
   (its names change with their content);
 - drops the `Access-Control-Allow-Origin: *` Pages adds by default, which `next start` never sends;
-- sends `X-Robots-Tag: noindex` on the project address `zakydev.pages.dev` only, so search engines keep to
-  zakydev.com (Pages marks only the hashed preview addresses `noindex` itself).
+- sends `X-Robots-Tag: noindex` on every `pages.dev` address of the project: `zakydev.pages.dev` and each
+  deployment's `<hash>.zakydev.pages.dev`, production deployments included (Pages marks only preview deployments
+  `noindex` itself). The rules match those hosts only, so search engines keep to zakydev.com.
 
 On Pages the redirects (`/en`, `/en/`, `/ar/`) carry the security headers too. Under `next start` they do not: Next
 does not apply `headers()` to `redirects()` answers, so its 308s send only `location`. A redirect has no body and the
@@ -221,8 +225,9 @@ Owner decision 2026-10-18, Pages first. Pages builds the repository on every pus
   `SKIP_DEPENDENCY_INSTALL` = `1` and set the build command to
   `npm install -g npm@11.19.0 && npm ci && npm run build:static`.
 - Send Claude the `https://<hash>.zakydev.pages.dev` address of the deployment; Claude runs the checks of step 6
-  against it. Preview addresses carry `X-Robots-Tag: noindex` from Pages, and `zakydev.pages.dev` carries it from
-  `out/_headers`, so neither is indexed.
+  against it. Every `pages.dev` address carries `X-Robots-Tag: noindex` from `out/_headers`, so none is indexed.
+  If the project's address is not exactly `zakydev.pages.dev` (Pages adds a suffix when the name is taken), use the
+  address it shows wherever this file says `zakydev.pages.dev`; the `noindex` rules cover it either way.
 
 #### 4. Connect the domain (you)
 1. Pages → the `zakydev` project → **Custom domains** → **Set up a custom domain** → `zakydev.com` → **Continue** →
@@ -254,12 +259,16 @@ Owner decision 2026-10-18, Pages first. Pages builds the repository on every pus
 4. Leave **SSL/TLS** → **Edge Certificates** → **HTTP Strict Transport Security** off: the site sends its own HSTS
    header, and Cloudflare's would add `includeSubDomains` for Google Workspace's subdomains if switched on with it.
    **Always Use HTTPS**: On.
-5. No Cloudflare scripts in the pages. Each of these injects a third-party script, which breaks the rule of no
-   third-party requests and raises a CSP violation on every page:
-   - Account home → **Analytics & Logs** → **Web Analytics**: zakydev.com is **not** listed (or its automatic setup is
-     off).
-   - Pages → the `zakydev` project → **Metrics** → **Web Analytics**: **Off**.
-   - zakydev.com → **Security** → **Bots**: **Bot Fight Mode** off, and **JavaScript detections** off.
+5. No Cloudflare scripts in the pages. Each of these adds scripts the site did not ask for. The Web Analytics beacon
+   is a third-party request, which breaks the rule of no third-party requests, and the CSP blocks it with a violation
+   on every page. The bot scripts load from the site's own `/cdn-cgi/` path, so the CSP allows them and no test sees
+   them; only the step-6 grep catches them all.
+   - Account home → **Analytics & Logs** → **Web Analytics**: Cloudflare turns it on by default for a proxied zone on
+     the free plan, so zakydev.com is probably listed. If it is: zakydev.com → **Manage site** → **Disable**.
+   - **Workers & Pages** → the `zakydev` project → **Metrics** → **Web Analytics**: **Off** (it is off unless someone
+     turned it on).
+   - zakydev.com → **Security** → **Settings** → filter **Bot traffic**: **Bot fight mode** Off. While it is on,
+     JavaScript detections are on too and cannot be turned off. If a **JS detections** switch is shown, Off.
 
 #### 6. Verify (Claude, from outside)
 curl checks, adapted for Pages (`HTTP/2`, `cf-ray` present):
@@ -284,6 +293,7 @@ curl -sI https://zakydev.com/ | grep -ciE '^(x-content-type-options|referrer-pol
 curl -s https://zakydev.com/ | grep -cE 'cloudflareinsights|cdn-cgi|email-decode|rocket-loader'   # 0: nothing injected (step 5)
 curl -s https://zakydev.com/ar | grep -cE 'cloudflareinsights|cdn-cgi|email-decode|rocket-loader' # 0
 curl -sI https://zakydev.pages.dev/ | grep -i '^x-robots-tag'                    # noindex
+curl -sI https://<hash>.zakydev.pages.dev/ | grep -i '^x-robots-tag'             # noindex (a production deployment too)
 curl -sI https://zakydev.com/ | grep -ci '^x-robots-tag'                        # 0: the domain itself is indexable
 ```
 
@@ -292,7 +302,7 @@ on the 308s, the extensionless `Content-Type`, the `/ar/` slash, the soft langua
 and one value per header:
 
 ```
-cd apps/web && STATIC_BASE_URL=https://<hash>.zakydev.pages.dev npx playwright test --config playwright.static.config.ts
+cd apps/web && STATIC_BASE_URL=https://<hash>.zakydev.pages.dev npm run e2e:static
 ```
 
 Also: `dig MX zakydev.com` still Google, and the MX/TXT records unchanged against the export of step 1. Then you send a

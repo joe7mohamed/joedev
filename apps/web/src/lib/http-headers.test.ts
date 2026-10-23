@@ -3,7 +3,7 @@ import { contentSecurityPolicy } from './csp';
 import {
   HOME_REDIRECTS,
   IMMUTABLE,
-  PAGES_DEV_ORIGIN,
+  PAGES_DEV_HOSTS,
   pagesHeaders,
   pagesRedirects,
   REVALIDATE,
@@ -87,10 +87,13 @@ describe('pagesHeaders', () => {
       expect(rule(path)?.set.get('Content-Type'), path).toBe('image/png');
   });
 
-  it('keeps the project address zakydev.pages.dev out of search engines, and only that host', () => {
-    expect(rule(`${PAGES_DEV_ORIGIN}/*`)?.set.get('X-Robots-Tag')).toBe('noindex');
-    expect(PAGES_DEV_ORIGIN).toBe('https://zakydev.pages.dev');
-    expect(rule('/*')?.set.has('X-Robots-Tag')).toBe(false);
+  it('keeps every pages.dev address out of search engines, and only those hosts', () => {
+    expect(PAGES_DEV_HOSTS).toEqual([
+      'https://:project.pages.dev/*',
+      'https://:version.:project.pages.dev/*',
+    ]);
+    for (const host of PAGES_DEV_HOSTS) expect(rule(host)?.set.get('X-Robots-Tag'), host).toBe('noindex');
+    expect(rules.filter((r) => r.set.has('X-Robots-Tag')).map((r) => r.path)).toEqual(PAGES_DEV_HOSTS);
   });
 
   it('stays within the Pages limits: 100 rules, 2,000 characters a line', () => {
