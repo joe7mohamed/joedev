@@ -34,7 +34,7 @@ No dependency reported an unreviewed install script (`npm install-scripts ls`), 
 
 | Package | Installed | Where |
 | --- | --- | --- |
-| next | 16.4.0 | dependency of `apps/web` (16.4.2 was too new for min-release-age) |
+| next | 16.4.2 | dependency of `apps/web` (16.4.0 at first; 16.4.2 on 2026-10-23 for GHSA-2464-fhr4-w9xw, GHSA-p3m5-59mp-jv5r and GHSA-673q-mjm6-r5xr) |
 | react / react-dom | 19.3.0 | dependencies of `apps/web` (19.3.1 was too new for min-release-age) |
 | tailwindcss / @tailwindcss/postcss | 4.3.3 | devDependencies of `apps/web` |
 | @playwright/test | 1.64.0 | devDependency of `apps/web` (1.64.1 was too new for min-release-age) |
